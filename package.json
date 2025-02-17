@@ -5,16 +5,14 @@
   "type": "module",
   "scripts": {
     "backend:down": "docker-compose -f backend/docker-compose.yml down",
-    "backend:up": "docker-compose -f backend/docker-compose.yml up -d && pnpm db:migrate && pnpm db:load-data",
+    "backend:up": "docker-compose -f backend/docker-compose.yml up -d && pnpm db:migrate",
     "db:migrate": "dotenv -- pnpm exec pg-migrations apply --directory ./db/migrations-server",
-    "db:load-data": "dotenv -- node ./db/load_data.js",
-    "reset": "pnpm backend:down && pnpm backend:up && pnpm db:migrate && pnpm db:load-data",
+    "reset": "pnpm backend:down && pnpm backend:up && pnpm db:migrate",
     "write-server": "dotenv -- tsx server.ts",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "process-data": "node ./db/process_data.js",
     "format": "prettier --write ./src",
     "lint": "eslint ./src",
     "stylecheck": "eslint ./src && prettier --check ./src ./db"
