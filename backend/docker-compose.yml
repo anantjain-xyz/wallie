@@ -4,7 +4,7 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: linearlite
+      POSTGRES_DB: wallie
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     ports:
@@ -20,7 +20,7 @@ services:
   backend:
     image: electricsql/electric
     environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/linearlite?sslmode=disable
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/wallie?sslmode=disable
     ports:
       - 3000:3000
     depends_on:

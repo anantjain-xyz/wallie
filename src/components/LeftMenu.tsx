@@ -61,7 +61,7 @@ function LeftMenu() {
               {/* <div className="flex text-sm items-center justify-center rounded-sm w-4.5 h-4.5 text-white bg-yellow-500 mr-2.5">
                 G
               </div> */}
-              <span className="flex text-sm font-medium">electric</span>
+              <span className="flex text-sm font-medium">Wallie</span>
             </Link>
 
             {/* User avatar  */}
@@ -153,18 +153,6 @@ function LeftMenu() {
               onClick={() => setShowPGliteConsoleModal(true)}
             >
               <ConsoleIcon className="w-3 mr-2 mt-1" /> PGlite Console
-            </button>
-            <a className="inline-flex mt-1" href="https://electric-sql.com/">
-              <ElectricIcon className="w-3 h-3 mr-2 mt-1 scale-150" />
-              {` `}
-              ElectricSQL
-            </a>
-            <button
-              type="button"
-              className="inline-flex mt-1"
-              onClick={() => setShowAboutModal(true)}
-            >
-              <HelpIcon className="w-3 mr-2 mt-1" /> About
             </button>
           </div>
         </div>

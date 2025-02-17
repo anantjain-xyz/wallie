@@ -11,7 +11,7 @@ import { serve } from '@hono/node-server'
 
 const DATABASE_URL =
   process.env.DATABASE_URL ??
-  'postgresql://postgres:password@localhost:54321/linearlite'
+  'postgresql://postgres:password@localhost:54321/wallie'
 
 // Create postgres connection
 const sql = postgres(DATABASE_URL)

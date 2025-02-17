@@ -103,7 +103,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         <div className="flex items-center">
           <span className="inline-flex items-center p-1 px-2 text-gray-400 bg-gray-100 rounded">
             <ElectricIcon className="w-3 h-3 scale-150 mr-1" />
-            <span>electric</span>
+            <span>Wallie</span>
           </span>
           <ChevronRight className="ml-1" />
           <span className="ml-1 font-normal text-gray-700">New Issue</span>
