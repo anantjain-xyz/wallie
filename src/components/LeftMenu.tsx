@@ -1,6 +1,4 @@
-import { ReactComponent as HelpIcon } from '../assets/icons/help.svg'
 import { ReactComponent as MenuIcon } from '../assets/icons/menu.svg'
-import { ReactComponent as ElectricIcon } from '../assets/images/icon.inverse.svg'
 import { ReactComponent as BacklogIcon } from '../assets/icons/circle-dot.svg'
 import { MenuContext } from '../App'
 import classnames from 'classnames'
