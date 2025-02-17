@@ -1,12 +1,6 @@
 
 # Wallie
 
-This is a comprehensive example of a local-first [Linear](https://linear.app) clone built with [Electric](https://electric-sql.com) and [PGlite](https://pglite.dev).
-
-Linear is a collaborative project management app for teams, built on a [sync engine architecture](https://linear.app/blog/scaling-the-linear-sync-engine). Wallie is an example app that shows how you can build a Linear-quality application using Electric and PGlite. It's built on top of the excellent clone of the Linear UI built by [Tuan Nguyen](https://github.com/tuan3w).
-
-It uses syncs data using Electric into a local PGlite database and uses a [write through the database](https://electric-sql.com/docs/guides/writes#through-the-db) pattern, where local mutations are saved to the local database and then synced to the server. See the [Write Path](#write-path) section below for more details.
-
 ## Data set
 
 Wallie is configured to load a large dataset of 100,000 issues, with comments, totally ~150MB into the local database. It demonstrates both fast initial sync and instant local reactivity, using fast, windowed live queries in PGlite. As such, it is intended to show how you can build large-scale, real-world apps on Electric and PGlite.
@@ -23,7 +17,7 @@ The following features are implemented:
 
 ## Setup
 
-Install and build all of the workspace packages and examples:
+Install and build:
 
 ```shell
 pnpm install
