@@ -128,3 +128,11 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# VS Code settings
+.vscode/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
