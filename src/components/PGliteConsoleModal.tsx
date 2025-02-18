@@ -1,4 +1,5 @@
 import { Repl } from '@electric-sql/pglite-repl'
+import { usePGlite } from '@electric-sql/pglite-react'
 import Modal from './Modal'
 
 interface Props {
@@ -7,6 +8,8 @@ interface Props {
 }
 
 export default function PGliteConsoleModal({ isOpen, onDismiss }: Props) {
+  const pg = usePGlite()
+
   return (
     <Modal
       title="PGlite Console"
@@ -15,7 +18,7 @@ export default function PGliteConsoleModal({ isOpen, onDismiss }: Props) {
       size="large"
     >
       <div className="flex flex-col w-full h-100">
-        <Repl showTime={true} />
+        <Repl pg={pg} showTime={true} />
       </div>
     </Modal>
   )
