@@ -1,6 +1,6 @@
 import { ReactComponent as MenuIcon } from '../assets/icons/menu.svg'
 import { ReactComponent as BacklogIcon } from '../assets/icons/circle-dot.svg'
-import { MenuContext } from '../App'
+import { MenuContext, IssueModalContext } from '../App'
 import classnames from 'classnames'
 import { memo, RefObject, useRef, useState, useContext } from 'react'
 import { BsPencilSquare as AddIcon } from 'react-icons/bs'
@@ -21,9 +21,9 @@ function LeftMenu() {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showAboutModal, setShowAboutModal] = useState(false)
-  const [showIssueModal, setShowIssueModal] = useState(false)
   const [showPGliteConsoleModal, setShowPGliteConsoleModal] = useState(false)
   const { showMenu, setShowMenu } = useContext(MenuContext)!
+  const { showIssueModal, setShowIssueModal } = useContext(IssueModalContext)!
 
   const classes = classnames(
     `absolute z-40 lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 bg-white flex flex-col flex-shrink-0 w-56 font-sans text-sm text-gray-700 border-r border-gray-100 lg:shadow-none justify-items-start`,
@@ -95,7 +95,7 @@ function LeftMenu() {
                 setShowIssueModal(true)
               }}
             >
-              <AddIcon className="mr-2.5 w-3.5 h-3.5" /> New Issue
+              <AddIcon className="mr-2.5 w-3.5 h-3.5" /> New Issue [c]
             </button>
             <Link
               to="/search"
@@ -155,25 +155,11 @@ function LeftMenu() {
           </div>
         </div>
       </div>
-      {/* Modals */}
-      {
-        <AboutModal
-          isOpen={showAboutModal}
-          onDismiss={() => setShowAboutModal(false)}
-        />
-      }
-      {
-        <IssueModal
-          isOpen={showIssueModal}
-          onDismiss={() => setShowIssueModal(false)}
-        />
-      }
-      {
-        <PGliteConsoleModal
-          isOpen={showPGliteConsoleModal}
-          onDismiss={() => setShowPGliteConsoleModal(false)}
-        />
-      }
+      {showAboutModal && <AboutModal isOpen={showAboutModal} onDismiss={() => setShowAboutModal(false)} />}
+      {showIssueModal && <IssueModal isOpen={showIssueModal} onDismiss={() => setShowIssueModal(false)} />}
+      {showPGliteConsoleModal && (
+        <PGliteConsoleModal isOpen={showPGliteConsoleModal} onDismiss={() => setShowPGliteConsoleModal(false)} />
+      )}
     </>
   )
 }

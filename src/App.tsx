@@ -1,6 +1,6 @@
 import 'animate.css/animate.min.css'
 import Board from './pages/Board'
-import { useState, createContext, useEffect, useMemo } from 'react'
+import { useState, createContext, useEffect, useMemo, useCallback } from 'react'
 import {
   createBrowserRouter,
   RouterProvider,
@@ -10,6 +10,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { live, LiveNamespace, LiveQuery } from '@electric-sql/pglite/live'
 import { PGliteWorker } from '@electric-sql/pglite/worker'
 import { PGliteProvider } from '@electric-sql/pglite-react'
+import { ShortcutProvider, useShortcut } from 'react-keybind'
 import PGWorker from './pglite-worker.js?worker'
 import List from './pages/List'
 import Root from './pages/root'
@@ -29,7 +30,13 @@ interface MenuContextInterface {
   setShowMenu: (show: boolean) => void
 }
 
+interface IssueModalContextInterface {
+  showIssueModal: boolean
+  setShowIssueModal: (show: boolean) => void
+}
+
 export const MenuContext = createContext(null as MenuContextInterface | null)
+export const IssueModalContext = createContext(null as IssueModalContextInterface | null)
 
 type PGliteWorkerWithLive = PGliteWorker & { live: LiveNamespace }
 
@@ -165,19 +172,44 @@ const LoadingScreen = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
-const App = () => {
+const AppContent = () => {
   const [showMenu, setShowMenu] = useState(false)
+  const [showIssueModal, setShowIssueModal] = useState(false)
   const [pgForProvider, setPgForProvider] =
     useState<PGliteWorkerWithLive | null>(null)
   const [syncStatus, syncMessage] = useSyncStatus()
+  const { registerShortcut, unregisterShortcut } = useShortcut()!;
 
   useEffect(() => {
     pgPromise.then(setPgForProvider)
   }, [])
 
+  const openIssueModal = useCallback(() => {
+    // Only trigger if no input/textarea is focused
+    const activeElement = document.activeElement;
+    const isInputFocused = activeElement instanceof HTMLInputElement || 
+                          activeElement instanceof HTMLTextAreaElement;
+    
+    if (!isInputFocused) {
+      setShowIssueModal(true);
+    }
+  }, [])
+
+  useEffect(() => {
+    registerShortcut(openIssueModal, ['c'], 'Create Issue', 'Open the create issue modal')
+    return () => {
+      unregisterShortcut(['c'])
+    }
+  }, [openIssueModal])
+
   const menuContextValue = useMemo(
     () => ({ showMenu, setShowMenu }),
     [showMenu]
+  )
+
+  const issueModalContextValue = useMemo(
+    () => ({ showIssueModal, setShowIssueModal }),
+    [showIssueModal]
   )
 
   if (!pgForProvider) return <LoadingScreen>Starting PGlite...</LoadingScreen>
@@ -194,9 +226,19 @@ const App = () => {
   return (
     <PGliteProvider db={pgForProvider}>
       <MenuContext.Provider value={menuContextValue}>
-        <RouterProvider router={router} />
+        <IssueModalContext.Provider value={issueModalContextValue}>
+          <RouterProvider router={router} />
+        </IssueModalContext.Provider>
       </MenuContext.Provider>
     </PGliteProvider>
+  )
+}
+
+const App = () => {
+  return (
+    <ShortcutProvider>
+      <AppContent />
+    </ShortcutProvider>
   )
 }
 
