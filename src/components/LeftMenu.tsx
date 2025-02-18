@@ -7,19 +7,15 @@ import { BsPencilSquare as AddIcon } from 'react-icons/bs'
 import { BsSearch as SearchIcon } from 'react-icons/bs'
 import { BsFillGrid3X3GapFill as BoardIcon } from 'react-icons/bs'
 import { BsCollectionFill as IssuesIcon } from 'react-icons/bs'
-import { MdKeyboardArrowDown as ExpandMore } from 'react-icons/md'
 import { BsTerminalFill as ConsoleIcon } from 'react-icons/bs'
 import { Link } from 'react-router-dom'
-import Avatar from './Avatar'
 import AboutModal from './AboutModal'
 import IssueModal from './IssueModal'
 import PGliteConsoleModal from './PGliteConsoleModal'
 import ItemGroup from './ItemGroup'
-import ProfileMenu from './ProfileMenu'
 
 function LeftMenu() {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>
-  const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showAboutModal, setShowAboutModal] = useState(false)
   const [showPGliteConsoleModal, setShowPGliteConsoleModal] = useState(false)
   const { showMenu, setShowMenu } = useContext(MenuContext)!
@@ -49,60 +45,32 @@ function LeftMenu() {
           <div className="flex items-center justify-between">
             {/* Project selection */}
             <Link
-              className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-100"
+              className="flex items-center p-2 rounded cursor-pointer hover:bg-gray-100"
               to="/"
             >
               <img
                 src="/electric-icon.png"
                 className="w-4.5 h-4.5 mr-2.5 rounded-sm"
               />
-              {/* <div className="flex text-sm items-center justify-center rounded-sm w-4.5 h-4.5 text-white bg-yellow-500 mr-2.5">
-                G
-              </div> */}
               <span className="flex text-sm font-medium">Wallie</span>
             </Link>
-
-            {/* User avatar  */}
-            <div className="relative">
-              <button
-                type="button"
-                className="flex items-center justify-center p-2 rounded cursor-pointer hover:bg-gray-100"
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-              >
-                <Avatar
-                  name="Electric"
-                  // online={status == 'connected'}
-                  online={false}
-                  showOffline={true}
-                />
-                <ExpandMore size={13} className="ml-2" />
-              </button>
-              <ProfileMenu
-                isOpen={showProfileMenu}
-                onDismiss={() => setShowProfileMenu(false)}
-                setShowAboutModal={setShowAboutModal}
-                className="absolute top-10"
-              />
-            </div>
-          </div>
-
-          {/* Create issue btn */}
-          <div className="flex">
-            <button
-              type="button"
-              className="inline-flex w-full items-center px-2 py-2 mt-3 bg-white border border-gray-300 rounded hover:bg-gray-100 h-7"
-              onClick={() => {
-                setShowIssueModal(true)
-              }}
-            >
-              <AddIcon className="mr-2.5 w-3.5 h-3.5" /> New Issue [c]
-            </button>
-            <Link
-              to="/search"
-              className="inline-flex ms-2 items-center px-2 py-2 mt-3 bg-white border border-gray-300 rounded hover:bg-gray-100 h-7"
+            <div className="flex items-center">
+              <Link
+                to="/search"
+                className="inline-flex ms-2 items-center p-2 bg-white rounded hover:bg-gray-100 h-7"
             >
               <SearchIcon className="w-3.5 h-3.5" />
-            </Link>
+              </Link>
+              <button
+                type="button"
+                className="inline-flex ms-2 items-center p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 h-7"
+                onClick={() => {
+                  setShowIssueModal(true)
+                }}
+              >
+                <AddIcon className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
 

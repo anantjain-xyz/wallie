@@ -10,8 +10,6 @@ interface Props {
   onClick?: MouseEventHandler | undefined
 }
 
-//bg-blue-500
-
 function stringToHslColor(str: string, s: number, l: number) {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
