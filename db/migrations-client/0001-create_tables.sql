@@ -34,10 +34,6 @@ CREATE TABLE IF NOT EXISTS "comment" (
     CONSTRAINT "comment_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX IF NOT EXISTS "issue_id_idx" ON "issue" ("id");
-
-CREATE INDEX IF NOT EXISTS "comment_id_idx" ON "comment" ("id");
-
 -- During sync the electric.syncing config var is set to true
 -- We can use this in triggers to determine the action that should be performed
 
@@ -270,8 +266,7 @@ BEGIN
     IF backup_data IS NOT NULL THEN
         FOR column_name, column_value IN SELECT * FROM jsonb_each(backup_data)
         LOOP
-            EXECUTE format('UPDATE %I SET %I = $1, modified_columns = array_remove(modified_columns, $2) WHERE id = $3', table_name, column_name)
-            USING column_value, column_name, row_id;
+            EXECUTE format('UPDATE %I SET %I = $1, modified_columns = array_remove(modified_columns, $2) WHERE id = $3', table_name, column_name, row_id);
         END LOOP;
 
         -- Clear the backup after reverting
