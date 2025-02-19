@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import Editor from '../../components/editor/Editor'
 import Avatar from '../../components/Avatar'
@@ -8,6 +8,7 @@ import { Comment, Issue } from '../../types/types'
 import { BsCloudCheck as SyncedIcon } from 'react-icons/bs'
 import { BsCloudSlash as UnsyncedIcon } from 'react-icons/bs'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
+import { useShortcut } from 'react-keybind'
 
 export interface CommentsProps {
   issue: Issue
@@ -16,6 +17,7 @@ export interface CommentsProps {
 function Comments({ issue }: CommentsProps) {
   const pg = usePGlite()
   const [newCommentBody, setNewCommentBody] = useState<string>(``)
+  const { registerShortcut, unregisterShortcut } = useShortcut()!
   const commentsResults = useLiveQuery.sql<Comment>`
     SELECT * FROM comment WHERE issue_id = ${issue.id}
   `
@@ -53,7 +55,7 @@ function Comments({ issue }: CommentsProps) {
     }
   }
 
-  const handlePost = () => {
+  const handlePost = useCallback(() => {
     if (!newCommentBody) {
       showWarning(
         `Please enter a comment before submitting`,
@@ -74,14 +76,21 @@ function Comments({ issue }: CommentsProps) {
     `
 
     setNewCommentBody(``)
-  }
+  }, [newCommentBody, issue.id, pg])
+
+  useEffect(() => {
+    registerShortcut(handlePost, ['meta+enter'], 'Post Comment', 'Post the current comment')
+    return () => {
+      unregisterShortcut(['meta+enter'])
+    }
+  }, [registerShortcut, unregisterShortcut, handlePost])
 
   return (
     <>
       {commentList()}
-      <div className="w-full max-w-full mt-2 min-h-14 ">
+      <div className="w-full max-w-full mt-2 min-h-14">
         <Editor
-          className="prose font-normal p-3 appearance-none text-md shadow-sm rounded border border-gray-200 editor"
+          className="w-full max-w-full prose font-normal p-3 appearance-none text-md shadow-sm rounded border border-gray-200 editor"
           value={newCommentBody}
           onChange={(val) => setNewCommentBody(val)}
           placeholder="Add a comment..."
