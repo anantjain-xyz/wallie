@@ -1,7 +1,7 @@
 import { Mutex } from '@electric-sql/pglite'
 import { type PGliteWithLive } from '@electric-sql/pglite/live'
 import { type PGliteWithSync } from '@electric-sql/pglite-sync'
-import type { IssueChange, CommentChange, WorkspaceChange, ChangeSet } from './utils/changes'
+import type { IssueChange, CommentChange, WorkspaceChange, ChangeSet, UserChange } from './utils/changes'
 import { postInitialSync } from './migrations'
 import { useEffect, useState } from 'react'
 
@@ -32,6 +32,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
   let issueShapeInitialSyncDone = false
   let commentShapeInitialSyncDone = false
   let workspaceShapeInitialSyncDone = false
+  let userShapeInitialSyncDone = false
   let postInitialSyncDone = false
 
   if (!hasIssuesAtStart && !postInitialSyncDone) {
@@ -49,6 +50,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
       issueShapeInitialSyncDone &&
       commentShapeInitialSyncDone &&
       workspaceShapeInitialSyncDone &&
+      userShapeInitialSyncDone &&
       !postInitialSyncDone
     ) {
       postInitialSyncDone = true
@@ -166,6 +168,42 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
     }
   )
 
+  const userUrl = new URL(`${ELECTRIC_URL}/v1/shape`)
+  if (ELECTRIC_SOURCE_SECRET) {
+    userUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
+  }
+
+  // Users Sync
+  const usersSync = await pg.sync.syncShapeToTable({
+    shape: {
+      url: userUrl.toString(),
+      params: {
+        table: 'user',
+        source_id: ELECTRIC_SOURCE_ID,
+      },
+    },
+    table: 'user',
+    primaryKey: ['id'],
+    shapeKey: 'users',
+    commitGranularity: 'up-to-date',
+    useCopy: true,
+    onInitialSync: async () => {
+      userShapeInitialSyncDone = true
+      await pg.exec(`ALTER TABLE "user" ENABLE TRIGGER ALL`)
+      doPostInitialSync()
+    },
+  })
+  usersSync.subscribe(
+    () => {
+      if (!hasIssuesAtStart && !postInitialSyncDone) {
+        updateSyncStatus('initial-sync', 'Inserting users...')
+      }
+    },
+    (error) => {
+      console.error('usersSync error', error)
+    }
+  )
+
   if (!hasIssuesAtStart) {
     await postInitialSyncDonePromise
     await pg.query(`SELECT 1;`) // Do a query to ensure PGlite is idle
@@ -181,17 +219,19 @@ async function startWritePath(pg: PGliteWithExtensions) {
     issue_count: number
     comment_count: number
     workspace_count: number
+    user_count: number
   }>(
     `
       SELECT * FROM
         (SELECT count(id) as issue_count FROM issue WHERE synced = false),
         (SELECT count(id) as comment_count FROM comment WHERE synced = false),
-        (SELECT count(id) as workspace_count FROM workspace WHERE synced = false)
+        (SELECT count(id) as workspace_count FROM workspace WHERE synced = false),
+        (SELECT count(id) as user_count FROM "user" WHERE synced = false)
     `,
     [],
     async (results) => {
-      const { issue_count, comment_count, workspace_count } = results.rows[0]
-      if (issue_count > 0 || comment_count > 0 || workspace_count > 0) {
+      const { issue_count, comment_count, workspace_count, user_count } = results.rows[0]
+      if (issue_count > 0 || comment_count > 0 || workspace_count > 0 || user_count > 0) {
         await syncMutex.acquire()
         try {
           doSyncToServer(pg)
@@ -208,6 +248,7 @@ async function doSyncToServer(pg: PGliteWithExtensions) {
   let issueChanges: IssueChange[]
   let commentChanges: CommentChange[]
   let workspaceChanges: WorkspaceChange[]
+  let userChanges: UserChange[]
   await pg.transaction(async (tx) => {
     const issueRes = await tx.query<IssueChange>(`
       SELECT
@@ -255,14 +296,32 @@ async function doSyncToServer(pg: PGliteWithExtensions) {
       FROM workspace
       WHERE synced = false AND sent_to_server = false
     `)
+    const userRes = await tx.query<UserChange>(`
+      SELECT
+        id,
+        email,
+        username,
+        full_name,
+        profile_picture,
+        workspace_id,
+        modified,
+        created,
+        modified_columns,
+        deleted,
+        new
+      FROM "user"
+      WHERE synced = false AND sent_to_server = false
+    `)
     issueChanges = issueRes.rows
     commentChanges = commentRes.rows
     workspaceChanges = workspaceRes.rows
+    userChanges = userRes.rows
   })
   const changeSet: ChangeSet = {
     issues: issueChanges!,
     comments: commentChanges!,
     workspaces: workspaceChanges!,
+    users: userChanges!,
   }
   const response = await fetch(APPLY_CHANGES_URL, {
     method: 'POST',
@@ -312,6 +371,17 @@ async function doSyncToServer(pg: PGliteWithExtensions) {
         WHERE id = $1 AND modified = $2
       `,
         [workspace.id, workspace.modified]
+      )
+    }
+
+    for (const user of userChanges!) {
+      await tx.query(
+        `
+        UPDATE "user"
+        SET sent_to_server = true
+        WHERE id = $1 AND modified = $2
+      `,
+        [user.id, user.modified]
       )
     }
   })
