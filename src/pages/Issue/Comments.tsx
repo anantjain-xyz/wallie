@@ -9,6 +9,7 @@ import { BsCloudCheck as SyncedIcon } from 'react-icons/bs'
 import { BsCloudSlash as UnsyncedIcon } from 'react-icons/bs'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { useShortcut } from 'react-keybind'
+import { DEFAULT_WORKSPACE_ID } from '../../constants'
 
 export interface CommentsProps {
   issue: Issue
@@ -65,13 +66,14 @@ function Comments({ issue }: CommentsProps) {
     }
 
     pg.sql`
-      INSERT INTO comment (id, issue_id, body, created, username)
+      INSERT INTO comment (id, issue_id, body, created, username, workspace_id)
       VALUES (
         ${crypto.randomUUID()},
         ${issue.id},
         ${newCommentBody},
         ${new Date()},
-        ${'testuser'}
+        ${'testuser'},
+        ${DEFAULT_WORKSPACE_ID}
       )
     `
 

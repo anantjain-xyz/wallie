@@ -23,6 +23,7 @@ import { showInfo, showWarning } from '../utils/notification'
 import { usePGlite } from '@electric-sql/pglite-react'
 import { Issue } from '../types/types'
 import config from '../config'
+import { DEFAULT_WORKSPACE_ID } from '../constants'
 
 interface Props {
   isOpen: boolean
@@ -61,8 +62,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
 
     const date = new Date()
     await pg.sql`
-      INSERT INTO issue (id, title, username, priority, status, description, modified, created, kanbanorder)
-      VALUES (${crypto.randomUUID()}, ${title}, ${'testuser'}, ${priority}, ${status}, ${description ?? ''}, ${date}, ${date}, ${kanbanorder})
+      INSERT INTO issue (id, title, username, priority, status, description, modified, created, kanbanorder, workspace_id)
+      VALUES (${crypto.randomUUID()}, ${title}, ${'testuser'}, ${priority}, ${status}, ${description ?? ''}, ${date}, ${date}, ${kanbanorder}, ${DEFAULT_WORKSPACE_ID})
     `
 
     if (onDismiss) onDismiss()
