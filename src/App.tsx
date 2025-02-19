@@ -1,10 +1,11 @@
 import 'animate.css/animate.min.css'
 import Board from './pages/Board'
-import { useState, createContext, useEffect, useMemo, useCallback } from 'react'
+import { useState, createContext, useEffect, useMemo, useCallback, useContext } from 'react'
 import {
   createBrowserRouter,
   RouterProvider,
   type Params,
+  useNavigate,
 } from 'react-router-dom'
 import 'react-toastify/dist/ReactToastify.css'
 import { live, LiveNamespace, LiveQuery } from '@electric-sql/pglite/live'
@@ -132,10 +133,53 @@ async function issueLoader({
   return { liveIssue }
 }
 
+const ShortcutHandler = ({ children }: { children: React.ReactNode }) => {
+  const { registerShortcut, unregisterShortcut } = useShortcut()!;
+  const navigate = useNavigate();
+  const { setShowIssueModal } = useContext(IssueModalContext)!;
+
+  const openIssueModal = useCallback(() => {
+    // Only trigger if no input/textarea is focused
+    const activeElement = document.activeElement;
+    const isInputFocused = activeElement instanceof HTMLInputElement || 
+                          activeElement instanceof HTMLTextAreaElement;
+    
+    if (!isInputFocused) {
+      setShowIssueModal(true);
+    }
+  }, [setShowIssueModal])
+
+  const openSearch = useCallback(() => {
+    // Only trigger if no input/textarea is focused
+    const activeElement = document.activeElement;
+    const isInputFocused = activeElement instanceof HTMLInputElement || 
+                          activeElement instanceof HTMLTextAreaElement;
+    
+    if (!isInputFocused) {
+      navigate('/search');
+    }
+  }, [navigate])
+
+  useEffect(() => {
+    registerShortcut(openIssueModal, ['c'], 'Create Issue', 'Open the create issue modal')
+    registerShortcut(openSearch, ['/'], 'Search', 'Open search page')
+    return () => {
+      unregisterShortcut(['c'])
+      unregisterShortcut(['/'])
+    }
+  }, [openIssueModal, openSearch, registerShortcut, unregisterShortcut])
+
+  return <>{children}</>;
+}
+
 const router = createBrowserRouter([
   {
     path: `/`,
-    element: <Root />,
+    element: (
+      <ShortcutHandler>
+        <Root />
+      </ShortcutHandler>
+    ),
     children: [
       {
         path: `/`,
@@ -178,29 +222,10 @@ const AppContent = () => {
   const [pgForProvider, setPgForProvider] =
     useState<PGliteWorkerWithLive | null>(null)
   const [syncStatus, syncMessage] = useSyncStatus()
-  const { registerShortcut, unregisterShortcut } = useShortcut()!;
 
   useEffect(() => {
     pgPromise.then(setPgForProvider)
   }, [])
-
-  const openIssueModal = useCallback(() => {
-    // Only trigger if no input/textarea is focused
-    const activeElement = document.activeElement;
-    const isInputFocused = activeElement instanceof HTMLInputElement || 
-                          activeElement instanceof HTMLTextAreaElement;
-    
-    if (!isInputFocused) {
-      setShowIssueModal(true);
-    }
-  }, [])
-
-  useEffect(() => {
-    registerShortcut(openIssueModal, ['c'], 'Create Issue', 'Open the create issue modal')
-    return () => {
-      unregisterShortcut(['c'])
-    }
-  }, [openIssueModal])
 
   const menuContextValue = useMemo(
     () => ({ showMenu, setShowMenu }),
