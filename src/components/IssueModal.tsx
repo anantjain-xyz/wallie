@@ -96,6 +96,19 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     }
   }, [isOpen])
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        handleSubmit();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleSubmit]);
+
   const body = (
     <div className="flex flex-col w-full py-4 overflow-hidden">
       {/* header */}
@@ -180,7 +193,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           className="px-3 ml-auto text-white bg-indigo-600 rounded hover:bg-indigo-700 h-7"
           onClick={handleSubmit}
         >
-          Save Issue
+          Create issue
         </button>
       </div>
     </div>
