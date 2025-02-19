@@ -3,6 +3,7 @@ import React, {
   RefObject,
   useCallback,
   useRef,
+  useEffect,
   type MouseEvent,
 } from 'react'
 import ReactDOM from 'react-dom'
@@ -38,6 +39,20 @@ function Modal({
 }: Props) {
   const ref = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>
   const outerRef = useRef(null)
+
+  useEffect(() => {
+    if (isOpen && onDismiss) {
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onDismiss()
+        }
+      }
+      document.addEventListener('keydown', handleEscape)
+      return () => {
+        document.removeEventListener('keydown', handleEscape)
+      }
+    }
+  }, [isOpen, onDismiss])
 
   const wrapperClasses = classnames(
     `fixed flex flex-col items-center inset-0 z-50`,
