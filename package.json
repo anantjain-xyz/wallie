@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "backend:down": "docker-compose -f backend/docker-compose.yml down",
-    "backend:up": "docker-compose -f backend/docker-compose.yml up -d && pnpm db:migrate",
+    "backend:down": "docker-compose down",
+    "backend:up": "docker-compose up -d && pnpm db:migrate",
     "db:migrate": "dotenv -- pnpm exec pg-migrations apply --directory ./db/migrations-server",
     "reset": "pnpm backend:down && pnpm backend:up && pnpm db:migrate",
     "write-server": "dotenv -- tsx server.ts",
