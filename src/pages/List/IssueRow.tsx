@@ -1,7 +1,5 @@
 import type { CSSProperties } from 'react'
 import { usePGlite } from '@electric-sql/pglite-react'
-import { BsCloudCheck as SyncedIcon } from 'react-icons/bs'
-import { BsCloudSlash as UnsyncedIcon } from 'react-icons/bs'
 import PriorityMenu from '../../components/contextmenu/PriorityMenu'
 import StatusMenu from '../../components/contextmenu/StatusMenu'
 import PriorityIcon from '../../components/PriorityIcon'
@@ -78,13 +76,6 @@ function IssueRow({ issue, style }: Props) {
       </div>
       <div className="flex-shrink-0 hidden ml-4 font-normal text-gray-500 sm:block w-15 md:block">
         <Avatar name={issue.creator_id} />
-      </div>
-      <div className="flex-shrink-0 hidden ml-4 font-normal text-gray-500 sm:block w-15 md:block">
-        {issue.synced ? (
-          <SyncedIcon className="text-green-500 w-4 h-4" />
-        ) : (
-          <UnsyncedIcon className="text-orange-500 w-4 h-4" />
-        )}
       </div>
     </div>
   )
