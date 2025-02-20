@@ -8,7 +8,7 @@ import { Comment, Issue } from '../../types/types'
 import { BsCloudCheck as SyncedIcon } from 'react-icons/bs'
 import { BsCloudSlash as UnsyncedIcon } from 'react-icons/bs'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
-import { useShortcut } from 'react-keybind'
+import { useHotkeys } from 'react-hotkeys-hook'
 import { DEFAULT_WORKSPACE_ID, DEFAULT_CURRENT_USER_ID } from '../../constants'
 
 export interface CommentsProps {
@@ -18,7 +18,6 @@ export interface CommentsProps {
 function Comments({ issue }: CommentsProps) {
   const pg = usePGlite()
   const [newCommentBody, setNewCommentBody] = useState<string>(``)
-  const { registerShortcut, unregisterShortcut } = useShortcut()!
   const commentsResults = useLiveQuery.sql<Comment & { author_full_name: string }>`
     SELECT c.*, u.full_name as author_full_name
     FROM comment c
@@ -83,12 +82,7 @@ function Comments({ issue }: CommentsProps) {
     setNewCommentBody(``)
   }, [newCommentBody, issue.id, pg])
 
-  useEffect(() => {
-    registerShortcut(handlePost, ['meta+enter'], 'Post Comment', 'Post the current comment')
-    return () => {
-      unregisterShortcut(['meta+enter'])
-    }
-  }, [registerShortcut, unregisterShortcut, handlePost])
+  useHotkeys('meta+enter', handlePost, { enableOnContentEditable: true }, [handlePost])
 
   return (
     <>

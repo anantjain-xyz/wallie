@@ -11,7 +11,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { live, LiveNamespace, LiveQuery } from '@electric-sql/pglite/live'
 import { PGliteWorker } from '@electric-sql/pglite/worker'
 import { PGliteProvider } from '@electric-sql/pglite-react'
-import { ShortcutProvider, useShortcut } from 'react-keybind'
+import { useHotkeys } from 'react-hotkeys-hook'
 import PGWorker from './pglite-worker.js?worker'
 import List from './pages/List'
 import Root from './pages/root'
@@ -133,46 +133,17 @@ async function issueLoader({
   return { liveIssue }
 }
 
-const ShortcutHandler = ({ children }: { children: React.ReactNode }) => {
-  const { registerShortcut, unregisterShortcut } = useShortcut()!;
+const GlobalShortcutsHandler = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const { setShowIssueModal } = useContext(IssueModalContext)!;
 
-  const openIssueModal = useCallback(() => {
-    // Only trigger if no input/textarea/contenteditable is focused
-    const activeElement = document.activeElement;
-    const isInputFocused = activeElement instanceof HTMLInputElement || 
-                          activeElement instanceof HTMLTextAreaElement ||
-                          activeElement?.hasAttribute('contenteditable');
-    if (!isInputFocused) {
-      setShowIssueModal(true);
-    } else {
-      return true; // Allow the event to continue
-    }
-  }, [setShowIssueModal])
+  useHotkeys('c', () => {
+    setShowIssueModal(true);
+  }, { enableOnFormTags: false }, [setShowIssueModal]);
 
-  const openSearch = useCallback(() => {
-    // Only trigger if no input/textarea/contenteditable is focused
-    const activeElement = document.activeElement;
-    const isInputFocused = activeElement instanceof HTMLInputElement || 
-                          activeElement instanceof HTMLTextAreaElement ||
-                          activeElement?.hasAttribute('contenteditable');
-    
-    if (!isInputFocused) {
-      navigate('/search');
-    } else {
-      return true; // Allow the event to continue
-    }
-  }, [navigate])
-
-  useEffect(() => {
-    registerShortcut(openIssueModal, ['c'], 'Create Issue', 'Open the create issue modal')
-    registerShortcut(openSearch, ['/'], 'Search', 'Open search page')
-    return () => {
-      unregisterShortcut(['c'])
-      unregisterShortcut(['/'])
-    }
-  }, [openIssueModal, openSearch, registerShortcut, unregisterShortcut])
+  useHotkeys('/', () => {
+    navigate('/search');
+  }, { enableOnFormTags: false }, [navigate]);
 
   return <>{children}</>;
 }
@@ -181,9 +152,9 @@ const router = createBrowserRouter([
   {
     path: `/`,
     element: (
-      <ShortcutHandler>
+      <GlobalShortcutsHandler>
         <Root />
-      </ShortcutHandler>
+      </GlobalShortcutsHandler>
     ),
     children: [
       {
@@ -221,7 +192,7 @@ const LoadingScreen = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
-const AppContent = () => {
+const App = () => {
   const [showMenu, setShowMenu] = useState(false)
   const [showIssueModal, setShowIssueModal] = useState(false)
   const [pgForProvider, setPgForProvider] =
@@ -261,14 +232,6 @@ const AppContent = () => {
         </IssueModalContext.Provider>
       </MenuContext.Provider>
     </PGliteProvider>
-  )
-}
-
-const App = () => {
-  return (
-    <ShortcutProvider>
-      <AppContent />
-    </ShortcutProvider>
   )
 }
 
