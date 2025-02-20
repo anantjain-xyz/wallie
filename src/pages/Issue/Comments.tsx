@@ -19,8 +19,11 @@ function Comments({ issue }: CommentsProps) {
   const pg = usePGlite()
   const [newCommentBody, setNewCommentBody] = useState<string>(``)
   const { registerShortcut, unregisterShortcut } = useShortcut()!
-  const commentsResults = useLiveQuery.sql<Comment>`
-    SELECT * FROM comment WHERE issue_id = ${issue.id}
+  const commentsResults = useLiveQuery.sql<Comment & { author_full_name: string }>`
+    SELECT c.*, u.full_name as author_full_name
+    FROM comment c
+    LEFT JOIN app_user u ON c.app_user_id = u.id 
+    WHERE c.issue_id = ${issue.id}
   `
   const comments = commentsResults?.rows
 
@@ -32,9 +35,9 @@ function Comments({ issue }: CommentsProps) {
           className="flex flex-col w-full p-3 mb-3 bg-white rounded shadow-sm border"
         >
           <div className="flex items-center mb-2">
-            <Avatar name={comment.app_user_id} />
+            <Avatar name={comment.author_full_name} />
             <span className="ms-2 text-sm text-gray-400">
-              {comment.app_user_id}
+              {comment.author_full_name}
             </span>
             <span className=" ms-auto text-sm text-gray-400 ml-2">
               {formatDate(comment.created)}

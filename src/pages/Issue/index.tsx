@@ -33,6 +33,11 @@ function IssuePage() {
   const [dirtyDescription, setDirtyDescription] = useState<string | null>(null)
   const descriptionIsDirty = useRef(false)
 
+  const issueCreatorResults = useLiveQuery.sql<{ full_name: string }>`
+    SELECT full_name FROM app_user WHERE id = ${issue.app_user_id}
+  `
+  const issueCreator = issueCreatorResults?.rows[0]
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleTitleChangeDebounced = useCallback(
     debounce(async (title: string) => {
@@ -181,8 +186,8 @@ function IssuePage() {
                     type="button"
                     className="inline-flex items-center h-6 ps-1.5 pe-2 text-gray-500border-none rounded hover:bg-gray-100"
                   >
-                    <Avatar name={issue.app_user_id} />
-                    <span className="ml-1">{issue.app_user_id}</span>
+                    <Avatar name={issueCreator?.full_name} />
+                    <span className="ml-1">{issueCreator?.full_name}</span>
                   </button>
                 </div>
               </div>
