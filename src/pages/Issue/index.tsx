@@ -181,8 +181,8 @@ function IssuePage() {
                     type="button"
                     className="inline-flex items-center h-6 ps-1.5 pe-2 text-gray-500border-none rounded hover:bg-gray-100"
                   >
-                    <Avatar name={issue.username} />
-                    <span className="ml-1">{issue.username}</span>
+                    <Avatar name={issue.app_user_id} />
+                    <span className="ml-1">{issue.app_user_id}</span>
                   </button>
                 </div>
               </div>

@@ -60,11 +60,83 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
     }
   }
 
+  const workspaceUrl = new URL(`${ELECTRIC_URL}/v1/shape`)
+  if (ELECTRIC_SOURCE_SECRET) {
+    workspaceUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
+  }
+
+  // Workspaces Sync
+  const workspacesSync = await pg.sync.syncShapeToTable({
+    shape: {
+      url: workspaceUrl.toString(),
+      params: {
+        table: 'workspace',
+        source_id: ELECTRIC_SOURCE_ID,
+      },
+    },
+    table: 'workspace',
+    primaryKey: ['id'],
+    shapeKey: 'workspaces',
+    commitGranularity: 'up-to-date',
+    useCopy: true,
+    onInitialSync: async () => {
+      workspaceShapeInitialSyncDone = true
+      await pg.exec(`ALTER TABLE workspace ENABLE TRIGGER ALL`)
+      doPostInitialSync()
+    },
+  })
+  workspacesSync.subscribe(
+    () => {
+      if (!hasIssuesAtStart && !postInitialSyncDone) {
+        updateSyncStatus('initial-sync', 'Inserting workspaces...')
+      }
+    },
+    (error) => {
+      console.error('workspacesSync error', error)
+    }
+  )
+
+  const userUrl = new URL(`${ELECTRIC_URL}/v1/shape`)
+  if (ELECTRIC_SOURCE_SECRET) {
+    userUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
+  }
+
+  // Users Sync
+  const usersSync = await pg.sync.syncShapeToTable({
+    shape: {
+      url: userUrl.toString(),
+      params: {
+        table: 'app_user',
+        source_id: ELECTRIC_SOURCE_ID,
+      },
+    },
+    table: 'app_user',
+    primaryKey: ['id'],
+    shapeKey: 'users',
+    commitGranularity: 'up-to-date',
+    useCopy: true,
+    onInitialSync: async () => {
+      userShapeInitialSyncDone = true
+      await pg.exec(`ALTER TABLE app_user ENABLE TRIGGER ALL`)
+      doPostInitialSync()
+    },
+  })
+  usersSync.subscribe(
+    () => {
+      if (!hasIssuesAtStart && !postInitialSyncDone) {
+        updateSyncStatus('initial-sync', 'Inserting users...')
+      }
+    },
+    (error) => {
+      console.error('usersSync error', error)
+    }
+  )
+
   const issueUrl = new URL(`${ELECTRIC_URL}/v1/shape`)
   if (ELECTRIC_SOURCE_SECRET) {
     issueUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
   }
-
+  
   // Issues Sync
   const issuesSync = await pg.sync.syncShapeToTable({
     shape: {
@@ -132,78 +204,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
     }
   )
 
-  const workspaceUrl = new URL(`${ELECTRIC_URL}/v1/shape`)
-  if (ELECTRIC_SOURCE_SECRET) {
-    workspaceUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
-  }
-
-  // Workspaces Sync
-  const workspacesSync = await pg.sync.syncShapeToTable({
-    shape: {
-      url: workspaceUrl.toString(),
-      params: {
-        table: 'workspace',
-        source_id: ELECTRIC_SOURCE_ID,
-      },
-    },
-    table: 'workspace',
-    primaryKey: ['id'],
-    shapeKey: 'workspaces',
-    commitGranularity: 'up-to-date',
-    useCopy: true,
-    onInitialSync: async () => {
-      workspaceShapeInitialSyncDone = true
-      await pg.exec(`ALTER TABLE workspace ENABLE TRIGGER ALL`)
-      doPostInitialSync()
-    },
-  })
-  workspacesSync.subscribe(
-    () => {
-      if (!hasIssuesAtStart && !postInitialSyncDone) {
-        updateSyncStatus('initial-sync', 'Inserting workspaces...')
-      }
-    },
-    (error) => {
-      console.error('workspacesSync error', error)
-    }
-  )
-
-  const userUrl = new URL(`${ELECTRIC_URL}/v1/shape`)
-  if (ELECTRIC_SOURCE_SECRET) {
-    userUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
-  }
-
-  // Users Sync
-  const usersSync = await pg.sync.syncShapeToTable({
-    shape: {
-      url: userUrl.toString(),
-      params: {
-        table: 'user',
-        source_id: ELECTRIC_SOURCE_ID,
-      },
-    },
-    table: 'user',
-    primaryKey: ['id'],
-    shapeKey: 'users',
-    commitGranularity: 'up-to-date',
-    useCopy: true,
-    onInitialSync: async () => {
-      userShapeInitialSyncDone = true
-      await pg.exec(`ALTER TABLE "user" ENABLE TRIGGER ALL`)
-      doPostInitialSync()
-    },
-  })
-  usersSync.subscribe(
-    () => {
-      if (!hasIssuesAtStart && !postInitialSyncDone) {
-        updateSyncStatus('initial-sync', 'Inserting users...')
-      }
-    },
-    (error) => {
-      console.error('usersSync error', error)
-    }
-  )
-
   if (!hasIssuesAtStart) {
     await postInitialSyncDonePromise
     await pg.query(`SELECT 1;`) // Do a query to ensure PGlite is idle
@@ -226,7 +226,7 @@ async function startWritePath(pg: PGliteWithExtensions) {
         (SELECT count(id) as issue_count FROM issue WHERE synced = false),
         (SELECT count(id) as comment_count FROM comment WHERE synced = false),
         (SELECT count(id) as workspace_count FROM workspace WHERE synced = false),
-        (SELECT count(id) as user_count FROM "user" WHERE synced = false)
+        (SELECT count(id) as user_count FROM app_user WHERE synced = false)
     `,
     [],
     async (results) => {
@@ -250,39 +250,6 @@ async function doSyncToServer(pg: PGliteWithExtensions) {
   let workspaceChanges: WorkspaceChange[]
   let userChanges: UserChange[]
   await pg.transaction(async (tx) => {
-    const issueRes = await tx.query<IssueChange>(`
-      SELECT
-        id,
-        title,
-        description,
-        priority,
-        status,
-        workspace_id,
-        modified,
-        created,
-        kanbanorder,
-        username,
-        modified_columns,
-        deleted,
-        new
-      FROM issue
-      WHERE synced = false AND sent_to_server = false
-    `)
-    const commentRes = await tx.query<CommentChange>(`
-      SELECT
-        id,
-        body,
-        username,
-        issue_id,
-        workspace_id,
-        modified,
-        created,
-        modified_columns,
-        deleted,
-        new
-      FROM comment
-      WHERE synced = false AND sent_to_server = false
-    `)
     const workspaceRes = await tx.query<WorkspaceChange>(`
       SELECT
         id,
@@ -309,7 +276,40 @@ async function doSyncToServer(pg: PGliteWithExtensions) {
         modified_columns,
         deleted,
         new
-      FROM "user"
+      FROM app_user
+      WHERE synced = false AND sent_to_server = false
+    `)
+    const issueRes = await tx.query<IssueChange>(`
+      SELECT
+        id,
+        title,
+        description,
+        priority,
+        status,
+        workspace_id,
+        modified,
+        created,
+        kanbanorder,
+        app_user_id,
+        modified_columns,
+        deleted,
+        new
+      FROM issue
+      WHERE synced = false AND sent_to_server = false
+    `)
+    const commentRes = await tx.query<CommentChange>(`
+      SELECT
+        id,
+        body,
+        app_user_id,
+        issue_id,
+        workspace_id,
+        modified,
+        created,
+        modified_columns,
+        deleted,
+        new
+      FROM comment
       WHERE synced = false AND sent_to_server = false
     `)
     issueChanges = issueRes.rows
@@ -341,6 +341,28 @@ async function doSyncToServer(pg: PGliteWithExtensions) {
 
     tx.exec('SET LOCAL electric.bypass_triggers = true')
 
+    for (const workspace of workspaceChanges!) {
+      await tx.query(
+        `
+        UPDATE workspace
+        SET sent_to_server = true
+        WHERE id = $1 AND modified = $2
+      `,
+        [workspace.id, workspace.modified]
+      )
+    }
+
+    for (const user of userChanges!) {
+      await tx.query(
+        `
+        UPDATE app_user
+        SET sent_to_server = true
+        WHERE id = $1 AND modified = $2
+      `,
+        [user.id, user.modified]
+      )
+    }
+
     for (const issue of issueChanges!) {
       await tx.query(
         `
@@ -360,28 +382,6 @@ async function doSyncToServer(pg: PGliteWithExtensions) {
         WHERE id = $1 AND modified = $2
       `,
         [comment.id, comment.modified]
-      )
-    }
-
-    for (const workspace of workspaceChanges!) {
-      await tx.query(
-        `
-        UPDATE workspace
-        SET sent_to_server = true
-        WHERE id = $1 AND modified = $2
-      `,
-        [workspace.id, workspace.modified]
-      )
-    }
-
-    for (const user of userChanges!) {
-      await tx.query(
-        `
-        UPDATE "user"
-        SET sent_to_server = true
-        WHERE id = $1 AND modified = $2
-      `,
-        [user.id, user.modified]
       )
     }
   })

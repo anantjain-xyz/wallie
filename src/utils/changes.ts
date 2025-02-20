@@ -10,7 +10,7 @@ export const issueChangeSchema = z.object({
   modified: z.string().nullable().optional(),
   created: z.string().nullable().optional(),
   kanbanorder: z.string().nullable().optional(),
-  username: z.string().nullable().optional(),
+  app_user_id: z.string().nullable().optional(),
   modified_columns: z.array(z.string()).nullable().optional(),
   deleted: z.boolean().nullable().optional(),
   new: z.boolean().nullable().optional(),
@@ -21,7 +21,7 @@ export type IssueChange = z.infer<typeof issueChangeSchema>
 export const commentChangeSchema = z.object({
   id: z.string(),
   body: z.string().nullable().optional(),
-  username: z.string().nullable().optional(),
+  app_user_id: z.string().nullable().optional(),
   issue_id: z.string().nullable().optional(),
   workspace_id: z.string().nullable().optional(),
   modified: z.string().nullable().optional(),

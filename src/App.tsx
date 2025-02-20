@@ -139,24 +139,29 @@ const ShortcutHandler = ({ children }: { children: React.ReactNode }) => {
   const { setShowIssueModal } = useContext(IssueModalContext)!;
 
   const openIssueModal = useCallback(() => {
-    // Only trigger if no input/textarea is focused
+    // Only trigger if no input/textarea/contenteditable is focused
     const activeElement = document.activeElement;
     const isInputFocused = activeElement instanceof HTMLInputElement || 
-                          activeElement instanceof HTMLTextAreaElement;
-    
+                          activeElement instanceof HTMLTextAreaElement ||
+                          activeElement?.hasAttribute('contenteditable');
     if (!isInputFocused) {
       setShowIssueModal(true);
+    } else {
+      return true; // Allow the event to continue
     }
   }, [setShowIssueModal])
 
   const openSearch = useCallback(() => {
-    // Only trigger if no input/textarea is focused
+    // Only trigger if no input/textarea/contenteditable is focused
     const activeElement = document.activeElement;
     const isInputFocused = activeElement instanceof HTMLInputElement || 
-                          activeElement instanceof HTMLTextAreaElement;
+                          activeElement instanceof HTMLTextAreaElement ||
+                          activeElement?.hasAttribute('contenteditable');
     
     if (!isInputFocused) {
       navigate('/search');
+    } else {
+      return true; // Allow the event to continue
     }
   }, [navigate])
 

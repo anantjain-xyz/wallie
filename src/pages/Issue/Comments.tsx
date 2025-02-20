@@ -9,7 +9,7 @@ import { BsCloudCheck as SyncedIcon } from 'react-icons/bs'
 import { BsCloudSlash as UnsyncedIcon } from 'react-icons/bs'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { useShortcut } from 'react-keybind'
-import { DEFAULT_WORKSPACE_ID } from '../../constants'
+import { DEFAULT_WORKSPACE_ID, DEFAULT_CURRENT_USER_ID } from '../../constants'
 
 export interface CommentsProps {
   issue: Issue
@@ -32,9 +32,9 @@ function Comments({ issue }: CommentsProps) {
           className="flex flex-col w-full p-3 mb-3 bg-white rounded shadow-sm border"
         >
           <div className="flex items-center mb-2">
-            <Avatar name={comment.username} />
+            <Avatar name={comment.app_user_id} />
             <span className="ms-2 text-sm text-gray-400">
-              {comment.username}
+              {comment.app_user_id}
             </span>
             <span className=" ms-auto text-sm text-gray-400 ml-2">
               {formatDate(comment.created)}
@@ -66,13 +66,13 @@ function Comments({ issue }: CommentsProps) {
     }
 
     pg.sql`
-      INSERT INTO comment (id, issue_id, body, created, username, workspace_id)
+      INSERT INTO comment (id, issue_id, body, created, app_user_id, workspace_id)
       VALUES (
         ${crypto.randomUUID()},
         ${issue.id},
         ${newCommentBody},
         ${new Date()},
-        ${'testuser'},
+        ${DEFAULT_CURRENT_USER_ID},
         ${DEFAULT_WORKSPACE_ID}
       )
     `

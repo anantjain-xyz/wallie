@@ -1,3 +1,4 @@
+-- Workspace
 CREATE TABLE IF NOT EXISTS "workspace" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
@@ -32,6 +33,48 @@ EXECUTE FUNCTION handle_update();
 -- Initially disable triggers
 ALTER TABLE workspace DISABLE TRIGGER ALL;
 
+-- Users
+CREATE TABLE IF NOT EXISTS "app_user" (
+    "id" UUID NOT NULL,
+    "email" TEXT NOT NULL,
+    "username" TEXT,
+    "full_name" TEXT,
+    "profile_picture" TEXT,
+    "workspace_id" UUID NOT NULL,
+    "modified" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "created" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "deleted" BOOLEAN NOT NULL DEFAULT FALSE, -- Soft delete for local deletions
+    "new" BOOLEAN NOT NULL DEFAULT FALSE, -- New row flag for local inserts
+    "modified_columns" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[], -- Columns that have been modified locally
+    "sent_to_server" BOOLEAN NOT NULL DEFAULT FALSE, -- Flag to track if the row has been sent to the server
+    "synced" BOOLEAN GENERATED ALWAYS AS (ARRAY_LENGTH(modified_columns, 1) IS NULL AND NOT deleted AND NOT new) STORED,
+    "backup" JSONB, -- JSONB column to store the backup of the row data for modified columns
+    CONSTRAINT "app_user_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "app_user_email_key" UNIQUE ("email"),
+    CONSTRAINT "app_user_username_key" UNIQUE ("username"),
+    FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE
+);
+
+-- Add triggers for local state management
+CREATE OR REPLACE TRIGGER app_user_delete_trigger
+BEFORE DELETE ON app_user
+FOR EACH ROW
+EXECUTE FUNCTION handle_delete();
+
+CREATE OR REPLACE TRIGGER app_user_insert_trigger
+BEFORE INSERT ON app_user
+FOR EACH ROW
+EXECUTE FUNCTION handle_insert();
+
+CREATE OR REPLACE TRIGGER app_user_update_trigger
+BEFORE UPDATE ON app_user
+FOR EACH ROW
+EXECUTE FUNCTION handle_update();
+
+-- Initially disable triggers
+ALTER TABLE app_user DISABLE TRIGGER ALL;
+
+-- Issues
 CREATE TABLE IF NOT EXISTS "issue" (
     "id" UUID NOT NULL,
     "title" TEXT NOT NULL,
@@ -41,7 +84,7 @@ CREATE TABLE IF NOT EXISTS "issue" (
     "modified" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "created" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "kanbanorder" TEXT NOT NULL,
-    "username" TEXT NOT NULL,
+    "app_user_id" UUID NOT NULL,
     "workspace_id" UUID NOT NULL,
     "deleted" BOOLEAN NOT NULL DEFAULT FALSE, -- Soft delete for local deletions
     "new" BOOLEAN NOT NULL DEFAULT FALSE, -- New row flag for local inserts
@@ -50,7 +93,8 @@ CREATE TABLE IF NOT EXISTS "issue" (
     "synced" BOOLEAN GENERATED ALWAYS AS (ARRAY_LENGTH(modified_columns, 1) IS NULL AND NOT deleted AND NOT new) STORED,
     "backup" JSONB, -- JSONB column to store the backup of the row data for modified columns
     CONSTRAINT "issue_pkey" PRIMARY KEY ("id"),
-    FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE
+    FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE,
+    FOREIGN KEY (app_user_id) REFERENCES app_user(id) ON DELETE CASCADE
 );
 
 CREATE OR REPLACE TRIGGER issue_delete_trigger
@@ -70,10 +114,11 @@ EXECUTE FUNCTION handle_update();
 
 ALTER TABLE issue DISABLE TRIGGER ALL;
 
+-- Comments
 CREATE TABLE IF NOT EXISTS "comment" (
     "id" UUID NOT NULL,
     "body" TEXT NOT NULL,
-    "username" TEXT NOT NULL,
+    "app_user_id" UUID NOT NULL,
     "issue_id" UUID NOT NULL,
     "modified" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "created" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -85,7 +130,9 @@ CREATE TABLE IF NOT EXISTS "comment" (
     "synced" BOOLEAN GENERATED ALWAYS AS (ARRAY_LENGTH(modified_columns, 1) IS NULL AND NOT deleted AND NOT new) STORED,
     "backup" JSONB, -- JSONB column to store the backup of the row data for modified columns
     CONSTRAINT "comment_pkey" PRIMARY KEY ("id"),
-    FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE
+    FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE,
+    FOREIGN KEY (app_user_id) REFERENCES app_user(id) ON DELETE CASCADE,
+    FOREIGN KEY (issue_id) REFERENCES issue(id) ON DELETE CASCADE
 );
 
 CREATE OR REPLACE TRIGGER comment_delete_trigger

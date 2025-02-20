@@ -6,6 +6,8 @@ import {
   changeSetSchema,
   CommentChange,
   IssueChange,
+  WorkspaceChange,
+  UserChange,
 } from './src/utils/changes'
 import { serve } from '@hono/node-server'
 
@@ -60,8 +62,14 @@ serve({
 })
 
 async function applyChanges(changes: ChangeSet) {
-  const { issues, comments } = changes
+  const { issues, comments, workspaces, users } = changes
   await sql.begin(async (sql) => {
+    for (const workspace of workspaces) {
+      await applyTableChange('workspace', workspace, sql)
+    }
+    for (const user of users) {
+      await applyTableChange('app_user', user, sql)
+    }
     for (const issue of issues) {
       await applyTableChange('issue', issue, sql)
     }
@@ -72,8 +80,8 @@ async function applyChanges(changes: ChangeSet) {
 }
 
 async function applyTableChange(
-  tableName: 'issue' | 'comment',
-  change: IssueChange | CommentChange,
+  tableName: 'issue' | 'comment' | 'workspace' | 'app_user',
+  change: IssueChange | CommentChange | WorkspaceChange | UserChange,
   sql: postgres.TransactionSql
 ): Promise<void> {
   const {
