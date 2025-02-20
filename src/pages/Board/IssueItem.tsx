@@ -69,7 +69,7 @@ const IssueItem = ({ issue, style, isDragging, provided }: IssueProps) => {
           </span>
         </div>
         <div className="flex-shrink-0">
-          <Avatar name={issue.app_user_id} />
+          <Avatar name={issue.creator_id} />
         </div>
       </div>
       <div className="mt-2.5 flex items-center">

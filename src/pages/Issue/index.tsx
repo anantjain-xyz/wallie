@@ -33,9 +33,9 @@ function IssuePage() {
   const [dirtyDescription, setDirtyDescription] = useState<string | null>(null)
   const descriptionIsDirty = useRef(false)
 
-  const issueCreatorResults = useLiveQuery.sql<{ full_name: string }>`
-    SELECT full_name FROM app_user WHERE id = ${issue.app_user_id}
-  `
+  const issueCreatorResults = issue?.creator_id ? useLiveQuery.sql<{ full_name: string }>`
+    SELECT full_name FROM app_user WHERE id = ${issue.creator_id}
+  ` : null
   const issueCreator = issueCreatorResults?.rows[0]
 
   // eslint-disable-next-line react-hooks/exhaustive-deps

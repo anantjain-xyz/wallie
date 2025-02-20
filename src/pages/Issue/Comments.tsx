@@ -22,7 +22,7 @@ function Comments({ issue }: CommentsProps) {
   const commentsResults = useLiveQuery.sql<Comment & { author_full_name: string }>`
     SELECT c.*, u.full_name as author_full_name
     FROM comment c
-    LEFT JOIN app_user u ON c.app_user_id = u.id 
+    LEFT JOIN app_user u ON c.creator_id = u.id 
     WHERE c.issue_id = ${issue.id}
   `
   const comments = commentsResults?.rows
@@ -69,7 +69,7 @@ function Comments({ issue }: CommentsProps) {
     }
 
     pg.sql`
-      INSERT INTO comment (id, issue_id, body, created, app_user_id, workspace_id)
+      INSERT INTO comment (id, issue_id, body, created, creator_id, workspace_id)
       VALUES (
         ${crypto.randomUUID()},
         ${issue.id},

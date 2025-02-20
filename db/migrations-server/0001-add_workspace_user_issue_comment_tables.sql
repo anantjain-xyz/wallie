@@ -46,23 +46,23 @@ CREATE TABLE IF NOT EXISTS "issue" (
     "modified" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "created" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "kanbanorder" TEXT NOT NULL,
-    "app_user_id" UUID NOT NULL,
+    "creator_id" UUID NOT NULL,
     "workspace_id" UUID NOT NULL,
     CONSTRAINT "issue_pkey" PRIMARY KEY ("id"),
-    FOREIGN KEY (app_user_id) REFERENCES app_user(id) ON DELETE CASCADE,
+    FOREIGN KEY (creator_id) REFERENCES app_user(id) ON DELETE CASCADE,
     FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE
 );
 
 CREATE TABLE  IF NOT EXISTS "comment" (
     "id" UUID NOT NULL,
     "body" TEXT NOT NULL,
-    "app_user_id" UUID NOT NULL,
+    "creator_id" UUID NOT NULL,
     "issue_id" UUID NOT NULL,
     "modified" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "created" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "workspace_id" UUID NOT NULL,
     CONSTRAINT "comment_pkey" PRIMARY KEY ("id"),
-    FOREIGN KEY (app_user_id) REFERENCES app_user(id) ON DELETE CASCADE,
+    FOREIGN KEY (creator_id) REFERENCES app_user(id) ON DELETE CASCADE,
     FOREIGN KEY (issue_id) REFERENCES issue(id) ON DELETE CASCADE,
     FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE
 );

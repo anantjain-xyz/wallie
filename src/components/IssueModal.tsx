@@ -62,7 +62,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
 
     const date = new Date()
     await pg.sql`
-      INSERT INTO issue (id, title, app_user_id, priority, status, description, modified, created, kanbanorder, workspace_id)
+      INSERT INTO issue (id, title, creator_id, priority, status, description, modified, created, kanbanorder, workspace_id)
       VALUES (${crypto.randomUUID()}, ${title}, ${DEFAULT_CURRENT_USER_ID}, ${priority}, ${status}, ${description ?? ''}, ${date}, ${date}, ${kanbanorder}, ${DEFAULT_WORKSPACE_ID})
     `
 

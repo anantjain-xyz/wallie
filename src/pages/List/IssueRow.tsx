@@ -77,7 +77,7 @@ function IssueRow({ issue, style }: Props) {
         {formatDate(issue.created)}
       </div>
       <div className="flex-shrink-0 hidden ml-4 font-normal text-gray-500 sm:block w-15 md:block">
-        <Avatar name={issue.app_user_id} />
+        <Avatar name={issue.creator_id} />
       </div>
       <div className="flex-shrink-0 hidden ml-4 font-normal text-gray-500 sm:block w-15 md:block">
         {issue.synced ? (

@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS "issue" (
     "modified" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "created" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "kanbanorder" TEXT NOT NULL,
-    "app_user_id" UUID NOT NULL,
+    "creator_id" UUID NOT NULL,
     "workspace_id" UUID NOT NULL,
     "deleted" BOOLEAN NOT NULL DEFAULT FALSE, -- Soft delete for local deletions
     "new" BOOLEAN NOT NULL DEFAULT FALSE, -- New row flag for local inserts
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS "issue" (
     "backup" JSONB, -- JSONB column to store the backup of the row data for modified columns
     CONSTRAINT "issue_pkey" PRIMARY KEY ("id"),
     FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE,
-    FOREIGN KEY (app_user_id) REFERENCES app_user(id) ON DELETE CASCADE
+    FOREIGN KEY (creator_id) REFERENCES app_user(id) ON DELETE CASCADE
 );
 
 CREATE OR REPLACE TRIGGER issue_delete_trigger
@@ -118,7 +118,7 @@ ALTER TABLE issue DISABLE TRIGGER ALL;
 CREATE TABLE IF NOT EXISTS "comment" (
     "id" UUID NOT NULL,
     "body" TEXT NOT NULL,
-    "app_user_id" UUID NOT NULL,
+    "creator_id" UUID NOT NULL,
     "issue_id" UUID NOT NULL,
     "modified" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "created" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS "comment" (
     "backup" JSONB, -- JSONB column to store the backup of the row data for modified columns
     CONSTRAINT "comment_pkey" PRIMARY KEY ("id"),
     FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE,
-    FOREIGN KEY (app_user_id) REFERENCES app_user(id) ON DELETE CASCADE,
+    FOREIGN KEY (creator_id) REFERENCES app_user(id) ON DELETE CASCADE,
     FOREIGN KEY (issue_id) REFERENCES issue(id) ON DELETE CASCADE
 );
 

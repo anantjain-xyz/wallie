@@ -290,7 +290,7 @@ async function doSyncToServer(pg: PGliteWithExtensions) {
         modified,
         created,
         kanbanorder,
-        app_user_id,
+        creator_id,
         modified_columns,
         deleted,
         new
@@ -301,7 +301,7 @@ async function doSyncToServer(pg: PGliteWithExtensions) {
       SELECT
         id,
         body,
-        app_user_id,
+        creator_id,
         issue_id,
         workspace_id,
         modified,
