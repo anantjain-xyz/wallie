@@ -10,7 +10,7 @@ const slideUp = cssTransition({
 
 export default function Root() {
   return (
-    <div>
+    <>
       <SignedOut>
         <SignInButton />
       </SignedOut>
@@ -32,6 +32,6 @@ export default function Root() {
           />
         </div>
       </SignedIn>
-    </div>
+    </>
   )
 }

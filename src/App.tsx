@@ -25,6 +25,7 @@ import { Issue as IssueType, Status, StatusValue } from './types/types'
 import { startSync, useSyncStatus, waitForInitialSyncDone } from './sync'
 import { electricSync } from '@electric-sql/pglite-sync'
 import { ImSpinner8 } from 'react-icons/im'
+import { useElectricAuth } from './auth'
 
 interface MenuContextInterface {
   showMenu: boolean
@@ -41,7 +42,12 @@ export const IssueModalContext = createContext(null as IssueModalContextInterfac
 
 type PGliteWorkerWithLive = PGliteWorker & { live: LiveNamespace }
 
+const ELECTRIC_URL = import.meta.env.VITE_ELECTRIC_URL
+  ? new URL(import.meta.env.VITE_ELECTRIC_URL).origin
+  : `http://localhost:3000`
+
 async function createPGlite() {
+  const auth = useElectricAuth();
   return PGliteWorker.create(new PGWorker(), {
     extensions: {
       live,

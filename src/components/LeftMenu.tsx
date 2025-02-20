@@ -119,7 +119,7 @@ function LeftMenu() {
               className="inline-flex mt-1"
               onClick={() => setShowPGliteConsoleModal(true)}
             >
-              <ConsoleIcon className="w-3 mr-2 mt-1" /> PGlite Console
+              <ConsoleIcon className="w-3 mr-2 mt-1" />
             </button>
             <UserButton />
           </div>
