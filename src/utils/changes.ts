@@ -46,7 +46,7 @@ export const workspaceChangeSchema = z.object({
 
 export type WorkspaceChange = z.infer<typeof workspaceChangeSchema>
 
-export const userChangeSchema = z.object({
+export const appUserChangeSchema = z.object({
   id: z.string(),
   email: z.string().nullable().optional(),
   username: z.string().nullable().optional(),
@@ -60,13 +60,13 @@ export const userChangeSchema = z.object({
   new: z.boolean().nullable().optional(),
 })
 
-export type UserChange = z.infer<typeof userChangeSchema>
+export type AppUserChange = z.infer<typeof appUserChangeSchema>
 
 export const changeSetSchema = z.object({
   issues: z.array(issueChangeSchema),
   comments: z.array(commentChangeSchema),
   workspaces: z.array(workspaceChangeSchema),
-  users: z.array(userChangeSchema),
+  users: z.array(appUserChangeSchema),
 })
 
 export type ChangeSet = z.infer<typeof changeSetSchema>

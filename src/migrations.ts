@@ -25,10 +25,7 @@ export async function postInitialSync(pg: PGliteInterface) {
     .map((c) => c.trim())
     .filter((c) => c.length > 0)
   for (const command of commands) {
-    // wait 100ms between commands
-    console.time(`command: ${command}`)
     await pg.exec(command)
-    console.timeEnd(`command: ${command}`)
   }
 }
 

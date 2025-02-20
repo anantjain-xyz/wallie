@@ -1,7 +1,7 @@
 import { Mutex } from '@electric-sql/pglite'
 import { type PGliteWithLive } from '@electric-sql/pglite/live'
 import { type PGliteWithSync } from '@electric-sql/pglite-sync'
-import type { IssueChange, CommentChange, WorkspaceChange, ChangeSet, UserChange } from './utils/changes'
+import type { IssueChange, CommentChange, WorkspaceChange, ChangeSet, AppUserChange } from './utils/changes'
 import { postInitialSync } from './migrations'
 import { useEffect, useState } from 'react'
 
@@ -17,11 +17,11 @@ const APPLY_CHANGES_URL = `${WRITE_SERVER_URL}/apply-changes`
 
 type SyncStatus = 'initial-sync' | 'done'
 
-type PGliteWithExtensions = PGliteWithLive & PGliteWithSync
+export type PGliteWithExtensions = PGliteWithLive & PGliteWithSync
 
-export async function startSync(pg: PGliteWithExtensions) {
+export async function startSync(pg: PGliteWithExtensions, getAuthHeaders: () => Promise<{ Authorization?: string }>) {
   await startSyncToDatabase(pg)
-  startWritePath(pg)
+  startWritePath(pg, getAuthHeaders)
 }
 
 async function startSyncToDatabase(pg: PGliteWithExtensions) {
@@ -32,7 +32,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
   let issueShapeInitialSyncDone = false
   let commentShapeInitialSyncDone = false
   let workspaceShapeInitialSyncDone = false
-  let userShapeInitialSyncDone = false
+  let appUserShapeInitialSyncDone = false
   let postInitialSyncDone = false
 
   if (!hasIssuesAtStart && !postInitialSyncDone) {
@@ -50,7 +50,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
       issueShapeInitialSyncDone &&
       commentShapeInitialSyncDone &&
       workspaceShapeInitialSyncDone &&
-      userShapeInitialSyncDone &&
+      appUserShapeInitialSyncDone &&
       !postInitialSyncDone
     ) {
       postInitialSyncDone = true
@@ -112,11 +112,11 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
     },
     table: 'app_user',
     primaryKey: ['id'],
-    shapeKey: 'users',
+    shapeKey: 'app_users',
     commitGranularity: 'up-to-date',
     useCopy: true,
     onInitialSync: async () => {
-      userShapeInitialSyncDone = true
+      appUserShapeInitialSyncDone = true
       await pg.exec(`ALTER TABLE app_user ENABLE TRIGGER ALL`)
       doPostInitialSync()
     },
@@ -213,7 +213,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
 
 const syncMutex = new Mutex()
 
-async function startWritePath(pg: PGliteWithExtensions) {
+async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Promise<{ Authorization?: string }>) {
   // Use a live query to watch for changes to the local tables that need to be synced
   pg.live.query<{
     issue_count: number
@@ -234,7 +234,7 @@ async function startWritePath(pg: PGliteWithExtensions) {
       if (issue_count > 0 || comment_count > 0 || workspace_count > 0 || user_count > 0) {
         await syncMutex.acquire()
         try {
-          doSyncToServer(pg)
+          doSyncToServer(pg, getAuthHeaders)
         } finally {
           syncMutex.release()
         }
@@ -244,11 +244,11 @@ async function startWritePath(pg: PGliteWithExtensions) {
 }
 
 // Call wrapped in mutex to prevent multiple syncs from happening at the same time
-async function doSyncToServer(pg: PGliteWithExtensions) {
+async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Promise<{ Authorization?: string }>) {
   let issueChanges: IssueChange[]
   let commentChanges: CommentChange[]
   let workspaceChanges: WorkspaceChange[]
-  let userChanges: UserChange[]
+  let appUserChanges: AppUserChange[]
   await pg.transaction(async (tx) => {
     const workspaceRes = await tx.query<WorkspaceChange>(`
       SELECT
@@ -263,7 +263,7 @@ async function doSyncToServer(pg: PGliteWithExtensions) {
       FROM workspace
       WHERE synced = false AND sent_to_server = false
     `)
-    const userRes = await tx.query<UserChange>(`
+    const appUserRes = await tx.query<AppUserChange>(`
       SELECT
         id,
         email,
@@ -315,19 +315,24 @@ async function doSyncToServer(pg: PGliteWithExtensions) {
     issueChanges = issueRes.rows
     commentChanges = commentRes.rows
     workspaceChanges = workspaceRes.rows
-    userChanges = userRes.rows
+    appUserChanges = appUserRes.rows
   })
   const changeSet: ChangeSet = {
     issues: issueChanges!,
     comments: commentChanges!,
     workspaces: workspaceChanges!,
-    users: userChanges!,
+    users: appUserChanges!,
+  }
+  const authHeaders = await getAuthHeaders()
+  const headers = new Headers({
+    'Content-Type': 'application/json'
+  })
+  if (authHeaders.Authorization) {
+    headers.set('Authorization', authHeaders.Authorization)
   }
   const response = await fetch(APPLY_CHANGES_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(changeSet),
   })
   if (!response.ok) {
@@ -352,7 +357,7 @@ async function doSyncToServer(pg: PGliteWithExtensions) {
       )
     }
 
-    for (const user of userChanges!) {
+    for (const user of appUserChanges!) {
       await tx.query(
         `
         UPDATE app_user

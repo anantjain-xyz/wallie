@@ -8,7 +8,7 @@
     "backend:up": "docker-compose up -d && pnpm db:migrate",
     "db:migrate": "dotenv -- pnpm exec pg-migrations apply --directory ./db/migrations-server",
     "reset": "pnpm backend:down && pnpm backend:up && pnpm db:migrate",
-    "write-server": "dotenv -- tsx server.ts",
+    "write-server": "dotenv -- tsx server/index.ts",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",

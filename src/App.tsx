@@ -26,6 +26,7 @@ import { startSync, useSyncStatus, waitForInitialSyncDone } from './sync'
 import { electricSync } from '@electric-sql/pglite-sync'
 import { ImSpinner8 } from 'react-icons/im'
 import { useElectricAuth } from './auth'
+import type { PGliteWithExtensions } from './sync'
 
 interface MenuContextInterface {
   showMenu: boolean
@@ -40,14 +41,7 @@ interface IssueModalContextInterface {
 export const MenuContext = createContext(null as MenuContextInterface | null)
 export const IssueModalContext = createContext(null as IssueModalContextInterface | null)
 
-type PGliteWorkerWithLive = PGliteWorker & { live: LiveNamespace }
-
-const ELECTRIC_URL = import.meta.env.VITE_ELECTRIC_URL
-  ? new URL(import.meta.env.VITE_ELECTRIC_URL).origin
-  : `http://localhost:3000`
-
 async function createPGlite() {
-  const auth = useElectricAuth();
   return PGliteWorker.create(new PGWorker(), {
     extensions: {
       live,
@@ -59,16 +53,6 @@ async function createPGlite() {
 const pgPromise = createPGlite()
 
 let syncStarted = false
-pgPromise.then(async (pg) => {
-  console.log('PGlite worker started')
-  pg.onLeaderChange(() => {
-    console.log('Leader changed, isLeader:', pg.isLeader)
-    if (pg.isLeader && !syncStarted) {
-      syncStarted = true
-      startSync(pg)
-    }
-  })
-})
 
 async function issueListLoader({ request }: { request: Request }) {
   await waitForInitialSyncDone()
@@ -202,12 +186,24 @@ const App = () => {
   const [showMenu, setShowMenu] = useState(false)
   const [showIssueModal, setShowIssueModal] = useState(false)
   const [pgForProvider, setPgForProvider] =
-    useState<PGliteWorkerWithLive | null>(null)
+    useState<PGliteWithExtensions | null>(null)
   const [syncStatus, syncMessage] = useSyncStatus()
+  const { getAuthHeaders } = useElectricAuth()
 
   useEffect(() => {
-    pgPromise.then(setPgForProvider)
+    pgPromise.then((pg) => setPgForProvider(pg as PGliteWithExtensions))
   }, [])
+
+  useEffect(() => {
+    if (pgForProvider && !syncStarted) {
+      pgForProvider.onLeaderChange(() => {
+        if (pgForProvider.isLeader && !syncStarted) {
+          syncStarted = true
+          startSync(pgForProvider, getAuthHeaders)
+        }
+      })
+    }
+  }, [pgForProvider, getAuthHeaders])
 
   const menuContextValue = useMemo(
     () => ({ showMenu, setShowMenu }),
@@ -230,7 +226,7 @@ const App = () => {
       </LoadingScreen>
     )
 
-  return ( 
+  return (
     <PGliteProvider db={pgForProvider}>
       <MenuContext.Provider value={menuContextValue}>
         <IssueModalContext.Provider value={issueModalContextValue}>

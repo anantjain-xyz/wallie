@@ -31,9 +31,9 @@ CREATE TABLE IF NOT EXISTS "app_user" (
 INSERT INTO "app_user" ("id", "email", "username", "full_name", "workspace_id")
 VALUES (
     '98765432-4321-8765-4321-987654321012',
-    'test@example.com',
-    'testuser',
-    'Test User',
+    'anant@wallie.app',
+    'anant',
+    'Anant Jain',
     '75474ef0-8f28-4c25-8586-392340a01665'
 ); 
 

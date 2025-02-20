@@ -7,9 +7,10 @@ import {
   CommentChange,
   IssueChange,
   WorkspaceChange,
-  UserChange,
-} from './src/utils/changes'
+  AppUserChange,
+} from '../src/utils/changes'
 import { serve } from '@hono/node-server'
+import { authMiddleware } from './auth'
 
 const DATABASE_URL =
   process.env.DATABASE_URL ??
@@ -22,6 +23,15 @@ const app = new Hono()
 
 // Middleware
 app.use('/*', cors())
+
+// Add auth middleware
+app.use('/*', async (c, next) => {
+  const authResult = await authMiddleware(c.req.raw);
+  if (authResult) {
+    return authResult;
+  }
+  await next();
+});
 
 // Routes
 app.get('/', async (c) => {
@@ -81,7 +91,7 @@ async function applyChanges(changes: ChangeSet) {
 
 async function applyTableChange(
   tableName: 'issue' | 'comment' | 'workspace' | 'app_user',
-  change: IssueChange | CommentChange | WorkspaceChange | UserChange,
+  change: IssueChange | CommentChange | WorkspaceChange | AppUserChange,
   sql: postgres.TransactionSql
 ): Promise<void> {
   const {
@@ -107,4 +117,4 @@ async function applyTableChange(
       WHERE id = ${id}
     `
   }
-}
+} 
