@@ -1,6 +1,6 @@
 import 'animate.css/animate.min.css'
 import Board from './pages/Board'
-import { useState, createContext, useEffect, useMemo, useCallback, useContext } from 'react'
+import { useState, createContext, useEffect, useMemo, useContext } from 'react'
 import {
   createBrowserRouter,
   RouterProvider,
@@ -224,7 +224,7 @@ const App = () => {
       </LoadingScreen>
     )
 
-  return (
+  return ( 
     <PGliteProvider db={pgForProvider}>
       <MenuContext.Provider value={menuContextValue}>
         <IssueModalContext.Provider value={issueModalContextValue}>

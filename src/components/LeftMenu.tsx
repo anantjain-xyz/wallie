@@ -13,6 +13,7 @@ import AboutModal from './AboutModal'
 import IssueModal from './IssueModal'
 import PGliteConsoleModal from './PGliteConsoleModal'
 import ItemGroup from './ItemGroup'
+import { UserButton } from '@clerk/clerk-react'
 
 function LeftMenu() {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>
@@ -112,7 +113,7 @@ function LeftMenu() {
           <div className="flex flex-col flex-grow flex-shrink" />
 
           {/* bottom group */}
-          <div className="flex flex-col px-2 pb-2 text-gray-500 mt-7">
+          <div className="flex flex-row justify-between px-2 pb-2 text-gray-500 mt-7">
             <button
               type="button"
               className="inline-flex mt-1"
@@ -120,6 +121,7 @@ function LeftMenu() {
             >
               <ConsoleIcon className="w-3 mr-2 mt-1" /> PGlite Console
             </button>
+            <UserButton />
           </div>
         </div>
       </div>
