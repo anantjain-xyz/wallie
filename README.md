@@ -1,16 +1,11 @@
 
 # Wallie
 
-## Data set
-
-Wallie is configured to load a large dataset of 100,000 issues, with comments, totally ~150MB into the local database. It demonstrates both fast initial sync and instant local reactivity, using fast, windowed live queries in PGlite. As such, it is intended to show how you can build large-scale, real-world apps on Electric and PGlite.
-
 ## Features
 
 The following features are implemented:
 
 - full bi-directional sync of data to and from the server
-- an indicator on each issue to show if it's been synced to the server
 - filtering and sorting of issues and comments
 - a kanban board for issues with drag and drop reordering (with conflict free ordering handled using fractional indexes)
 - full text search of issues and comments using Postgres's `tsvector` and `tsquery` features
@@ -30,15 +25,19 @@ Start the example backend services using [Docker Compose](https://docs.docker.co
 pnpm backend:up
 ```
 
-> Note that this always stops and deletes the volumes mounted by any other example backend containers that are running or that have been run previously. This ensures that the example always starts with a clean database and clean disk.
+Start the proxy server that sits in front of Electric and authorizes requests:
 
-Start the write path server:
+```shell
+pnpm run proxy-server
+```
+
+Start the write path server (also authorizes requests):
 
 ```shell
 pnpm run write-server
 ```
 
-Now start the dev server:
+Now start the dev server for the frontend app:
 
 ```shell
 pnpm dev
@@ -52,7 +51,7 @@ pnpm backend:down
 
 ## How it works
 
-Wallie demonstrates a local-first architecture using ElectricSQL and PGlite. Here's how the different pieces fit together:
+Wallie is built using a local-first architecture using ElectricSQL and PGlite. Here's how the different pieces fit together:
 
 ### Backend Components
 
@@ -61,6 +60,8 @@ Wallie demonstrates a local-first architecture using ElectricSQL and PGlite. Her
 2. **Electric Sync Service**: Runs in front of Postgres, managing data synchronization from it to the clients. Produces replication streams for a subset of the database - these are called "shapes".
 
 3. **Write Server**: A simple HTTP server that handles write operations, applying them to the Postgres database.
+
+4. **Proxy Server**: Sits in front of the Electric Sync Service and authorizes requests to it.
 
 ### Frontend Components
 
@@ -72,13 +73,13 @@ Wallie demonstrates a local-first architecture using ElectricSQL and PGlite. Her
 
 ## Write Path
 
-This example uses a "write through the database" pattern, where local mutations are saved to the local PGlite database and then synced to the server. There are a number of ways to implement this, broadly split into two patterns:
+Wallie uses a "write through the database" pattern, where local mutations are saved to the local PGlite database and then synced to the server. There are a number of ways to implement this, broadly split into two patterns:
 
 1. **Merge on write:** There is a single table in the local database that contains all of the data. Local mutations are applied to this table and then synced to the server. As syncs are applied from the server, any pending changes are merged with the new data.
 
 2. **Merge on read:** There are two tables in the local database for each table of data: One is a pure replica of the server data and never has local mutations; and the other is a "delta" table that contains the local mutations. When the data is read, the two tables are joined on the id, and the result is the complete data set. This pattern can be extended by using a view to merge the data from the two tables, with `instead of` triggers to apply the local mutations to the "delta" table.
 
-This example uses the first pattern, which has a more performant read path and is ideal for large datasets. Below is a brief explanation of how it works:
+Wallie uses the first pattern, which has a more performant read path and is ideal for large datasets. Below is a brief explanation of how it works:
 
 The local database schema has a number of additional columns on each table that are used to maintain state for the write path and to resolve conflicts:
 
