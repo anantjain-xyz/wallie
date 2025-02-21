@@ -24,7 +24,9 @@ import { showInfo, showWarning } from '../utils/notification'
 import { usePGlite } from '@electric-sql/pglite-react'
 import { Issue } from '../types/types'
 import config from '../config'
-import { DEFAULT_WORKSPACE_ID, DEFAULT_CURRENT_USER_ID } from '../constants'
+import { DEFAULT_CURRENT_USER_ID } from '../constants'
+import { getCurrentUserWorkspaceId } from '../utils/userUtils'
+import { useUser } from '@clerk/clerk-react'
 
 interface Props {
   isOpen: boolean
@@ -37,6 +39,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
   const [description, setDescription] = useState<string>()
   const [priority, setPriority] = useState<PriorityValue>(Priority.NONE)
   const [status, setStatus] = useState<StatusValue>(Status.BACKLOG)
+  const { user } = useUser()
   const pg = usePGlite()
 
   const handleSubmit = async () => {
@@ -52,24 +55,30 @@ function IssueModal({ isOpen, onDismiss }: Props) {
       return
     }
 
-    const lastIssue = (
-      await pg.query<Issue>(`
-        SELECT * FROM issue
-        ORDER BY kanbanorder DESC
-        LIMIT 1
-      `)
-    )?.rows[0]
-    const kanbanorder = generateKeyBetween(lastIssue?.kanbanorder, null)
+    try {
+      const workspaceId = await getCurrentUserWorkspaceId(pg, user)
+      
+      const lastIssue = (
+        await pg.query<Issue>(`
+          SELECT * FROM issue
+          ORDER BY kanbanorder DESC
+          LIMIT 1
+        `)
+      )?.rows[0]
+      const kanbanorder = generateKeyBetween(lastIssue?.kanbanorder, null)
 
-    const date = new Date()
-    await pg.sql`
-      INSERT INTO issue (id, title, creator_id, priority, status, description, modified, created, kanbanorder, workspace_id)
-      VALUES (${crypto.randomUUID()}, ${title}, ${DEFAULT_CURRENT_USER_ID}, ${priority}, ${status}, ${description ?? ''}, ${date}, ${date}, ${kanbanorder}, ${DEFAULT_WORKSPACE_ID})
-    `
+      const date = new Date()
+      await pg.sql`
+        INSERT INTO issue (id, title, creator_id, priority, status, description, modified, created, kanbanorder, workspace_id)
+        VALUES (${crypto.randomUUID()}, ${title}, ${DEFAULT_CURRENT_USER_ID}, ${priority}, ${status}, ${description ?? ''}, ${date}, ${date}, ${kanbanorder}, ${workspaceId})
+      `
 
-    if (onDismiss) onDismiss()
-    reset()
-    showInfo(`You created new issue.`, `Issue created`)
+      if (onDismiss) onDismiss()
+      reset()
+      showInfo(`You created new issue.`, `Issue created`)
+    } catch (error) {
+      showWarning('Failed to create issue', error instanceof Error ? error.message : 'Unknown error')
+    }
   }
 
   const handleClickCloseBtn = () => {

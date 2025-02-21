@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import Editor from '../../components/editor/Editor'
 import Avatar from '../../components/Avatar'
@@ -9,7 +9,9 @@ import { BsCloudCheck as SyncedIcon } from 'react-icons/bs'
 import { BsCloudSlash as UnsyncedIcon } from 'react-icons/bs'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import { DEFAULT_WORKSPACE_ID, DEFAULT_CURRENT_USER_ID } from '../../constants'
+import { DEFAULT_CURRENT_USER_ID } from '../../constants'
+import { getCurrentUserWorkspaceId } from '../../utils/userUtils'
+import { useUser } from '@clerk/clerk-react'
 
 export interface CommentsProps {
   issue: Issue
@@ -17,6 +19,7 @@ export interface CommentsProps {
 
 function Comments({ issue }: CommentsProps) {
   const pg = usePGlite()
+  const { user } = useUser()
   const [newCommentBody, setNewCommentBody] = useState<string>(``)
   const commentsResults = useLiveQuery.sql<Comment & { author_full_name: string }>`
     SELECT c.*, u.full_name as author_full_name
@@ -58,7 +61,7 @@ function Comments({ issue }: CommentsProps) {
     }
   }
 
-  const handlePost = useCallback(() => {
+  const handlePost = useCallback(async () => {
     if (!newCommentBody) {
       showWarning(
         `Please enter a comment before submitting`,
@@ -67,20 +70,26 @@ function Comments({ issue }: CommentsProps) {
       return
     }
 
-    pg.sql`
-      INSERT INTO comment (id, issue_id, body, created, creator_id, workspace_id)
-      VALUES (
-        ${crypto.randomUUID()},
-        ${issue.id},
-        ${newCommentBody},
-        ${new Date()},
-        ${DEFAULT_CURRENT_USER_ID},
-        ${DEFAULT_WORKSPACE_ID}
-      )
-    `
+    try {
+      const workspaceId = await getCurrentUserWorkspaceId(pg, user)
+      
+      await pg.sql`
+        INSERT INTO comment (id, issue_id, body, created, creator_id, workspace_id)
+        VALUES (
+          ${crypto.randomUUID()},
+          ${issue.id},
+          ${newCommentBody},
+          ${new Date()},
+          ${DEFAULT_CURRENT_USER_ID},
+          ${workspaceId}
+        )
+      `
 
-    setNewCommentBody(``)
-  }, [newCommentBody, issue.id, pg])
+      setNewCommentBody(``)
+    } catch (error) {
+      showWarning('Failed to post comment', error instanceof Error ? error.message : 'Unknown error')
+    }
+  }, [newCommentBody, issue.id, pg, user])
 
   useHotkeys('meta+enter', handlePost, { enableOnContentEditable: true }, [handlePost])
 
