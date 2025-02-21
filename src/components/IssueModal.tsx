@@ -24,8 +24,7 @@ import { showInfo, showWarning } from '../utils/notification'
 import { usePGlite } from '@electric-sql/pglite-react'
 import { Issue } from '../types/types'
 import config from '../config'
-import { DEFAULT_CURRENT_USER_ID } from '../constants'
-import { getCurrentUserWorkspaceId } from '../utils/userUtils'
+import { getCurrentUserWorkspaceId, getCurrentUserId } from '../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
 
 interface Props {
@@ -57,6 +56,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
 
     try {
       const workspaceId = await getCurrentUserWorkspaceId(pg, user)
+      const userId = await getCurrentUserId(pg, user)
       
       const lastIssue = (
         await pg.query<Issue>(`
@@ -70,7 +70,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
       const date = new Date()
       await pg.sql`
         INSERT INTO issue (id, title, creator_id, priority, status, description, modified, created, kanbanorder, workspace_id)
-        VALUES (${crypto.randomUUID()}, ${title}, ${DEFAULT_CURRENT_USER_ID}, ${priority}, ${status}, ${description ?? ''}, ${date}, ${date}, ${kanbanorder}, ${workspaceId})
+        VALUES (${crypto.randomUUID()}, ${title}, ${userId}, ${priority}, ${status}, ${description ?? ''}, ${date}, ${date}, ${kanbanorder}, ${workspaceId})
       `
 
       if (onDismiss) onDismiss()

@@ -9,8 +9,7 @@ import { BsCloudCheck as SyncedIcon } from 'react-icons/bs'
 import { BsCloudSlash as UnsyncedIcon } from 'react-icons/bs'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import { DEFAULT_CURRENT_USER_ID } from '../../constants'
-import { getCurrentUserWorkspaceId } from '../../utils/userUtils'
+import { getCurrentUserWorkspaceId, getCurrentUserId } from '../../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
 
 export interface CommentsProps {
@@ -72,6 +71,7 @@ function Comments({ issue }: CommentsProps) {
 
     try {
       const workspaceId = await getCurrentUserWorkspaceId(pg, user)
+      const userId = await getCurrentUserId(pg, user)
       
       await pg.sql`
         INSERT INTO comment (id, issue_id, body, created, creator_id, workspace_id)
@@ -80,7 +80,7 @@ function Comments({ issue }: CommentsProps) {
           ${issue.id},
           ${newCommentBody},
           ${new Date()},
-          ${DEFAULT_CURRENT_USER_ID},
+          ${userId},
           ${workspaceId}
         )
       `

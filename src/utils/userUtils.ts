@@ -31,4 +31,28 @@ export async function getCurrentUserWorkspaceId(
   }
 
   return result.rows[0].workspace_id
+}
+
+export async function getCurrentUserId(
+  pg: ReturnType<typeof usePGlite>,
+  user: User
+): Promise<string> {
+  if (!user?.emailAddresses?.[0]?.emailAddress) {
+    throw new Error('No authenticated user found')
+  }
+
+  const email = user.emailAddresses[0].emailAddress
+  
+  const result = await pg.query<AppUser>(`
+    SELECT id 
+    FROM app_user 
+    WHERE email = $1
+    LIMIT 1
+  `, [email])
+
+  if (!result.rows.length) {
+    throw new Error('User not found in app_user table')
+  }
+
+  return result.rows[0].id
 } 
