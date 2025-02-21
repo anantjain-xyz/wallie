@@ -76,7 +76,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
     },
     table: 'workspace',
     primaryKey: ['id'],
-    shapeKey: 'workspaces',
+    shapeKey: null,
     commitGranularity: 'up-to-date',
     useCopy: true,
     onInitialSync: async () => {
@@ -112,7 +112,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
     },
     table: 'app_user',
     primaryKey: ['id'],
-    shapeKey: 'app_users',
+    shapeKey: null,
     commitGranularity: 'up-to-date',
     useCopy: true,
     onInitialSync: async () => {
