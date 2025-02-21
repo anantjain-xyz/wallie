@@ -16,9 +16,11 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write ./src",
     "lint": "eslint ./src",
-    "stylecheck": "eslint ./src && prettier --check ./src ./db"
+    "stylecheck": "eslint ./src && prettier --check ./src ./db",
+    "test": "vitest"
   },
   "dependencies": {
+    "@clerk/backend": "^1.24.2",
     "@clerk/clerk-react": "^5.23.0",
     "@electric-sql/pglite": "^0.2.17",
     "@electric-sql/pglite-react": "^0.2.17",
@@ -26,6 +28,7 @@
     "@electric-sql/pglite-sync": "^0.2.20",
     "@firefox-devtools/react-contextmenu": "^5.1.1",
     "@headlessui/react": "^1.7.17",
+    "@hono/clerk-auth": "^2.0.0",
     "@hono/node-server": "^1.8.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@svgr/plugin-svgo": "^8.1.0",
@@ -97,7 +100,8 @@
     "tailwindcss": "^3.4.4",
     "tsx": "^4.19.1",
     "typescript": "^5.5.3",
-    "vite": "^5.4.8"
+    "vite": "^5.4.8",
+    "vitest": "^3.0.6"
   },
   "pnpm": {
     "ignoredBuiltDependencies": [

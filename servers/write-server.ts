@@ -10,7 +10,7 @@ import {
   AppUserChange,
 } from '../src/utils/changes'
 import { serve } from '@hono/node-server'
-import { authMiddleware } from './auth'
+import { authMiddleware, validateAuth } from './auth'
 
 const DATABASE_URL =
   process.env.DATABASE_URL ??
@@ -25,8 +25,9 @@ const app = new Hono()
 app.use('/*', cors())
 
 // Add auth middleware
+app.use('/*', authMiddleware)
 app.use('/*', async (c, next) => {
-  const authResult = await authMiddleware(c.req.raw);
+  const authResult = await validateAuth(c);
   if (authResult) {
     return authResult;
   }

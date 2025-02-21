@@ -4,6 +4,7 @@ import { type PGliteWithSync } from '@electric-sql/pglite-sync'
 import type { IssueChange, CommentChange, WorkspaceChange, ChangeSet, AppUserChange } from './utils/changes'
 import { postInitialSync } from './migrations'
 import { useEffect, useState } from 'react'
+import { DEFAULT_WORKSPACE_ID } from './constants'
 
 const WRITE_SERVER_URL = import.meta.env.VITE_WRITE_SERVER_URL
   ? import.meta.env.VITE_WRITE_SERVER_URL
@@ -72,6 +73,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       params: {
         table: 'workspace',
         source_id: ELECTRIC_SOURCE_ID,
+        where: `id = '${DEFAULT_WORKSPACE_ID}'`,
       },
       headers: await getAuthHeaders(),
     },
@@ -109,6 +111,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       params: {
         table: 'app_user',
         source_id: ELECTRIC_SOURCE_ID,
+        where: `workspace_id = '${DEFAULT_WORKSPACE_ID}'`,
       },
       headers: await getAuthHeaders(),
     },
@@ -146,6 +149,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       params: {
         table: 'issue',
         source_id: ELECTRIC_SOURCE_ID,
+        where: `workspace_id = '${DEFAULT_WORKSPACE_ID}'`,
       },
       headers: await getAuthHeaders(),
     },
@@ -183,6 +187,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       params: {
         table: 'comment',
         source_id: ELECTRIC_SOURCE_ID,
+        where: `workspace_id = '${DEFAULT_WORKSPACE_ID}'`,
       },
       headers: await getAuthHeaders(),
     },
