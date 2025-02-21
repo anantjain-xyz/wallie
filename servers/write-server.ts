@@ -63,12 +63,12 @@ app.post('/apply-changes', async (c) => {
 })
 
 // Start the server
-const port = 3001
+const port = process.env.WRITE_SERVER_PORT ?? 3001
 console.log(`Server is running on port ${port}`)
 
 serve({
   fetch: app.fetch,
-  port,
+  port: parseInt(port as string),
 })
 
 async function applyChanges(changes: ChangeSet) {

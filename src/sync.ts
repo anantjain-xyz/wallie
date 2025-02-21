@@ -8,9 +8,9 @@ import { useEffect, useState } from 'react'
 const WRITE_SERVER_URL = import.meta.env.VITE_WRITE_SERVER_URL
   ? import.meta.env.VITE_WRITE_SERVER_URL
   : `http://localhost:3001`
-const ELECTRIC_URL = import.meta.env.VITE_ELECTRIC_URL
-  ? new URL(import.meta.env.VITE_ELECTRIC_URL).origin
-  : `http://localhost:3000`
+const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL
+  ? new URL(import.meta.env.VITE_PROXY_SERVER_URL).origin
+  : `http://localhost:3002`
 const ELECTRIC_SOURCE_ID = import.meta.env.VITE_ELECTRIC_SOURCE_ID
 const ELECTRIC_SOURCE_SECRET = import.meta.env.VITE_ELECTRIC_SOURCE_SECRET
 const APPLY_CHANGES_URL = `${WRITE_SERVER_URL}/apply-changes`
@@ -20,11 +20,11 @@ type SyncStatus = 'initial-sync' | 'done'
 export type PGliteWithExtensions = PGliteWithLive & PGliteWithSync
 
 export async function startSync(pg: PGliteWithExtensions, getAuthHeaders: () => Promise<{ Authorization?: string }>) {
-  await startSyncToDatabase(pg)
+  await startSyncToDatabase(pg, getAuthHeaders)
   startWritePath(pg, getAuthHeaders)
 }
 
-async function startSyncToDatabase(pg: PGliteWithExtensions) {
+async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () => Promise<{ Authorization?: string }>) {
   // Check if there are any issues already in the database
   const issues = await pg.query(`SELECT 1 FROM issue LIMIT 1`)
   const hasIssuesAtStart = issues.rows.length > 0
@@ -60,7 +60,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
     }
   }
 
-  const workspaceUrl = new URL(`${ELECTRIC_URL}/v1/shape`)
+  const workspaceUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
   if (ELECTRIC_SOURCE_SECRET) {
     workspaceUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
   }
@@ -73,6 +73,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
         table: 'workspace',
         source_id: ELECTRIC_SOURCE_ID,
       },
+      headers: await getAuthHeaders(),
     },
     table: 'workspace',
     primaryKey: ['id'],
@@ -96,7 +97,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
     }
   )
 
-  const userUrl = new URL(`${ELECTRIC_URL}/v1/shape`)
+  const userUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
   if (ELECTRIC_SOURCE_SECRET) {
     userUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
   }
@@ -109,6 +110,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
         table: 'app_user',
         source_id: ELECTRIC_SOURCE_ID,
       },
+      headers: await getAuthHeaders(),
     },
     table: 'app_user',
     primaryKey: ['id'],
@@ -132,7 +134,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
     }
   )
 
-  const issueUrl = new URL(`${ELECTRIC_URL}/v1/shape`)
+  const issueUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
   if (ELECTRIC_SOURCE_SECRET) {
     issueUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
   }
@@ -145,6 +147,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
         table: 'issue',
         source_id: ELECTRIC_SOURCE_ID,
       },
+      headers: await getAuthHeaders(),
     },
     table: 'issue',
     primaryKey: ['id'],
@@ -168,7 +171,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
     }
   )
 
-  const commentUrl = new URL(`${ELECTRIC_URL}/v1/shape`)
+  const commentUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
   if (ELECTRIC_SOURCE_SECRET) {
     commentUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
   }
@@ -181,6 +184,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions) {
         table: 'comment',
         source_id: ELECTRIC_SOURCE_ID,
       },
+      headers: await getAuthHeaders(),
     },
     table: 'comment',
     primaryKey: ['id'],
