@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
-import { authMiddleware, validateAuth } from './auth'
+import { authMiddleware, validateProxyAuth } from './auth'
 
 const app = new Hono()
 
@@ -12,7 +12,7 @@ app.use('*', cors())
 // Add auth middleware
 app.use('/*', authMiddleware)
 app.use('/*', async (c, next) => {
-  const authResult = await validateAuth(c);
+  const authResult = await validateProxyAuth(c);
   if (authResult) {
     return authResult;
   }
