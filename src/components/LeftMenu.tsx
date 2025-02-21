@@ -14,6 +14,7 @@ import IssueModal from './IssueModal'
 import PGliteConsoleModal from './PGliteConsoleModal'
 import ItemGroup from './ItemGroup'
 import { UserButton } from '@clerk/clerk-react'
+import Tooltip from './Tooltip'
 
 function LeftMenu() {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>
@@ -56,21 +57,26 @@ function LeftMenu() {
               <span className="flex text-sm font-medium">Wallie</span>
             </Link>
             <div className="flex items-center">
-              <Link
-                to="/search"
-                className="inline-flex ms-2 items-center p-2 bg-white rounded hover:bg-gray-100 h-7"
-            >
-              <SearchIcon className="w-3.5 h-3.5" />
-              </Link>
-              <button
-                type="button"
-                className="inline-flex ms-2 items-center p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 h-7"
-                onClick={() => {
-                  setShowIssueModal(true)
-                }}
-              >
-                <AddIcon className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content="Search workspace" shortcut="/">
+                <Link
+                  to="/search"
+                  className="inline-flex ms-2 items-center p-2 bg-white rounded hover:bg-gray-100 h-7"
+                >
+                  <SearchIcon className="w-3.5 h-3.5" />
+                </Link>
+              </Tooltip>
+
+              <Tooltip content="Create new issue" shortcut="c">
+                <button
+                  type="button"
+                  className="inline-flex ms-2 items-center p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 h-7"
+                  onClick={() => {
+                    setShowIssueModal(true)
+                  }}
+                >
+                  <AddIcon className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             </div>
           </div>
         </div>

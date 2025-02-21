@@ -11,6 +11,7 @@ import PriorityIcon from './PriorityIcon'
 import StatusIcon from './StatusIcon'
 import PriorityMenu from './contextmenu/PriorityMenu'
 import StatusMenu from './contextmenu/StatusMenu'
+import Tooltip from './Tooltip'
 
 import {
   Priority,
@@ -188,14 +189,16 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         />
       </div>
       {/* Footer */}
-      <div className="flex items-center flex-shrink-0 px-4 pt-3">
-        <button
-          type="button"
-          className="px-3 ml-auto text-white bg-indigo-600 rounded hover:bg-indigo-700 h-7"
-          onClick={handleSubmit}
-        >
-          Create issue
-        </button>
+      <div className="flex items-center flex-shrink-0 px-4 pt-3 justify-end">
+        <Tooltip content="Create issue" shortcut="⌘ Enter">
+          <button
+            type="button"
+            className="px-3 ml-auto text-white bg-indigo-600 rounded hover:bg-indigo-700 h-7"
+            onClick={handleSubmit}
+          >
+            Create issue
+          </button>
+        </Tooltip>
       </div>
     </div>
   )
