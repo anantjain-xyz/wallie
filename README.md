@@ -19,6 +19,14 @@ pnpm install
 pnpm run -r build
 ```
 
+Create a `.env` file based on the `.env.example` file and set the environment variables:
+
+```shell
+cp .env.example .env
+```
+
+You can get the Clerk API keys from the Clerk dashboard.
+
 Start the example backend services using [Docker Compose](https://docs.docker.com/compose/):
 
 ```shell
