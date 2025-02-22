@@ -11,8 +11,6 @@ const WRITE_SERVER_URL = import.meta.env.VITE_WRITE_SERVER_URL
 const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL
   ? new URL(import.meta.env.VITE_PROXY_SERVER_URL).origin
   : `http://localhost:3002`
-const ELECTRIC_SOURCE_ID = import.meta.env.VITE_ELECTRIC_SOURCE_ID
-const ELECTRIC_SOURCE_SECRET = import.meta.env.VITE_ELECTRIC_SOURCE_SECRET
 const APPLY_CHANGES_URL = `${WRITE_SERVER_URL}/apply-changes`
 
 type SyncStatus = 'initial-sync' | 'done'
@@ -61,9 +59,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
   }
 
   const workspaceUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
-  if (ELECTRIC_SOURCE_SECRET) {
-    workspaceUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
-  }
 
   // Workspaces Sync
   const workspacesSync = await pg.sync.syncShapeToTable({
@@ -71,7 +66,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       url: workspaceUrl.toString(),
       params: {
         table: 'workspace',
-        source_id: ELECTRIC_SOURCE_ID,
       },
       headers: await getAuthHeaders(),
     },
@@ -98,9 +92,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
   )
 
   const userUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
-  if (ELECTRIC_SOURCE_SECRET) {
-    userUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
-  }
 
   // Users Sync
   const usersSync = await pg.sync.syncShapeToTable({
@@ -108,7 +99,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       url: userUrl.toString(),
       params: {
         table: 'app_user',
-        source_id: ELECTRIC_SOURCE_ID,
       },
       headers: await getAuthHeaders(),
     },
@@ -135,9 +125,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
   )
 
   const issueUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
-  if (ELECTRIC_SOURCE_SECRET) {
-    issueUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
-  }
   
   // Issues Sync
   const issuesSync = await pg.sync.syncShapeToTable({
@@ -145,7 +132,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       url: issueUrl.toString(),
       params: {
         table: 'issue',
-        source_id: ELECTRIC_SOURCE_ID,
       },
       headers: await getAuthHeaders(),
     },
@@ -172,9 +158,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
   )
 
   const commentUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
-  if (ELECTRIC_SOURCE_SECRET) {
-    commentUrl.searchParams.set('source_secret', ELECTRIC_SOURCE_SECRET)
-  }
 
   // Comments Sync
   const commentsSync = await pg.sync.syncShapeToTable({
@@ -182,7 +165,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       url: commentUrl.toString(),
       params: {
         table: 'comment',
-        source_id: ELECTRIC_SOURCE_ID,
       },
       headers: await getAuthHeaders(),
     },

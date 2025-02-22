@@ -21,24 +21,13 @@ app.use('/*', async (c, next) => {
 
 // Proxy middleware to forward requests
 async function proxyMiddleware(c: any) {
-  // Constuct the upstream URL
+  // Construct the upstream URL
   const url = new URL(c.req.raw.url)
   const baseUrl = process.env.ELECTRIC_URL ?? `http://localhost:3000`
   const originUrl = new URL(`/v1/shape`, baseUrl)
   url.searchParams.forEach((value, key) => {
     originUrl.searchParams.set(key, value)
   })
-
-  if (process.env.ELECTRIC_SOURCE_ID) {
-    originUrl.searchParams.set(`source_id`, process.env.ELECTRIC_SOURCE_ID)
-  }
-
-  if (process.env.ELECTRIC_SOURCE_SECRET) {
-    originUrl.searchParams.set(
-      `source_secret`,
-      process.env.ELECTRIC_SOURCE_SECRET
-    )
-  }
   
   try {
     const response = await fetch(originUrl, {
