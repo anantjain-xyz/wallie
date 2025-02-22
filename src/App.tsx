@@ -8,7 +8,7 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import 'react-toastify/dist/ReactToastify.css'
-import { live, LiveNamespace, LiveQuery } from '@electric-sql/pglite/live'
+import { live, LiveQuery } from '@electric-sql/pglite/live'
 import { PGliteWorker } from '@electric-sql/pglite/worker'
 import { PGliteProvider } from '@electric-sql/pglite-react'
 import { useHotkeys } from 'react-hotkeys-hook'

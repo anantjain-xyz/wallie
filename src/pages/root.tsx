@@ -1,7 +1,8 @@
 import { Outlet } from 'react-router-dom'
 import LeftMenu from '../components/LeftMenu'
 import { cssTransition, ToastContainer } from 'react-toastify'
-import { SignedIn, SignedOut, SignInButton } from "@clerk/clerk-react"
+import { SignedIn, SignedOut } from "@clerk/clerk-react"
+import SignInPage from '../components/SignInPage'
 
 const slideUp = cssTransition({
   enter: `animate__animated animate__slideInUp`,
@@ -12,7 +13,7 @@ export default function Root() {
   return (
     <>
       <SignedOut>
-        <SignInButton />
+        <SignInPage />
       </SignedOut>
       <SignedIn>
         <div className="flex w-full h-screen overflow-y-hidden">
