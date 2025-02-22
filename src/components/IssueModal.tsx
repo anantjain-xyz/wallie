@@ -23,7 +23,6 @@ import {
 import { showInfo, showWarning } from '../utils/notification'
 import { usePGlite } from '@electric-sql/pglite-react'
 import { Issue } from '../types/types'
-import config from '../config'
 import { getCurrentUserWorkspaceId, getCurrentUserId } from '../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
 
@@ -45,13 +44,6 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     e.preventDefault()
     if (title === '') {
       showWarning('Please enter a title before submitting', 'Title required')
-      return
-    }
-
-    if (config.readonly) {
-      showWarning('This is a read-only demo', 'Read-only')
-      if (onDismiss) onDismiss()
-      reset()
       return
     }
 
