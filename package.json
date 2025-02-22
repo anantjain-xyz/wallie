@@ -27,6 +27,8 @@
     "@electric-sql/pglite-repl": "^0.2.17",
     "@electric-sql/pglite-sync": "^0.2.20",
     "@firefox-devtools/react-contextmenu": "^5.1.1",
+    "@floating-ui/dom": "^1.6.3",
+    "@floating-ui/react": "^0.26.9",
     "@headlessui/react": "^1.7.17",
     "@hono/clerk-auth": "^2.0.0",
     "@hono/node-server": "^1.8.0",
@@ -65,13 +67,13 @@
     "tiptap-markdown": "^0.8.2",
     "uuid": "^9.0.0",
     "vite-plugin-svgr": "^3.2.0",
-    "zod": "^3.23.8",
-    "@floating-ui/react": "^0.26.9",
-    "@floating-ui/dom": "^1.6.3"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@databases/pg-migrations": "^5.0.3",
     "@eslint-react/eslint-plugin": "^1.18.0",
+    "@eslint/eslintrc": "^3.3.0",
+    "@eslint/js": "^9.21.0",
     "@faker-js/faker": "^8.4.1",
     "@tailwindcss/typography": "^0.5.10",
     "@types/body-parser": "^1.19.5",
@@ -87,6 +89,7 @@
     "@types/uuid": "^9.0.3",
     "@types/vite-plugin-react-svg": "^0.2.5",
     "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.24.1",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.19",
     "dotenv-cli": "^7.4.2",

@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState, useCallback } from 'react'
 import { generateKeyBetween } from 'fractional-indexing'
 
 import { BsChevronRight as ChevronRight } from 'react-icons/bs'
@@ -41,7 +41,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
   const { user } = useUser()
   const pg = usePGlite()
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
     if (title === '') {
       showWarning('Please enter a title before submitting', 'Title required')
       return
@@ -79,7 +80,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     } catch (error) {
       showWarning('Failed to create issue', error instanceof Error ? error.message : 'Unknown error')
     }
-  }
+  }, [title, description, priority, status, user, pg, onDismiss])
 
   const handleClickCloseBtn = () => {
     if (onDismiss) onDismiss()
@@ -110,7 +111,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        handleSubmit();
+        handleSubmit(e);
       }
     };
 
