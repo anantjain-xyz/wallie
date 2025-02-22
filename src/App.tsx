@@ -27,6 +27,8 @@ import { electricSync } from '@electric-sql/pglite-sync'
 import { ImSpinner8 } from 'react-icons/im'
 import { useElectricAuth } from './auth'
 import type { PGliteWithExtensions } from './sync'
+import { useAuth } from '@clerk/clerk-react'
+import SignInPage from './components/SignInPage'
 
 interface MenuContextInterface {
   showMenu: boolean
@@ -214,6 +216,12 @@ const App = () => {
     () => ({ showIssueModal, setShowIssueModal }),
     [showIssueModal]
   )
+
+  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth()
+
+  if (!isAuthLoaded) return <LoadingScreen>Loading...</LoadingScreen>
+
+  if (!isSignedIn) return <SignInPage />
 
   if (!pgForProvider) return <LoadingScreen>Starting PGlite...</LoadingScreen>
 
