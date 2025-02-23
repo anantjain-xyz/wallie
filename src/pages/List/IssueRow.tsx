@@ -9,6 +9,7 @@ import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { formatDate } from '../../utils/date'
 import { Issue } from '../../types/types'
+import React from 'react'
 
 interface Props {
   issue: Issue | undefined
@@ -18,6 +19,22 @@ interface Props {
 function IssueRow({ issue, style }: Props) {
   const pg = usePGlite()
   const navigate = useNavigate()
+  const [creatorName, setCreatorName] = React.useState<string>('')
+
+  React.useEffect(() => {
+    if (issue?.creator_id) {
+      pg.sql`
+        SELECT full_name 
+        FROM app_user 
+        WHERE id = ${issue.creator_id}
+      `.then((result: { rows: unknown[] }) => {
+        if (result.rows.length > 0) {
+          const row = result.rows[0] as { full_name: string };
+          setCreatorName(row.full_name);
+        }
+      })
+    }
+  }, [issue?.creator_id])
 
   const handleChangeStatus = (status: string) => {
     pg.sql`
@@ -75,7 +92,7 @@ function IssueRow({ issue, style }: Props) {
         {formatDate(issue.created)}
       </div>
       <div className="flex-shrink-0 hidden ml-4 font-normal text-gray-500 sm:block w-15 md:block">
-        <Avatar name={issue.creator_id} />
+        <Avatar name={creatorName} />
       </div>
     </div>
   )
