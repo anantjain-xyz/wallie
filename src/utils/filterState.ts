@@ -13,7 +13,7 @@ export function getFilterStateFromSearchParams(
 ): FilterState {
   const orderBy = searchParams.get(`orderBy`) ?? `created`
   const orderDirection =
-    (searchParams.get(`orderDirection`) as `asc` | `desc`) ?? `desc`
+    (searchParams.get(`orderDirection`) as `asc` | `desc`) ?? `asc`
   const status = searchParams
     .getAll(`status`)
     .map((status) => status.toLocaleLowerCase().split(`,`))
