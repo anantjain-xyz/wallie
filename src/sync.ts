@@ -200,6 +200,15 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
 const syncMutex = new Mutex()
 
 async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Promise<{ Authorization?: string }>) {
+  // Enable triggers on all tables here as well
+  // since we do not always do the initial sync
+  // but the migrations are run each time, which
+  // disable the triggers after creation
+  await pg.exec(`ALTER TABLE workspace ENABLE TRIGGER ALL`)
+  await pg.exec(`ALTER TABLE app_user ENABLE TRIGGER ALL`)
+  await pg.exec(`ALTER TABLE issue ENABLE TRIGGER ALL`)
+  await pg.exec(`ALTER TABLE comment ENABLE TRIGGER ALL`)
+
   // Use a live query to watch for changes to the local tables that need to be synced
   pg.live.query<{
     issue_count: number

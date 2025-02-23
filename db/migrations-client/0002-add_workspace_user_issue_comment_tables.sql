@@ -51,8 +51,7 @@ CREATE TABLE IF NOT EXISTS "app_user" (
     "backup" JSONB, -- JSONB column to store the backup of the row data for modified columns
     CONSTRAINT "app_user_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "app_user_email_key" UNIQUE ("email"),
-    CONSTRAINT "app_user_username_key" UNIQUE ("username"),
-    FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE
+    CONSTRAINT "app_user_username_key" UNIQUE ("username")
 );
 
 -- Add triggers for local state management
@@ -92,9 +91,7 @@ CREATE TABLE IF NOT EXISTS "issue" (
     "sent_to_server" BOOLEAN NOT NULL DEFAULT FALSE, -- Flag to track if the row has been sent to the server
     "synced" BOOLEAN GENERATED ALWAYS AS (ARRAY_LENGTH(modified_columns, 1) IS NULL AND NOT deleted AND NOT new) STORED,
     "backup" JSONB, -- JSONB column to store the backup of the row data for modified columns
-    CONSTRAINT "issue_pkey" PRIMARY KEY ("id"),
-    FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE,
-    FOREIGN KEY (creator_id) REFERENCES app_user(id) ON DELETE CASCADE
+    CONSTRAINT "issue_pkey" PRIMARY KEY ("id")
 );
 
 CREATE OR REPLACE TRIGGER issue_delete_trigger
@@ -129,10 +126,7 @@ CREATE TABLE IF NOT EXISTS "comment" (
     "sent_to_server" BOOLEAN NOT NULL DEFAULT FALSE, -- Flag to track if the row has been sent to the server
     "synced" BOOLEAN GENERATED ALWAYS AS (ARRAY_LENGTH(modified_columns, 1) IS NULL AND NOT deleted AND NOT new) STORED,
     "backup" JSONB, -- JSONB column to store the backup of the row data for modified columns
-    CONSTRAINT "comment_pkey" PRIMARY KEY ("id"),
-    FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE,
-    FOREIGN KEY (creator_id) REFERENCES app_user(id) ON DELETE CASCADE,
-    FOREIGN KEY (issue_id) REFERENCES issue(id) ON DELETE CASCADE
+    CONSTRAINT "comment_pkey" PRIMARY KEY ("id")
 );
 
 CREATE OR REPLACE TRIGGER comment_delete_trigger
