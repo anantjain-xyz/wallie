@@ -1,5 +1,5 @@
-import { usePGlite } from '@electric-sql/pglite-react'
-import type { useUser } from '@clerk/clerk-react'
+import { useUser } from '@clerk/clerk-react'
+import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
 
 type User = ReturnType<typeof useUser>['user']
 
@@ -9,50 +9,13 @@ interface AppUser {
   workspace_id: string
 }
 
-export async function getCurrentUserWorkspaceId(
-  pg: ReturnType<typeof usePGlite>,
-  user: User
-): Promise<string> {
-  if (!user?.emailAddresses?.[0]?.emailAddress) {
-    throw new Error('No authenticated user found')
-  }
+export function useCurrentUser(user: User | null | undefined) {
+  const email = user?.emailAddresses?.[0]?.emailAddress
 
-  const email = user.emailAddresses[0].emailAddress
-  
-  const result = await pg.query<AppUser>(`
-    SELECT workspace_id 
+  return useLiveQuery.sql<AppUser>`
+    SELECT * 
     FROM app_user 
-    WHERE email = $1
+    WHERE email = ${email}
     LIMIT 1
-  `, [email])
-
-  if (!result.rows.length) {
-    throw new Error('User not found in app_user table')
-  }
-
-  return result.rows[0].workspace_id
-}
-
-export async function getCurrentUserId(
-  pg: ReturnType<typeof usePGlite>,
-  user: User
-): Promise<string> {
-  if (!user?.emailAddresses?.[0]?.emailAddress) {
-    throw new Error('No authenticated user found')
-  }
-
-  const email = user.emailAddresses[0].emailAddress
-  
-  const result = await pg.query<AppUser>(`
-    SELECT id 
-    FROM app_user 
-    WHERE email = $1
-    LIMIT 1
-  `, [email])
-
-  if (!result.rows.length) {
-    throw new Error('User not found in app_user table')
-  }
-
-  return result.rows[0].id
+  `
 } 

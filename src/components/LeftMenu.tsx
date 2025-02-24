@@ -2,7 +2,7 @@ import { ReactComponent as MenuIcon } from '../assets/icons/menu.svg'
 import { ReactComponent as BacklogIcon } from '../assets/icons/circle-dot.svg'
 import { MenuContext, IssueModalContext } from '../App'
 import classnames from 'classnames'
-import { memo, RefObject, useRef, useState, useContext } from 'react'
+import { memo, RefObject, useRef, useState, useContext, useEffect } from 'react'
 import { BsPencilSquare as AddIcon } from 'react-icons/bs'
 import { BsSearch as SearchIcon } from 'react-icons/bs'
 import { BsFillGrid3X3GapFill as BoardIcon } from 'react-icons/bs'
@@ -15,6 +15,9 @@ import PGliteConsoleModal from './PGliteConsoleModal'
 import ItemGroup from './ItemGroup'
 import { UserButton } from '@clerk/clerk-react'
 import Tooltip from './Tooltip'
+import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
+import { useUser } from '@clerk/clerk-react'
+import { useCurrentUser } from '../utils/userUtils'
 
 function LeftMenu() {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>
@@ -22,6 +25,17 @@ function LeftMenu() {
   const [showPGliteConsoleModal, setShowPGliteConsoleModal] = useState(false)
   const { showMenu, setShowMenu } = useContext(MenuContext)!
   const { showIssueModal, setShowIssueModal } = useContext(IssueModalContext)!
+  const pg = usePGlite()
+  const { user } = useUser()
+  
+  const currentUserResult = useCurrentUser(user)
+  const workspaceId = currentUserResult?.rows[0]?.workspace_id
+
+  const workspaceResults = useLiveQuery.sql<{ name: string }>`
+    SELECT name FROM workspace WHERE id = ${workspaceId}
+  `
+
+  const workspaceName = workspaceResults?.rows[0]?.name ?? 'Wallie'
 
   const classes = classnames(
     `absolute z-40 lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 bg-white flex flex-col flex-shrink-0 w-56 font-sans text-sm text-gray-700 border-r border-gray-100 lg:shadow-none justify-items-start`,
@@ -54,7 +68,7 @@ function LeftMenu() {
                 src="/electric-icon.png"
                 className="w-4.5 h-4.5 mr-2.5 rounded-sm"
               />
-              <span className="flex text-sm font-medium">Wallie</span>
+              <span className="flex text-sm font-medium">{workspaceName}</span>
             </Link>
             <div className="flex items-center">
               <Tooltip content="Search workspace" shortcut="/">

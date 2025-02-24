@@ -23,7 +23,7 @@ import {
 import { showInfo, showWarning } from '../utils/notification'
 import { usePGlite } from '@electric-sql/pglite-react'
 import { Issue } from '../types/types'
-import { getCurrentUserWorkspaceId, getCurrentUserId } from '../utils/userUtils'
+import { useCurrentUser } from '../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
 
 interface Props {
@@ -39,6 +39,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
   const [status, setStatus] = useState<StatusValue>(Status.BACKLOG)
   const { user } = useUser()
   const pg = usePGlite()
+  const currentUserResult = useCurrentUser(user)
+  const currentUser = currentUserResult?.rows[0]
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,10 +49,12 @@ function IssueModal({ isOpen, onDismiss }: Props) {
       return
     }
 
+    if (!currentUser?.id || !currentUser?.workspace_id) {
+      showWarning('Failed to create issue', 'User data not available')
+      return
+    }
+
     try {
-      const workspaceId = await getCurrentUserWorkspaceId(pg, user)
-      const userId = await getCurrentUserId(pg, user)
-      
       const lastIssue = (
         await pg.query<Issue>(`
           SELECT * FROM issue
@@ -63,7 +67,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
       const date = new Date()
       await pg.sql`
         INSERT INTO issue (id, title, creator_id, priority, status, description, modified, created, kanbanorder, workspace_id)
-        VALUES (${crypto.randomUUID()}, ${title}, ${userId}, ${priority}, ${status}, ${description ?? ''}, ${date}, ${date}, ${kanbanorder}, ${workspaceId})
+        VALUES (${crypto.randomUUID()}, ${title}, ${currentUser.id}, ${priority}, ${status}, ${description ?? ''}, ${date}, ${date}, ${kanbanorder}, ${currentUser.workspace_id})
       `
 
       if (onDismiss) onDismiss()
@@ -72,7 +76,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     } catch (error) {
       showWarning('Failed to create issue', error instanceof Error ? error.message : 'Unknown error')
     }
-  }, [title, description, priority, status, user, pg, onDismiss])
+  }, [title, description, priority, status, currentUser, pg, onDismiss])
 
   const handleClickCloseBtn = () => {
     if (onDismiss) onDismiss()

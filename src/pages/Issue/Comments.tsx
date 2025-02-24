@@ -9,7 +9,7 @@ import { BsCloudCheck as SyncedIcon } from 'react-icons/bs'
 import { BsCloudSlash as UnsyncedIcon } from 'react-icons/bs'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import { getCurrentUserWorkspaceId, getCurrentUserId } from '../../utils/userUtils'
+import { useCurrentUser } from '../../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
 
 export interface CommentsProps {
@@ -27,6 +27,8 @@ function Comments({ issue }: CommentsProps) {
     WHERE c.issue_id = ${issue.id}
   `
   const comments = commentsResults?.rows
+  const currentUserResult = useCurrentUser(user)
+  const currentUser = currentUserResult?.rows[0]
 
   const commentList = () => {
     if (comments && comments.length > 0) {
@@ -69,10 +71,12 @@ function Comments({ issue }: CommentsProps) {
       return
     }
 
+    if (!currentUser?.id || !currentUser?.workspace_id) {
+      showWarning('Failed to post comment', 'User data not available')
+      return
+    }
+
     try {
-      const workspaceId = await getCurrentUserWorkspaceId(pg, user)
-      const userId = await getCurrentUserId(pg, user)
-      
       await pg.sql`
         INSERT INTO comment (id, issue_id, body, created, creator_id, workspace_id)
         VALUES (
@@ -80,8 +84,8 @@ function Comments({ issue }: CommentsProps) {
           ${issue.id},
           ${newCommentBody},
           ${new Date()},
-          ${userId},
-          ${workspaceId}
+          ${currentUser.id},
+          ${currentUser.workspace_id}
         )
       `
 
@@ -89,7 +93,7 @@ function Comments({ issue }: CommentsProps) {
     } catch (error) {
       showWarning('Failed to post comment', error instanceof Error ? error.message : 'Unknown error')
     }
-  }, [newCommentBody, issue.id, pg, user])
+  }, [newCommentBody, issue.id, currentUser, pg])
 
   useHotkeys('meta+enter', handlePost, { enableOnContentEditable: true }, [handlePost])
 
