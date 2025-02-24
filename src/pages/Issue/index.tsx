@@ -231,7 +231,7 @@ function IssuePage() {
           </div>
           <div className="flex flex-col md:flex-[3_0_0] md:p-3 border-gray-200 md:border-r min-h-0 min-w-0 overflow-auto">
             <input
-              className="w-full px-3 py-1 text-lg font-semibold placeholder-gray-400 border-transparent rounded "
+              className="w-full px-3 py-1 text-lg font-semibold placeholder-gray-400 border-transparent focus:border-transparent focus:ring-0 rounded "
               placeholder="Issue title"
               value={titleIsDirty.current ? dirtyTitle! : issue.title}
               onChange={(e) => handleTitleChange(e.target.value)}
@@ -249,8 +249,7 @@ function IssuePage() {
                 placeholder="Add description..."
               />
             </div>
-            <div className="border-t border-gray-200 mt-3 p-3">
-              <h2 className="text-md mb-3">Comments</h2>
+            <div className="border-t border-gray-200 mt-3 pt-6">
               <Comments issue={issue} />
             </div>
           </div>

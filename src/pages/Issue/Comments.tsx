@@ -9,6 +9,7 @@ import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useCurrentUser } from '../../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
+import Tooltip from '../../components/Tooltip'
 
 export interface CommentsProps {
   issue: Issue
@@ -44,7 +45,7 @@ function Comments({ issue }: CommentsProps) {
               {formatDate(comment.created)}
             </span>
           </div>
-          <div className="mt-2 text-md prose w-full max-w-full">
+          <div className="mt-2 text-sm font-light prose w-full max-w-full">
             <ReactMarkdown>{comment.body}</ReactMarkdown>
           </div>
         </div>
@@ -90,22 +91,26 @@ function Comments({ issue }: CommentsProps) {
   return (
     <>
       {commentList()}
-      <div className="w-full max-w-full mt-2 min-h-14">
+      <div className="w-full max-w-full mt-2 relative">
         <Editor
-          className="w-full max-w-full prose font-normal p-3 appearance-none text-md shadow-sm rounded border border-gray-200 editor"
+          className="w-full max-w-full prose font-light text-sm p-4 pb-16 appearance-none text-md rounded-lg border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-gray-200 placeholder-gray-400"
           value={newCommentBody}
           onChange={(val) => setNewCommentBody(val)}
-          placeholder="Add a comment..."
+          placeholder="Leave a comment..."
         />
-      </div>
-      <div className="flex w-full py-3">
-        <button
-          type="button"
-          className="px-3 ml-auto text-white bg-blue-600 rounded hover:bg-blue-700 h-7"
-          onClick={handlePost}
-        >
-          Post Comment
-        </button>
+        <div className="absolute bottom-4 right-4 flex items-center space-x-3">
+          <Tooltip content="Submit comment" shortcut="⌘ Enter">
+            <button
+              type="button"
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
+              onClick={handlePost}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 19V5M5 12l7-7 7 7" />
+              </svg>
+            </button>
+          </Tooltip>
+        </div>
       </div>
     </>
   )

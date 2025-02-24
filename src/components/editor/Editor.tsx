@@ -41,6 +41,9 @@ const Editor = ({
     TableRow,
     TableHeader,
     TableCell,
+    ...(placeholder ? [Placeholder.configure({
+      placeholder,
+    })] : []),
   ]
 
   const editor = useEditor({
@@ -58,14 +61,6 @@ const Editor = ({
       editor.commands.setContent(value)
     }
   }, [editor, value])
-
-  if (placeholder) {
-    extensions.push(
-      Placeholder.configure({
-        placeholder,
-      })
-    )
-  }
 
   return (
     <>
