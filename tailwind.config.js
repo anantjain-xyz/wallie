@@ -37,6 +37,7 @@ export default {
         'Helvetica\\ Neue',
         'sans-serif',
       ],
+      prosto: ['ProstoOne', 'sans-serif'],
     },
     borderWidth: {
       DEFAULT: '1px',

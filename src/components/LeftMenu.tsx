@@ -2,7 +2,7 @@ import { ReactComponent as MenuIcon } from '../assets/icons/menu.svg'
 import { ReactComponent as BacklogIcon } from '../assets/icons/circle-dot.svg'
 import { MenuContext, IssueModalContext } from '../App'
 import classnames from 'classnames'
-import { memo, RefObject, useRef, useState, useContext, useEffect } from 'react'
+import { memo, RefObject, useRef, useState, useContext } from 'react'
 import { BsPencilSquare as AddIcon } from 'react-icons/bs'
 import { BsSearch as SearchIcon } from 'react-icons/bs'
 import { BsFillGrid3X3GapFill as BoardIcon } from 'react-icons/bs'
@@ -61,13 +61,10 @@ function LeftMenu() {
           <div className="flex items-center justify-between">
             {/* Project selection */}
             <Link
-              className="flex items-center p-2 rounded cursor-pointer hover:bg-gray-100"
+              className="flex items-baseline rounded cursor-pointer p-2 hover:bg-gray-100"
               to="/"
             >
-              <img
-                src="/electric-icon.png"
-                className="w-4.5 h-4.5 mr-2.5 rounded-sm"
-              />
+              <div className="font-prosto text-md mr-2 text-blue-600">W</div>
               <span className="flex text-sm font-medium">{workspaceName}</span>
             </Link>
             <div className="flex items-center">
