@@ -15,7 +15,7 @@ import PGliteConsoleModal from './PGliteConsoleModal'
 import ItemGroup from './ItemGroup'
 import { UserButton } from '@clerk/clerk-react'
 import Tooltip from './Tooltip'
-import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
+import { useLiveQuery } from '@electric-sql/pglite-react'
 import { useUser } from '@clerk/clerk-react'
 import { useCurrentUser } from '../utils/userUtils'
 
@@ -25,7 +25,6 @@ function LeftMenu() {
   const [showPGliteConsoleModal, setShowPGliteConsoleModal] = useState(false)
   const { showMenu, setShowMenu } = useContext(MenuContext)!
   const { showIssueModal, setShowIssueModal } = useContext(IssueModalContext)!
-  const pg = usePGlite()
   const { user } = useUser()
   
   const currentUserResult = useCurrentUser(user)

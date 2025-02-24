@@ -34,7 +34,7 @@ function IssueRow({ issue, style }: Props) {
         }
       })
     }
-  }, [issue?.creator_id])
+  }, [issue?.creator_id, pg.sql])
 
   const handleChangeStatus = (status: string) => {
     pg.sql`

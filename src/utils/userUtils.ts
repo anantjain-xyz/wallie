@@ -1,5 +1,5 @@
 import { useUser } from '@clerk/clerk-react'
-import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
+import { useLiveQuery } from '@electric-sql/pglite-react'
 
 type User = ReturnType<typeof useUser>['user']
 
