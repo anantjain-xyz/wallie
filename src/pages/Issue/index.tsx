@@ -172,7 +172,7 @@ function IssuePage() {
             <div className="max-w-4xl flex flex-row md:flex-col">
               <div className="flex flex-1 mb-3 mr-5 md-mr-0">
                 <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
-                  Opened by
+                  Created by
                 </div>
                 <div className="flex flex-[3_0_0]">
                   <button
@@ -196,7 +196,7 @@ function IssuePage() {
                         type="button"
                         className="inline-flex items-center h-6 px-2 text-gray-500border-none rounded hover:bg-gray-100"
                       >
-                        <StatusIcon status={issue.status} className="mr-1" />
+                        <StatusIcon status={issue.status} className="mr-2" />
                         <span>{StatusDisplay[issue.status]}</span>
                       </button>
                     }
@@ -218,7 +218,7 @@ function IssuePage() {
                       >
                         <PriorityIcon
                           priority={issue.priority}
-                          className="mr-1"
+                          className="mr-2"
                         />
                         <span>{PriorityDisplay[issue.priority]}</span>
                       </button>

@@ -7,10 +7,11 @@ import { Menu } from './menu'
 interface Props {
   id: string
   button: ReactNode
+  filterKeyword?: boolean
   className?: string
   onSelect?: (status: string) => void
 }
-export default function StatusMenu({ id, button, className, onSelect }: Props) {
+export default function StatusMenu({ id, button, filterKeyword = false, className, onSelect }: Props) {
   const [keyword, setKeyword] = useState(``)
   const handleSelect = (status: string) => {
     if (onSelect) onSelect(status)
@@ -42,8 +43,8 @@ export default function StatusMenu({ id, button, className, onSelect }: Props) {
       <Portal>
         <Menu
           id={id}
-          size="normal"
-          filterKeyword={true}
+          size="small"
+          filterKeyword={filterKeyword}
           className={className}
           searchPlaceholder="Set status..."
           onKeywordChange={(kw) => setKeyword(kw)}

@@ -60,6 +60,14 @@ export const PriorityIcons = {
   [Priority.LOW]: LowPriorityIcon,
 }
 
+export const PriorityColors = {
+  [Priority.NONE]: `fill-gray-500`,
+  [Priority.URGENT]: `fill-orange-600`,
+  [Priority.HIGH]: `fill-gray-500`,
+  [Priority.MEDIUM]: `fill-gray-500`,
+  [Priority.LOW]: `fill-gray-500`,
+}
+
 export const PriorityOptions: [
   React.FunctionComponent<React.SVGProps<SVGSVGElement>>,
   PriorityValue,
