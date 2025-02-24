@@ -5,8 +5,6 @@ import Avatar from '../../components/Avatar'
 import { formatDate } from '../../utils/date'
 import { showWarning } from '../../utils/notification'
 import { Comment, Issue } from '../../types/types'
-import { BsCloudCheck as SyncedIcon } from 'react-icons/bs'
-import { BsCloudSlash as UnsyncedIcon } from 'react-icons/bs'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useCurrentUser } from '../../utils/userUtils'
@@ -44,14 +42,6 @@ function Comments({ issue }: CommentsProps) {
             </span>
             <span className=" ms-auto text-sm text-gray-400 ml-2">
               {formatDate(comment.created)}
-            </span>
-            <span className="ms-2">
-              {/* Synced status */}
-              {comment.synced ? (
-                <SyncedIcon className="text-green-500 w-4 h-4" />
-              ) : (
-                <UnsyncedIcon className="text-orange-500 w-4 h-4" />
-              )}
             </span>
           </div>
           <div className="mt-2 text-md prose w-full max-w-full">
@@ -111,7 +101,7 @@ function Comments({ issue }: CommentsProps) {
       <div className="flex w-full py-3">
         <button
           type="button"
-          className="px-3 ml-auto text-white bg-indigo-600 rounded hover:bg-indigo-700 h-7"
+          className="px-3 ml-auto text-white bg-blue-600 rounded hover:bg-blue-700 h-7"
           onClick={handlePost}
         >
           Post Comment

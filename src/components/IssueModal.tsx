@@ -199,7 +199,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         <Tooltip content="Create issue" shortcut="⌘ Enter">
           <button
             type="button"
-            className="px-3 ml-auto text-white bg-indigo-600 rounded hover:bg-indigo-700 h-7"
+            className="px-3 ml-auto text-white bg-blue-600 rounded hover:bg-blue-700 h-7"
             onClick={handleSubmit}
           >
             Create issue

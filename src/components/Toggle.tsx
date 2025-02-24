@@ -11,7 +11,7 @@ export default function Toggle({
   onChange,
   className,
   value = false,
-  activeClass = `bg-indigo-600 hover:bg-indigo-700`,
+  activeClass = `bg-blue-600 hover:bg-blue-700`,
   activeLabelClass = `border-indigo-600`,
 }: Props) {
   const labelClasses = classnames(

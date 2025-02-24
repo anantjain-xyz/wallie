@@ -1,8 +1,6 @@
 /* eslint-disable react-compiler/react-compiler */
 import { useNavigate, useLoaderData } from 'react-router-dom'
 import { useState, useRef, useCallback } from 'react'
-import { BsCloudCheck as SyncedIcon } from 'react-icons/bs'
-import { BsCloudSlash as UnsyncedIcon } from 'react-icons/bs'
 import { LiveQuery } from '@electric-sql/pglite/live'
 import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
 import { BsTrash3 as DeleteIcon } from 'react-icons/bs'
@@ -150,11 +148,6 @@ function IssuePage() {
             </div>
 
             <div className="flex items-center">
-              {issue.synced ? (
-                <SyncedIcon className="text-green-500 w-4 h-4 m-2 me-4" />
-              ) : (
-                <UnsyncedIcon className="text-orange-500 w-4 h-4 m-2 me-4" />
-              )}
               <button
                 type="button"
                 className="p-2 rounded hover:bg-gray-100"
@@ -246,7 +239,7 @@ function IssuePage() {
 
             <div className="w-full max-w-full mt-2 min-h-fit p-3 ">
               <Editor
-                className="prose font-normal appearance-none text-md rounded editor"
+                className="prose font-normal appearance-none text-md rounded editor focus:outline-none"
                 value={
                   descriptionIsDirty.current
                     ? dirtyDescription || ``
