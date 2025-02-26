@@ -4,6 +4,7 @@ from ..db.connection import db_pool, get_db
 from ..db.queries import get_latest_issue_timestamp, get_new_issues
 from ..data import TicketRequest
 from .comment_service import add_agent_comment
+from .issue_service import set_issue_in_progress
 from .pr_service import process_ticket
 
 # Global variable to store the last checked timestamp
@@ -70,8 +71,13 @@ async def check_for_new_issues():
                 ticket = TicketRequest(title=title, description=description)
                 
                 try:
-                    # Add a comment that the agent is working on this issue
+                    # Update issue status to in_progress and add a comment
                     async with db_pool.acquire() as conn:
+                        # First set the status to in_progress
+                        await set_issue_in_progress(conn, issue_id)
+                        logger.info(f"Updated issue {issue_id} status to 'in_progress'")
+                        
+                        # Then add the comment
                         await add_agent_comment(conn, issue_id, workspace_id, "⏱️ On it, will create a PR soon.")
                     
                     # Process the ticket asynchronously
