@@ -32,7 +32,7 @@ export function showInfo(msg: string, title: string = ``) {
         <div
           className={`font-medium text-sm w-full text-gray-700 flex items-center`}
         >
-          <span className="flex items-center justify-center w-4 h-4 bg-blue-700 rounded-full">
+          <span className="flex items-center justify-center w-4 h-4 bg-red-700 rounded-full">
             <svg width="10" height="7" viewBox="0 0 9 7" fill="#fff">
               <path d="M3.29974 4.8648L1.64132 3.20637C1.45492 3.01998 1.15383 3.01998 0.967432 3.20637C0.781038 3.39277 0.781038 3.69387 0.967432 3.88026L2.96519 5.87802C3.15158 6.06441 3.45268 6.06441 3.63907 5.87802L8.6956 0.821492C8.88199 0.635099 8.88199 0.334001 8.6956 0.147608C8.50921 -0.0387859 8.20811 -0.0387859 8.02171 0.147608L3.29974 4.8648Z"></path>
             </svg>
