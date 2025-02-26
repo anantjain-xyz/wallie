@@ -1,6 +1,6 @@
 from codegen import CodeAgent, ProgrammingLanguage
 from codegen.extensions.tools.github.create_pr import create_pr
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
+from fastapi import FastAPI, HTTPException, Depends
 from helpers import create_codebase, format_ticket_message
 from data import TicketRequest, PRResponse
 import os
@@ -197,7 +197,7 @@ async def process_ticket(ticket: TicketRequest, issue_id=None, workspace_id=None
     """Process a ticket by creating a PR"""
     try:
         # This calls our existing function but in an async context
-        result = await asyncio.to_thread(create_pr_sync, ticket)
+        result = await asyncio.to_thread(create_pr, ticket)
         logger.info(f"Successfully processed ticket: {ticket.title}, PR: {result.pr_url}")
         
         # If we have issue_id and workspace_id, add a comment with the PR URL
@@ -224,8 +224,8 @@ async def process_ticket(ticket: TicketRequest, issue_id=None, workspace_id=None
         
         raise
 
-def create_pr_sync(request: TicketRequest) -> PRResponse:
-    """Synchronous version of create_pr_from_ticket for use with asyncio.to_thread"""
+def create_pr(request: TicketRequest) -> PRResponse:
+    """Create a PR for a ticket using the Codebase agent"""
     if not os.environ.get("GITHUB_TOKEN"):
         raise Exception("GitHub token not configured")
     
@@ -259,28 +259,6 @@ def create_pr_sync(request: TicketRequest) -> PRResponse:
         pr_url=create_pr_result.url,
         message="PR created successfully"
     )
-
-@app.post("/create-pr", response_model=PRResponse)
-async def create_pr_from_ticket(request: TicketRequest, background_tasks: BackgroundTasks):
-    """Create a PR from a ticket with title and description"""
-    if not os.environ.get("GITHUB_TOKEN"):
-        raise HTTPException(status_code=500, detail="GitHub token not configured")
-    
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise HTTPException(status_code=500, detail="Anthropic API key not configured")
-    
-    try:
-        # Process the ticket in a background task (without issue_id and workspace_id for API calls)
-        background_tasks.add_task(process_ticket, request)
-        
-        return PRResponse(
-            status="processing",
-            message="PR creation started in background"
-        )
-    
-    except Exception as e:
-        logger.error(f"Error creating PR: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error creating PR: {str(e)}")
 
 @app.get("/health")
 async def health_check():
