@@ -35,4 +35,17 @@ async def set_issue_in_progress(conn, issue_id: str) -> bool:
     Returns:
         bool: True if successful, False otherwise
     """
-    return await update_issue_status(conn, issue_id, 'in_progress') 
+    return await update_issue_status(conn, issue_id, 'in_progress')
+
+async def set_issue_in_review(conn, issue_id: str) -> bool:
+    """
+    Set an issue's status to 'in_review'
+    
+    Args:
+        conn: Database connection
+        issue_id: ID of the issue to update
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    return await update_issue_status(conn, issue_id, 'in_review') 

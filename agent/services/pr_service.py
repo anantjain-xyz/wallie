@@ -5,6 +5,7 @@ from ..data import TicketRequest, PRResponse
 from ..config import logger, GITHUB_TOKEN, ANTHROPIC_API_KEY, GITHUB_REPO, PROGRAMMING_LANGUAGE
 from ..db.connection import db_pool
 from .comment_service import add_agent_comment
+from .issue_service import set_issue_in_review
 import asyncio
 
 async def process_ticket(ticket: TicketRequest, issue_id=None, workspace_id=None):
@@ -21,10 +22,15 @@ async def process_ticket(ticket: TicketRequest, issue_id=None, workspace_id=None
         if issue_id and workspace_id and db_pool:
             try:
                 async with db_pool.acquire() as conn:
+                    # Add PR success comment
                     pr_comment = f"✅ PR created successfully: {result.pr_url}"
                     await add_agent_comment(conn, issue_id, workspace_id, pr_comment)
+                    
+                    # Update issue status to 'in_review'
+                    await set_issue_in_review(conn, issue_id)
+                    logger.info(f"Updated issue {issue_id} status to 'in_review'")
             except Exception as comment_error:
-                logger.error(f"Failed to add PR success comment: {str(comment_error)}")
+                logger.error(f"Failed to add PR success comment or update status: {str(comment_error)}")
         
         return result
     except Exception as e:
@@ -37,7 +43,7 @@ async def process_ticket(ticket: TicketRequest, issue_id=None, workspace_id=None
         if issue_id and workspace_id and db_pool:
             try:
                 async with db_pool.acquire() as conn:
-                    error_comment = f"❌ Error creating PR: {str(e)}"
+                    error_comment = f"⛔ Error creating PR: {str(e)}"
                     await add_agent_comment(conn, issue_id, workspace_id, error_comment)
             except Exception as comment_error:
                 logger.error(f"Failed to add PR error comment: {str(comment_error)}")

@@ -72,7 +72,7 @@ async def check_for_new_issues():
                 try:
                     # Add a comment that the agent is working on this issue
                     async with db_pool.acquire() as conn:
-                        await add_agent_comment(conn, issue_id, workspace_id, "I'm working on this issue and will create a PR soon.")
+                        await add_agent_comment(conn, issue_id, workspace_id, "⏱️ On it, will create a PR soon.")
                     
                     # Process the ticket asynchronously
                     await process_ticket(ticket, issue_id, workspace_id)
@@ -86,7 +86,7 @@ async def check_for_new_issues():
                     # Add error comment if there was a problem
                     try:
                         async with db_pool.acquire() as conn:
-                            await add_agent_comment(conn, issue_id, workspace_id, f"Error processing this issue: {str(e)}")
+                            await add_agent_comment(conn, issue_id, workspace_id, f"⛔ Error processing this issue: {str(e)}")
                     except Exception as comment_error:
                         logger.error(f"Failed to add error comment: {str(comment_error)}")
     
