@@ -5,6 +5,7 @@ import { ReactComponent as BacklogIcon } from '../assets/icons/circle-dot.svg'
 import { ReactComponent as TodoIcon } from '../assets/icons/circle.svg'
 import { ReactComponent as DoneIcon } from '../assets/icons/done.svg'
 import { ReactComponent as InProgressIcon } from '../assets/icons/half-circle.svg'
+import { ReactComponent as InReviewIcon } from '../assets/icons/three-quarters-cricle.svg'
 
 import { ReactComponent as HighPriorityIcon } from '../assets/icons/signal-strong.svg'
 import { ReactComponent as LowPriorityIcon } from '../assets/icons/signal-weak.svg'
@@ -84,6 +85,7 @@ export const Status = {
   BACKLOG: `backlog`,
   TODO: `todo`,
   IN_PROGRESS: `in_progress`,
+  IN_REVIEW: `in_review`,
   DONE: `done`,
   CANCELED: `canceled`,
 } as const
@@ -94,6 +96,7 @@ export const StatusDisplay = {
   [Status.BACKLOG]: `Backlog`,
   [Status.TODO]: `To Do`,
   [Status.IN_PROGRESS]: `In Progress`,
+  [Status.IN_REVIEW]: `In Review`,
   [Status.DONE]: `Done`,
   [Status.CANCELED]: `Canceled`,
 }
@@ -102,6 +105,7 @@ export const StatusIcons = {
   [Status.BACKLOG]: BacklogIcon,
   [Status.TODO]: TodoIcon,
   [Status.IN_PROGRESS]: InProgressIcon,
+  [Status.IN_REVIEW]: InReviewIcon,
   [Status.DONE]: DoneIcon,
   [Status.CANCELED]: CancelIcon,
 }
@@ -117,6 +121,11 @@ export const StatusOptions: [
     StatusIcons[Status.IN_PROGRESS],
     Status.IN_PROGRESS,
     StatusDisplay[Status.IN_PROGRESS],
+  ],
+  [
+    StatusIcons[Status.IN_REVIEW],
+    Status.IN_REVIEW,
+    StatusDisplay[Status.IN_REVIEW],
   ],
   [StatusIcons[Status.DONE], Status.DONE, StatusDisplay[Status.DONE]],
   [

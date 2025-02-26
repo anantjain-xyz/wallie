@@ -231,6 +231,12 @@ export default function IssueBoard({ columnsLiveIssues }: IssueBoardProps) {
           liveQuery={columnsLiveIssues[Status.IN_PROGRESS]}
         />
         <IssueCol
+          title={StatusDisplay[Status.IN_REVIEW]}
+          status={Status.IN_REVIEW}
+          issues={issuesByStatus[Status.IN_REVIEW]}
+          liveQuery={columnsLiveIssues[Status.IN_REVIEW]}
+        />
+        <IssueCol
           title={StatusDisplay[Status.DONE]}
           status={Status.DONE}
           issues={issuesByStatus[Status.DONE]}
