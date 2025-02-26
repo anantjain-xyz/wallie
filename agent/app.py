@@ -12,6 +12,10 @@ import asyncpg
 import time
 from contextlib import asynccontextmanager
 from typing import List, Dict, Any, Optional
+from datetime import datetime
+
+# Import services
+from .services import add_agent_comment, set_issue_in_progress
 
 # Load environment variables
 load_dotenv()
@@ -135,6 +139,9 @@ async def check_for_new_issues():
                     ticket = TicketRequest(title=title, description=description)
                     
                     try:
+                        # Update the issue status to in_progress
+                        await set_issue_in_progress(conn, issue_id)
+
                         # Add a comment that the agent is working on this issue
                         await add_agent_comment(conn, issue_id, workspace_id, "I'm working on this issue and will create a PR soon.")
                         
