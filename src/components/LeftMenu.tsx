@@ -8,6 +8,7 @@ import { BsSearch as SearchIcon } from 'react-icons/bs'
 import { BsFillGrid3X3GapFill as BoardIcon } from 'react-icons/bs'
 import { BsCollectionFill as IssuesIcon } from 'react-icons/bs'
 import { BsTerminalFill as ConsoleIcon } from 'react-icons/bs'
+import { BsGearFill as SettingsIcon } from 'react-icons/bs'
 import { Link } from 'react-router-dom'
 import AboutModal from './AboutModal'
 import IssueModal from './IssueModal'
@@ -30,11 +31,12 @@ function LeftMenu() {
   const currentUserResult = useCurrentUser(user)
   const workspaceId = currentUserResult?.rows[0]?.workspace_id
 
-  const workspaceResults = useLiveQuery.sql<{ name: string }>`
-    SELECT name FROM workspace WHERE id = ${workspaceId}
+  const workspaceResults = useLiveQuery.sql<{ name: string, avatar_url: string | null }>`
+    SELECT name, avatar_url FROM workspace WHERE id = ${workspaceId}
   `
 
   const workspaceName = workspaceResults?.rows[0]?.name ?? 'Wallie'
+  const workspaceAvatarUrl = workspaceResults?.rows[0]?.avatar_url
 
   const classes = classnames(
     `absolute z-40 lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 bg-white flex flex-col flex-shrink-0 w-56 font-sans text-sm text-gray-700 border-r border-gray-100 lg:shadow-none justify-items-start`,
@@ -58,12 +60,19 @@ function LeftMenu() {
         {/* Top menu*/}
         <div className="flex flex-col flex-grow-0 flex-shrink-0 px-5 py-3">
           <div className="flex items-center justify-between">
-            {/* Project selection */}
             <Link
-              className="flex items-baseline rounded cursor-pointer p-2 hover:bg-gray-100"
+              className={`flex ${workspaceAvatarUrl ? 'items-center' : 'items-baseline'} rounded cursor-pointer p-2 hover:bg-gray-100`}
               to="/"
             >
-              <div className="font-prosto text-md mr-2 text-blue-600">W</div>
+              {workspaceAvatarUrl ? (
+                <img 
+                  src={workspaceAvatarUrl} 
+                  alt={workspaceName} 
+                  className="w-5 h-5 mr-2 rounded object-cover border border-gray-300"
+                />
+              ) : (
+                <div className="font-prosto text-md mr-2 text-blue-600">W</div>
+              )}
               <span className="flex text-sm font-medium">{workspaceName}</span>
             </Link>
             <div className="flex items-center">
@@ -137,7 +146,15 @@ function LeftMenu() {
             >
               <ConsoleIcon className="w-3 mr-2 mt-1" />
             </button>
-            <UserButton />
+            <div className="flex flex-row justify-between space-x-1">
+              <Link
+                to="/settings"
+                className="flex items-center rounded cursor-pointer hover:bg-gray-100"
+              >
+                <SettingsIcon className="w-3.5 h-3.5 m-2" />
+              </Link>
+              <UserButton />
+            </div>
           </div>
         </div>
       </div>

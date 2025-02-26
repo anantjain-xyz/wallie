@@ -16,6 +16,7 @@ import PGWorker from './pglite-worker.js?worker'
 import List from './pages/List'
 import Root from './pages/root'
 import Issue from './pages/Issue'
+import Settings from './pages/Settings'
 import {
   getFilterStateFromSearchParams,
   filterStateToSql,
@@ -168,6 +169,10 @@ const router = createBrowserRouter([
         path: `/issue/:id`,
         element: <Issue />,
         loader: issueLoader,
+      },
+      {
+        path: `/settings`,
+        element: <Settings />,
       },
     ],
   },

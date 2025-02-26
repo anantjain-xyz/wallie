@@ -250,6 +250,8 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         id,
         name,
         url,
+        avatar_url,
+        allowlisted_domains,
         modified,
         created,
         modified_columns,

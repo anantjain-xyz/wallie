@@ -37,6 +37,8 @@ export const workspaceChangeSchema = z.object({
   id: z.string(),
   name: z.string().nullable().optional(),
   url: z.string().nullable().optional(),
+  avatar_url: z.string().nullable().optional(),
+  allowlisted_domains: z.array(z.string()).nullable().optional(),
   modified: z.string().nullable().optional(),
   created: z.string().nullable().optional(),
   modified_columns: z.array(z.string()).nullable().optional(),
