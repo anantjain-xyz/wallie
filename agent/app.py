@@ -110,10 +110,10 @@ async def check_for_new_issues():
         async with db_pool.acquire() as conn:
             # Using created timestamp for ordering and filtering
             query = """
-                SELECT id, title, description, created
-                FROM issue
-                WHERE created > $1 OR ($1 IS NULL)
-                ORDER BY created ASC
+                SELECT i.id, i.title, i.description, i.created, i.workspace_id
+                FROM issue i
+                WHERE i.created > $1 OR ($1 IS NULL)
+                ORDER BY i.created ASC
             """
             
             rows = await conn.fetch(query, last_checked_timestamp)
@@ -126,6 +126,7 @@ async def check_for_new_issues():
                     title = row['title']
                     description = row['description'] or ""
                     created = row['created']
+                    workspace_id = row['workspace_id']
                     
                     # Process the new issue
                     logger.info(f"Processing new issue {issue_id} created at {created}: {title}")
@@ -134,11 +135,11 @@ async def check_for_new_issues():
                     ticket = TicketRequest(title=title, description=description)
                     
                     try:
-                        # Process the ticket asynchronously
-                        await process_ticket(ticket)
+                        # Add a comment that the agent is working on this issue
+                        await add_agent_comment(conn, issue_id, workspace_id, "I'm working on this issue and will create a PR soon.")
                         
-                        # Update the issue status in the database if needed
-                        # await conn.execute("UPDATE issues SET status = 'processing' WHERE id = $1", issue_id)
+                        # Process the ticket asynchronously
+                        await process_ticket(ticket, issue_id, workspace_id)
                         
                         # Update the last checked timestamp
                         if last_checked_timestamp is None or created > last_checked_timestamp:
@@ -146,19 +147,81 @@ async def check_for_new_issues():
                     
                     except Exception as e:
                         logger.error(f"Error processing issue {issue_id}: {str(e)}")
+                        # Add error comment if there was a problem
+                        try:
+                            await add_agent_comment(conn, issue_id, workspace_id, f"Error processing this issue: {str(e)}")
+                        except Exception as comment_error:
+                            logger.error(f"Failed to add error comment: {str(comment_error)}")
     
     except Exception as e:
         logger.error(f"Error checking for new issues: {str(e)}")
 
-async def process_ticket(ticket: TicketRequest):
+async def add_agent_comment(conn, issue_id, workspace_id, body):
+    """Add a comment from the agent to the database"""
+    try:
+        # Get the agent user ID from the database
+        agent_user_query = """
+            SELECT id FROM app_user 
+            WHERE username = 'wallie'
+            AND workspace_id = $1
+            LIMIT 1
+        """
+        agent_user_id = await conn.fetchval(agent_user_query, workspace_id)
+        
+        if not agent_user_id:
+            logger.warning("Agent user not found in the database")
+            # Create a new agent user
+            agent_user_query = """
+                INSERT INTO app_user (id, username, full_name, email, workspace_id)
+                VALUES (gen_random_uuid(), 'wallie', 'Wallie', 'agent@wallie.app', $1)
+                RETURNING id
+            """
+            agent_user_id = await conn.fetchval(agent_user_query, workspace_id)
+        
+        # Insert the comment
+        comment_query = """
+            INSERT INTO comment (id, body, creator_id, issue_id, workspace_id)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4)
+            RETURNING id
+        """
+        comment_id = await conn.fetchval(comment_query, body, agent_user_id, issue_id, workspace_id)
+        
+        logger.info(f"Added agent comment {comment_id} to issue {issue_id}")
+        return comment_id
+    
+    except Exception as e:
+        logger.error(f"Error adding agent comment: {str(e)}")
+        raise
+
+async def process_ticket(ticket: TicketRequest, issue_id=None, workspace_id=None):
     """Process a ticket by creating a PR"""
     try:
         # This calls our existing function but in an async context
         result = await asyncio.to_thread(create_pr_sync, ticket)
         logger.info(f"Successfully processed ticket: {ticket.title}, PR: {result.pr_url}")
+        
+        # If we have issue_id and workspace_id, add a comment with the PR URL
+        if issue_id and workspace_id and db_pool:
+            try:
+                async with db_pool.acquire() as conn:
+                    pr_comment = f"✅ PR created successfully: {result.pr_url}"
+                    await add_agent_comment(conn, issue_id, workspace_id, pr_comment)
+            except Exception as comment_error:
+                logger.error(f"Failed to add PR success comment: {str(comment_error)}")
+        
         return result
     except Exception as e:
         logger.error(f"Error processing ticket: {str(e)}")
+        
+        # If we have issue_id and workspace_id, add a comment about the error
+        if issue_id and workspace_id and db_pool:
+            try:
+                async with db_pool.acquire() as conn:
+                    error_comment = f"❌ Error creating PR: {str(e)}"
+                    await add_agent_comment(conn, issue_id, workspace_id, error_comment)
+            except Exception as comment_error:
+                logger.error(f"Failed to add PR error comment: {str(comment_error)}")
+        
         raise
 
 def create_pr_sync(request: TicketRequest) -> PRResponse:
@@ -207,7 +270,7 @@ async def create_pr_from_ticket(request: TicketRequest, background_tasks: Backgr
         raise HTTPException(status_code=500, detail="Anthropic API key not configured")
     
     try:
-        # Process the ticket in a background task
+        # Process the ticket in a background task (without issue_id and workspace_id for API calls)
         background_tasks.add_task(process_ticket, request)
         
         return PRResponse(
