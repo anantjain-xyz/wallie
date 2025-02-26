@@ -2,10 +2,10 @@ import asyncio
 from ..config import logger, POLLING_INTERVAL_SECONDS, ERROR_RETRY_SECONDS
 from ..db.connection import db_pool, get_db
 from ..db.queries import get_latest_issue_timestamp, get_new_issues
-from ..data import TicketRequest
+from ..data import AgentRunRequest
 from .comment_service import add_agent_comment
 from .issue_service import set_issue_in_progress
-from .pr_service import process_ticket
+from .pr_service import process_issue
 
 # Global variable to store the last checked timestamp
 last_checked_timestamp = None
@@ -68,7 +68,7 @@ async def check_for_new_issues():
                 logger.info(f"Processing new issue {issue_id} created at {created}: {title}")
                 
                 # Create a ticket request
-                ticket = TicketRequest(title=title, description=description)
+                ticket = AgentRunRequest(title=title, description=description)
                 
                 try:
                     # Update issue status to in_progress and add a comment
@@ -81,7 +81,7 @@ async def check_for_new_issues():
                         await add_agent_comment(conn, issue_id, workspace_id, "⏱️ On it, will create a PR soon.")
                     
                     # Process the ticket asynchronously
-                    await process_ticket(ticket, issue_id, workspace_id)
+                    await process_issue(ticket, issue_id, workspace_id)
                     
                     # Update the last checked timestamp
                     if last_checked_timestamp is None or created > last_checked_timestamp:

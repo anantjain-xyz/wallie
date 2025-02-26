@@ -26,5 +26,5 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 PROGRAMMING_LANGUAGE = ProgrammingLanguage.TYPESCRIPT  # Change as needed for your repo
 
 # Issue monitoring settings
-POLLING_INTERVAL_SECONDS = 10  # Check for new issues every 10 seconds
+POLLING_INTERVAL_SECONDS = 2  # Check for new issues every 10 seconds
 ERROR_RETRY_SECONDS = 30  # Wait longer after an error 

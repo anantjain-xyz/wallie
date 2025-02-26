@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def format_ticket_message(title: str, description: str | None = "") -> str:
+def format_issue_message(title: str, description: str | None = "") -> str:
     """Format a ticket into a message for the agent"""
     return f"""
     Here is a new ticket titled '{title}' and with the description '{description}'. Continue to respond to this query. Use your tools to query the codebase for more context.
