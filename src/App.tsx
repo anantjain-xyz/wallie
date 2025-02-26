@@ -176,7 +176,7 @@ const router = createBrowserRouter([
 const LoadingScreen = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="h-screen w-screen flex flex-col items-center justify-center gap-4">
-      <ImSpinner8 className="w-8 h-8 animate-spin text-blue-600" />
+      <ImSpinner8 className="w-8 h-8 animate-spin text-red-600" />
       <div className="text-gray-600 text-center" style={{ minHeight: '100px' }}>
         {children}
       </div>
