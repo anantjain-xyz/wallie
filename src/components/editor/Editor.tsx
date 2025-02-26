@@ -10,6 +10,7 @@ import Table from '@tiptap/extension-table'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import TableRow from '@tiptap/extension-table-row'
+import Link from '@tiptap/extension-link'
 import { Markdown } from 'tiptap-markdown'
 import EditorMenu from './EditorMenu'
 import { useEffect, useRef } from 'react'
@@ -41,6 +42,15 @@ const Editor = ({
     TableRow,
     TableHeader,
     TableCell,
+    Link.configure({
+      openOnClick: true,
+      HTMLAttributes: {
+        target: '_blank',
+        rel: 'noopener noreferrer',
+      },
+      autolink: true,
+      linkOnPaste: true,
+    }),
     ...(placeholder ? [Placeholder.configure({
       placeholder,
     })] : []),

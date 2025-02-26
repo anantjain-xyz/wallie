@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import Editor from '../../components/editor/Editor'
 import Avatar from '../../components/Avatar'
 import { formatDate } from '../../utils/date'
@@ -46,7 +47,16 @@ function Comments({ issue }: CommentsProps) {
             </span>
           </div>
           <div className="mt-2 text-sm font-light prose w-full max-w-full">
-            <ReactMarkdown>{comment.body}</ReactMarkdown>
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                a: ({node, ...props}) => (
+                  <a target="_blank" rel="noopener noreferrer" {...props} />
+                )
+              }}
+            >
+              {comment.body}
+            </ReactMarkdown>
           </div>
         </div>
       ))

@@ -9,12 +9,32 @@ import { BsListUl as BulletListIcon } from 'react-icons/bs'
 import { BsListOl as OrderedListIcon } from 'react-icons/bs'
 import { BsCodeSlash as CodeBlockIcon } from 'react-icons/bs'
 import { BsChatQuote as BlockquoteIcon } from 'react-icons/bs'
+import { BsLink45Deg as LinkIcon } from 'react-icons/bs'
 
 export interface EditorMenuProps {
   editor: TipTapEditor
 }
 
 const EditorMenu = ({ editor }: EditorMenuProps) => {
+  const setLink = () => {
+    const previousUrl = editor.getAttributes('link').href
+    const url = window.prompt('URL', previousUrl)
+
+    // cancelled
+    if (url === null) {
+      return
+    }
+
+    // empty
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run()
+      return
+    }
+
+    // update link
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+  }
+
   return (
     <div className="bg-white flex shadow-md rounded border p-1">
       <button
@@ -68,6 +88,18 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
         )}
       >
         <CodeIcon className="w-4 h-4" />
+      </button>
+      <button
+        type="button"
+        onClick={setLink}
+        className={classNames(
+          `me-1 px-1 py-1 rounded color text-gray-500 hover:text-black`,
+          {
+            'bg-gray-100': editor.isActive(`link`),
+          }
+        )}
+      >
+        <LinkIcon className="w-4 h-4" />
       </button>
       <div className="border-r me-1 border-gray-200"></div>
       <button
