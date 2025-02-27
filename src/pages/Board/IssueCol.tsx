@@ -64,7 +64,7 @@ function IssueCol({ title, status, issues = [], liveQuery }: Props) {
           {statusIcon}
           <span className="ml-3 mr-3 font-medium">{title} </span>
           <span className="mr-3 font-normal text-gray-400">
-            {issues?.length || 0}
+            {issues?.length ?? 0}
           </span>
         </div>
       </div>
@@ -94,8 +94,8 @@ function IssueCol({ title, status, issues = [], liveQuery }: Props) {
           // Usually the DroppableProvided.placeholder does this, but that won't
           // work in a virtual list
           const itemCount: number = snapshot.isUsingPlaceholder
-            ? issues.length + 1
-            : issues.length
+            ? issues?.length ?? 0 + 1
+            : issues?.length ?? 0
 
           return (
             <div 
