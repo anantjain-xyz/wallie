@@ -129,7 +129,19 @@ async function issueLoader({
 const GlobalShortcutsHandler = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const { setShowIssueModal } = useContext(IssueModalContext)!;
+  const [lastKeyPressed, setLastKeyPressed] = useState<string | null>(null);
+  const [keySequenceTimer, setKeySequenceTimer] = useState<NodeJS.Timeout | null>(null);
 
+  // Clear the last key pressed after a delay
+  const clearLastKeyPressed = () => {
+    if (keySequenceTimer) clearTimeout(keySequenceTimer);
+    const timer = setTimeout(() => {
+      setLastKeyPressed(null);
+    }, 1000); // 1 second timeout for key sequences
+    setKeySequenceTimer(timer);
+  };
+
+  // Single key shortcuts
   useHotkeys('c', () => {
     setShowIssueModal(true);
   }, { enableOnFormTags: false }, [setShowIssueModal]);
@@ -138,10 +150,27 @@ const GlobalShortcutsHandler = ({ children }: { children: React.ReactNode }) => 
     navigate('/search');
   }, { enableOnFormTags: false }, [navigate]);
 
-  // Add shortcut to go to Settings page
-  useHotkeys('g s', () => {
-    navigate('/settings');
-  }, { enableOnFormTags: false }, [navigate]);
+  // Key sequence handler
+  useHotkeys('g', () => {
+    setLastKeyPressed('g');
+    clearLastKeyPressed();
+  }, { enableOnFormTags: false });
+
+  useHotkeys('s', () => {
+    if (lastKeyPressed === 'g') {
+      navigate('/settings');
+      setLastKeyPressed(null);
+      if (keySequenceTimer) clearTimeout(keySequenceTimer);
+    }
+  }, { enableOnFormTags: false }, [navigate, lastKeyPressed, keySequenceTimer]);
+
+  useHotkeys('i', () => {
+    if (lastKeyPressed === 'g') {
+      navigate('/');
+      setLastKeyPressed(null);
+      if (keySequenceTimer) clearTimeout(keySequenceTimer);
+    }
+  }, { enableOnFormTags: false }, [navigate, lastKeyPressed, keySequenceTimer]);
 
   return <>{children}</>;
 }
