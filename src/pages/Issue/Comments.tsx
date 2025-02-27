@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import Editor from '../../components/editor/Editor'
@@ -14,6 +14,39 @@ import Tooltip from '../../components/Tooltip'
 
 export interface CommentsProps {
   issue: Issue
+}
+
+// Error boundary component for ReactMarkdown
+function SafeMarkdown({ children }: { children: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    // Reset error state when content changes
+    setHasError(false);
+  }, [children]);
+
+  if (hasError) {
+    return <div className="text-gray-700 whitespace-pre-wrap">{children}</div>;
+  }
+
+  try {
+    return (
+      <ReactMarkdown 
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: ({node, ...props}) => (
+            <a target="_blank" rel="noopener noreferrer" {...props} />
+          )
+        }}
+      >
+        {children}
+      </ReactMarkdown>
+    );
+  } catch (error) {
+    console.error('Error rendering markdown:', error);
+    setHasError(true);
+    return <div className="text-gray-700 whitespace-pre-wrap">{children}</div>;
+  }
 }
 
 function Comments({ issue }: CommentsProps) {
@@ -47,16 +80,9 @@ function Comments({ issue }: CommentsProps) {
             </span>
           </div>
           <div className="mt-2 text-sm font-light prose w-full max-w-full">
-            <ReactMarkdown 
-              remarkPlugins={[remarkGfm]}
-              components={{
-                a: ({node, ...props}) => (
-                  <a target="_blank" rel="noopener noreferrer" {...props} />
-                )
-              }}
-            >
+            <SafeMarkdown>
               {comment.body}
-            </ReactMarkdown>
+            </SafeMarkdown>
           </div>
         </div>
       ))
