@@ -37,7 +37,7 @@ export default function AboutModal({
         </button>
         <button
           type="button"
-          className="px-3 ml-3 text-white bg-blue-600 rounded hover:bg-blue-700 h-7"
+          className="px-3 ml-3 text-white bg-yellow-600$1bg-yellow-700 h-7"
           onClick={handleDelete}
         >
           Delete Issue
