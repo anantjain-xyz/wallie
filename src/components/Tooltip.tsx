@@ -5,14 +5,16 @@ interface TooltipProps {
   children: ReactNode
   content: string
   shortcut?: string
+  placement?: 'top' | 'bottom' | 'left' | 'right'
 }
 
-export default function Tooltip({ children, content, shortcut }: TooltipProps) {
+export default function Tooltip({ children, content, shortcut, placement = 'bottom' }: TooltipProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const { refs, floatingStyles } = useFloating({
     open: isOpen,
     onOpenChange: setIsOpen,
+    placement,
     middleware: [offset(8), shift()]
   })
 
@@ -34,7 +36,7 @@ export default function Tooltip({ children, content, shortcut }: TooltipProps) {
           >
             <span>{content}</span>
             {shortcut && (
-              <span className="ml-2 px-1 bg-gray-200 rounded text-xs">
+              <span className="ml-2 px-2 bg-gray-100 rounded text-xs">
                 {shortcut}
               </span>
             )}

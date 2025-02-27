@@ -147,12 +147,14 @@ function LeftMenu() {
               <ConsoleIcon className="w-3 mr-2 mt-1" />
             </button>
             <div className="flex flex-row justify-between space-x-1">
-              <Link
-                to="/settings"
-                className="flex items-center rounded cursor-pointer hover:bg-gray-100"
-              >
-                <SettingsIcon className="w-3.5 h-3.5 m-2" />
-              </Link>
+              <Tooltip content="Settings" shortcut="g then s" placement="top">
+                <Link
+                  to="/settings"
+                  className="flex items-center rounded cursor-pointer hover:bg-gray-100"
+                >
+                  <SettingsIcon className="w-3.5 h-3.5 m-2" />
+                </Link>
+              </Tooltip>
               <UserButton />
             </div>
           </div>
