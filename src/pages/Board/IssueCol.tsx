@@ -39,8 +39,7 @@ interface Props {
 
 const itemSpacing = 8
 
-function IssueCol({ title, status, issues, liveQuery }: Props) {
-  issues = issues || []
+function IssueCol({ title, status, issues = [], liveQuery }: Props) {
   const statusIcon = <StatusIcon status={status} />
 
   const issuesRes = useLiveQuery(liveQuery)
@@ -99,7 +98,11 @@ function IssueCol({ title, status, issues, liveQuery }: Props) {
             : issues.length
 
           return (
-            <div className="grow">
+            <div 
+              className="grow"
+              ref={droppableProvided.innerRef}
+              {...droppableProvided.droppableProps}
+            >
               <AutoSizer>
                 {({ height, width }) => (
                   <List
@@ -107,12 +110,9 @@ function IssueCol({ title, status, issues, liveQuery }: Props) {
                     itemCount={itemCount}
                     itemSize={itemHeight + itemSpacing}
                     width={width}
-                    outerRef={droppableProvided.innerRef}
                     itemData={issues}
                     className="w-full border-gray-200 pt-0.5"
                     onItemsRendered={handleOnItemsRendered}
-                    // ref={provided.innerRef}
-                    // {...provided.droppableProps}
                   >
                     {Row}
                   </List>
