@@ -17,15 +17,17 @@ const Settings = () => {
     name: string, 
     url: string,
     avatar_url: string | null,
-    allowlisted_domains: string[]
+    allowlisted_domains: string[],
+    anthropic_api_key: string | null
   }>`
-    SELECT id, name, url, avatar_url, allowlisted_domains FROM workspace WHERE id = ${workspaceId}
+    SELECT id, name, url, avatar_url, allowlisted_domains, anthropic_api_key FROM workspace WHERE id = ${workspaceId}
   `
 
   const workspace = workspaceResults?.rows[0]
   const [workspaceName, setWorkspaceName] = useState(workspace?.name || '')
   const [workspaceUrl, setWorkspaceUrl] = useState(workspace?.url || '')
   const [workspaceAvatarUrl, setWorkspaceAvatarUrl] = useState(workspace?.avatar_url || '')
+  const [anthropicApiKey, setAnthropicApiKey] = useState(workspace?.anthropic_api_key || '')
   const [isUploading, setIsUploading] = useState(false)
 
   // Update state when workspace data is loaded
@@ -34,6 +36,7 @@ const Settings = () => {
       setWorkspaceName(workspace.name)
       setWorkspaceUrl(workspace.url)
       setWorkspaceAvatarUrl(workspace.avatar_url || '')
+      setAnthropicApiKey(workspace.anthropic_api_key || '')
     }
   }, [workspace])
 
@@ -43,7 +46,7 @@ const Settings = () => {
     try {
       await pg.sql`
         UPDATE workspace 
-        SET name = ${workspaceName}, url = ${workspaceUrl}, modified = ${new Date()}
+        SET name = ${workspaceName}, url = ${workspaceUrl}, anthropic_api_key = ${anthropicApiKey}, modified = ${new Date()}
         WHERE id = ${workspaceId}
       `
       toast.success('Workspace settings saved successfully')
@@ -123,12 +126,12 @@ const Settings = () => {
                   <div 
                     {...getRootProps()} 
                     className={`h-12 w-12 rounded overflow-hidden bg-gray-100 flex items-center justify-center cursor-pointer border-2 ${
-                      isDragActive ? 'border-blue-500 border-dashed' : 'border-transparent'
+                      isDragActive ? 'border-red-500 border-dashed' : 'border-transparent'
                     } hover:border-gray-300 transition-colors`}
                   >
                     <input {...getInputProps()} />
                     {isUploading ? (
-                      <div className="animate-spin rounded-full h-6 w-6 border-2 border-t-blue-500 border-gray-300"></div>
+                      <div className="animate-spin rounded-full h-6 w-6 border-2 border-t-red-500 border-gray-300"></div>
                     ) : workspaceAvatarUrl ? (
                       <img 
                         src={workspaceAvatarUrl} 
@@ -158,7 +161,7 @@ const Settings = () => {
                   id="name"
                   value={workspaceName}
                   onChange={(e) => setWorkspaceName(e.target.value)}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
                 />
               </div>
               
@@ -177,9 +180,28 @@ const Settings = () => {
                     id="url"
                     value={workspaceUrl}
                     onChange={(e) => setWorkspaceUrl(e.target.value)}
-                    className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
                   />
                 </div>
+              </div>
+
+              {/* Anthropic API Key */}
+              <div>
+                <label htmlFor="anthropicApiKey" className="block text-sm font-medium text-gray-700 mb-1">
+                  Anthropic API Key
+                </label>
+                <input
+                  type="password"
+                  name="anthropicApiKey"
+                  id="anthropicApiKey"
+                  value={anthropicApiKey}
+                  onChange={(e) => setAnthropicApiKey(e.target.value)}
+                  placeholder="Enter your Anthropic API key"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Your Anthropic API key is required for AI-powered features. Keep this key secure.
+                </p>
               </div>
             </div>
             
@@ -187,7 +209,61 @@ const Settings = () => {
               <button
                 type="button"
                 onClick={handleSaveWorkspace}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600$1hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Save changes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ToastContainer position="bottom-right" />
+   
+export default Settings
+  )
+}
+
+export default Settings s
+export default Settings
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Your Anthropic API key is required for AI-powered features. Keep this key secure.
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={handleSaveWorkspace}
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600$1hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Save changes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ToastContainer position="bottom-right" />
+   
+export default Settings
+  )
+}
+
+export default Settings s
+export default Settings1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Your Anthropic API key is required for AI-powered features. Keep this key secure.
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={handleSaveWorkspace}
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600$1hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
                 Save changes
               </button>
@@ -197,6 +273,47 @@ const Settings = () => {
       </div>
       <ToastContainer position="bottom-right" />
     </div>
+  )
+}
+
+export default Settings </div>
+  )
+}
+
+export default Settings s </div>
+  )
+}
+
+export default Settings y-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Your Anthropic API key is required for AI-powered features. Keep this key secure.
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={handleSaveWorkspace}
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600$1hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Save changes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ToastContainer position="bottom-right" />
+    </div>
+  )
+}
+
+export default Settings </div>
+  )
+}
+
+export default Settings s </div>
   )
 }
 
