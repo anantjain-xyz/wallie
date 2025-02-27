@@ -123,12 +123,12 @@ const Settings = () => {
                   <div 
                     {...getRootProps()} 
                     className={`h-12 w-12 rounded overflow-hidden bg-gray-100 flex items-center justify-center cursor-pointer border-2 ${
-                      isDragActive ? 'border-blue-500 border-dashed' : 'border-transparent'
+                      isDragActive ? 'border-yellow-500 border-dashed' : 'border-transparent'
                     } hover:border-gray-300 transition-colors`}
                   >
                     <input {...getInputProps()} />
                     {isUploading ? (
-                      <div className="animate-spin rounded-full h-6 w-6 border-2 border-t-blue-500 border-gray-300"></div>
+                      <div className="animate-spin rounded-full h-6 w-6 border-2 border-t-yellow-500 border-gray-300"></div>
                     ) : workspaceAvatarUrl ? (
                       <img 
                         src={workspaceAvatarUrl} 
@@ -158,7 +158,7 @@ const Settings = () => {
                   id="name"
                   value={workspaceName}
                   onChange={(e) => setWorkspaceName(e.target.value)}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
                 />
               </div>
               
@@ -177,7 +177,7 @@ const Settings = () => {
                     id="url"
                     value={workspaceUrl}
                     onChange={(e) => setWorkspaceUrl(e.target.value)}
-                    className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
                   />
                 </div>
               </div>
@@ -187,7 +187,7 @@ const Settings = () => {
               <button
                 type="button"
                 onClick={handleSaveWorkspace}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600$1bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
               >
                 Save changes
               </button>
@@ -200,4 +200,4 @@ const Settings = () => {
   )
 }
 
-export default Settings 
+export default Settings tings ettings tings ault Settings tings ettings tings 
