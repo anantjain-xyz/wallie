@@ -138,6 +138,11 @@ const GlobalShortcutsHandler = ({ children }: { children: React.ReactNode }) => 
     navigate('/search');
   }, { enableOnFormTags: false }, [navigate]);
 
+  // Add shortcut to go to Settings page
+  useHotkeys('g s', () => {
+    navigate('/settings');
+  }, { enableOnFormTags: false }, [navigate]);
+
   return <>{children}</>;
 }
 
