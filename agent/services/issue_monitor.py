@@ -64,6 +64,11 @@ async def check_for_new_issues():
                 created = row['created']
                 workspace_id = row['workspace_id']
                 
+                # Update the last checked timestamp for this issue regardless of processing outcome
+                # This prevents infinite loops if processing fails
+                if last_checked_timestamp is None or created > last_checked_timestamp:
+                    last_checked_timestamp = created
+                
                 # Process the new issue
                 logger.info(f"Processing new issue {issue_id} created at {created}: {title}")
                 
@@ -83,10 +88,6 @@ async def check_for_new_issues():
                     # Process the ticket asynchronously
                     await process_issue(ticket, issue_id, workspace_id)
                     
-                    # Update the last checked timestamp
-                    if last_checked_timestamp is None or created > last_checked_timestamp:
-                        last_checked_timestamp = created
-                
                 except Exception as e:
                     logger.error(f"Error processing issue {issue_id}: {str(e)}")
                     # Add error comment if there was a problem
