@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import uvicorn
-
+import os
 from .config import logger
 from .db.connection import init_db, close_db
 from .services.issue_monitor import start_issue_monitor
@@ -42,4 +42,4 @@ async def health_check():
     }
 
 if __name__ == "__main__":
-    uvicorn.run("agent.main:app", host="0.0.0.0", port=8000, reload=True) 
+    uvicorn.run("agent.main:app", host="0.0.0.0", port=os.getenv("PORT", 8000), reload=True) 
