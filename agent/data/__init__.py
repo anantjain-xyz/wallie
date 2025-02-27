@@ -1,3 +1,3 @@
-from .models import AgentRunRequest, AgentRunResponse
+from .models import Issue, AgentRunResponse
 
-__all__ = ["AgentRunRequest", "AgentRunResponse"]
+__all__ = ["Issue", "AgentRunResponse"]

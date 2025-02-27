@@ -49,6 +49,11 @@ The application uses the following environment variables:
 To run the application:
 
 ```bash
+cd agent
+uv venv
+source .venv/bin/activate
+uv pip install -e .
+cd ..
 python -m agent.main
 ```
 
@@ -57,19 +62,3 @@ The application will start on port 8000 and begin monitoring the database for ne
 ## API Endpoints
 
 - `GET /health`: Health check endpoint that returns the status of the application and database connection
-
-## Development
-
-To set up the development environment:
-
-1. Install the dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. Create a `.env` file with the required environment variables
-
-3. Run the application in development mode:
-   ```bash
-   python -m agent.main
-   ```

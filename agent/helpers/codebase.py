@@ -11,7 +11,7 @@ def format_issue_message(title: str, description: str | None = "") -> str:
     """Format a ticket into a message for the agent"""
     return f"""
     Here is a new ticket titled '{title}' and with the description '{description}'. Continue to respond to this query. Use your tools to query the codebase for more context.
-    When applicable include references to files and line numbers, code snippets are also encouraged. Don't forget to create a pull request with your changes, use the appropriate tool to do so.
+    When applicable include references to files and line numbers, code snippets are also encouraged.
     """
 
 

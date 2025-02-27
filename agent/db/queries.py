@@ -1,7 +1,7 @@
 from .connection import db_pool
 from ..config import logger
 from typing import Optional, List, Dict, Any
-import uuid
+from uuid import UUID
 
 async def get_latest_issue_timestamp():
     """Get the timestamp of the most recent issue"""
@@ -43,7 +43,7 @@ async def get_new_issues(timestamp):
         logger.error(f"Error getting new issues: {str(e)}")
         return []
 
-async def get_agent_user_id(conn, workspace_id):
+async def get_agent_user_id(conn, workspace_id: UUID):
     """Get the agent user ID for the given workspace"""
     try:
         agent_user_query = """
@@ -69,7 +69,7 @@ async def get_agent_user_id(conn, workspace_id):
         logger.error(f"Error getting agent user ID: {str(e)}")
         raise
 
-async def add_comment(conn, issue_id, workspace_id, body):
+async def add_comment(conn, issue_id: UUID, workspace_id: UUID, body: str):
     """Add a comment to an issue"""
     try:
         # Get the agent user ID

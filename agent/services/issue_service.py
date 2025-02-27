@@ -1,7 +1,8 @@
 from ..config import logger
 from typing import Optional
+from uuid import UUID
 
-async def update_issue_status(conn, issue_id: str, status: str) -> bool:
+async def update_issue_status(conn, issue_id: UUID, status: str) -> bool:
     """
     Update the status of an issue
     
@@ -24,7 +25,7 @@ async def update_issue_status(conn, issue_id: str, status: str) -> bool:
         logger.error(f"Error updating issue status: {str(e)}")
         return False
 
-async def set_issue_in_progress(conn, issue_id: str) -> bool:
+async def set_issue_in_progress(conn, issue_id: UUID) -> bool:
     """
     Set an issue's status to 'in_progress'
     
@@ -37,7 +38,7 @@ async def set_issue_in_progress(conn, issue_id: str) -> bool:
     """
     return await update_issue_status(conn, issue_id, 'in_progress')
 
-async def set_issue_in_review(conn, issue_id: str) -> bool:
+async def set_issue_in_review(conn, issue_id: UUID) -> bool:
     """
     Set an issue's status to 'in_review'
     

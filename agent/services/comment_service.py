@@ -1,7 +1,8 @@
 from ..db.queries import add_comment
 from ..config import logger
+from uuid import UUID
 
-async def add_agent_comment(conn, issue_id, workspace_id, body):
+async def add_agent_comment(conn, issue_id: UUID, workspace_id: UUID, body: str):
     """Add a comment from the agent to the database"""
     try:
         comment_id = await add_comment(conn, issue_id, workspace_id, body)

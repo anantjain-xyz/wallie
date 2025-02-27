@@ -2,7 +2,7 @@ import asyncio
 from ..config import logger, POLLING_INTERVAL_SECONDS, ERROR_RETRY_SECONDS
 from ..db.connection import db_pool, get_db
 from ..db.queries import get_latest_issue_timestamp, get_new_issues
-from ..data import AgentRunRequest
+from ..data import Issue
 from .comment_service import add_agent_comment
 from .issue_service import set_issue_in_progress
 from .pr_service import process_issue
@@ -72,8 +72,7 @@ async def check_for_new_issues():
                 # Process the new issue
                 logger.info(f"Processing new issue {issue_id} created at {created}: {title}")
                 
-                # Create a ticket request
-                ticket = AgentRunRequest(title=title, description=description)
+                issue = Issue(title=title, description=description, id=issue_id, workspace_id=workspace_id)
                 
                 try:
                     # Update issue status to in_progress and add a comment
@@ -86,7 +85,7 @@ async def check_for_new_issues():
                         await add_agent_comment(conn, issue_id, workspace_id, "⏱️ On it, will create a PR soon.")
                     
                     # Process the ticket asynchronously
-                    await process_issue(ticket, issue_id, workspace_id)
+                    await process_issue(issue)
                     
                 except Exception as e:
                     logger.error(f"Error processing issue {issue_id}: {str(e)}")
