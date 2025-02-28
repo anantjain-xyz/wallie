@@ -3,7 +3,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import Editor from '../../components/editor/Editor'
 import Avatar from '../../components/Avatar'
-import { formatDate } from '../../utils/date'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 import { showWarning, showInfo } from '../../utils/notification'
 import { ReactComponent as DeleteIcon } from '../../assets/icons/delete.svg'
 import { Comment, Issue } from '../../types/types'
@@ -12,6 +13,9 @@ import { useHotkeys } from 'react-hotkeys-hook'
 import { useCurrentUser } from '../../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
 import Tooltip from '../../components/Tooltip'
+
+// Initialize dayjs relative time plugin
+dayjs.extend(relativeTime)
 
 export interface CommentsProps {
   issue: Issue
@@ -89,12 +93,15 @@ function Comments({ issue }: CommentsProps) {
         >
           <div className="flex items-center mb-2">
             <Avatar name={comment.author_full_name} />
-            <span className="ms-2 text-sm text-gray-400">
-              {comment.author_full_name}
-            </span>
-            <span className="ms-auto text-sm text-gray-400 ml-2">
-              {formatDate(comment.created)}
-            </span>
+            <div className='flex flex-row items-baseline'>
+              <span className="ms-2 text-sm text-gray-400">
+                {comment.author_full_name}
+              </span>
+              <span className="ms-2 text-xs text-gray-400">
+                {dayjs(comment.created).fromNow()}
+              </span>
+            </div>
+            <span className="ms-auto"></span>
             {currentUser?.id === comment.creator_id && (
               <button
                 className="ml-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
