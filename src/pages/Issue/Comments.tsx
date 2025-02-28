@@ -4,7 +4,8 @@ import remarkGfm from 'remark-gfm'
 import Editor from '../../components/editor/Editor'
 import Avatar from '../../components/Avatar'
 import { formatDate } from '../../utils/date'
-import { showWarning } from '../../utils/notification'
+import { showWarning, showInfo } from '../../utils/notification'
+import { ReactComponent as DeleteIcon } from '../../assets/icons/delete.svg'
 import { Comment, Issue } from '../../types/types'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { useHotkeys } from 'react-hotkeys-hook'
@@ -63,6 +64,22 @@ function Comments({ issue }: CommentsProps) {
   const currentUserResult = useCurrentUser(user)
   const currentUser = currentUserResult?.rows[0]
 
+  const handleDeleteComment = useCallback(async (commentId: string) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) {
+      return
+    }
+
+    try {
+      await pg.sql`
+        DELETE FROM comment
+        WHERE id = ${commentId}
+      `
+      showInfo('Comment deleted successfully', 'Success')
+    } catch (error) {
+      showWarning('Failed to delete comment', error instanceof Error ? error.message : 'Unknown error')
+    }
+  }, [pg])
+
   const commentList = () => {
     if (comments && comments.length > 0) {
       return comments.map((comment) => (
@@ -75,9 +92,18 @@ function Comments({ issue }: CommentsProps) {
             <span className="ms-2 text-sm text-gray-400">
               {comment.author_full_name}
             </span>
-            <span className=" ms-auto text-sm text-gray-400 ml-2">
+            <span className="ms-auto text-sm text-gray-400 ml-2">
               {formatDate(comment.created)}
             </span>
+            {currentUser?.id === comment.creator_id && (
+              <button
+                className="ml-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
+                onClick={() => handleDeleteComment(comment.id)}
+                title="Delete comment"
+              >
+                <DeleteIcon width={16} height={16} />
+              </button>
+            )}
           </div>
           <div className="mt-2 text-sm font-light prose w-full max-w-full">
             <SafeMarkdown>
