@@ -67,7 +67,10 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       params: {
         table: 'workspace',
       },
-      headers: await getAuthHeaders(),
+      headers: {
+        ...await getAuthHeaders(),
+        'Cache-Control': 'no-cache'
+      },
     },
     table: 'workspace',
     primaryKey: ['id'],
@@ -100,7 +103,10 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       params: {
         table: 'app_user',
       },
-      headers: await getAuthHeaders(),
+      headers: {
+        ...await getAuthHeaders(),
+        'Cache-Control': 'no-cache'
+      },
     },
     table: 'app_user',
     primaryKey: ['id'],
@@ -133,7 +139,10 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       params: {
         table: 'issue',
       },
-      headers: await getAuthHeaders(),
+      headers: {
+        ...await getAuthHeaders(),
+        'Cache-Control': 'no-cache'
+      },
     },
     table: 'issue',
     primaryKey: ['id'],
@@ -166,7 +175,10 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       params: {
         table: 'comment',
       },
-      headers: await getAuthHeaders(),
+      headers: {
+        ...await getAuthHeaders(),
+        'Cache-Control': 'no-cache'
+      },
     },
     table: 'comment',
     primaryKey: ['id'],
