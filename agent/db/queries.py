@@ -48,7 +48,7 @@ async def get_agent_user_id(conn, workspace_id: UUID):
     try:
         agent_user_query = """
             SELECT id FROM app_user 
-            WHERE username = 'wallie'
+            WHERE username ilike 'wallie%'
             AND workspace_id = $1
             LIMIT 1
         """
