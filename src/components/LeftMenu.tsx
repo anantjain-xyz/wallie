@@ -1,5 +1,6 @@
 import { ReactComponent as MenuIcon } from '../assets/icons/menu.svg'
 import { ReactComponent as BacklogIcon } from '../assets/icons/circle-dot.svg'
+import { ReactComponent as TodoIcon } from '../assets/icons/circle.svg'
 import { MenuContext, IssueModalContext } from '../App'
 import classnames from 'classnames'
 import { memo, RefObject, useRef, useState, useContext } from 'react'
@@ -110,12 +111,10 @@ function LeftMenu() {
               <span>All Issues</span>
             </Link>
             <Link
-              to="/?status=todo,in_progress"
+              to="/?status=todo,in_progress,in_review"
               className="flex items-center pl-6 rounded cursor-pointer h-7 hover:bg-gray-100"
             >
-              <span className="w-3.5 h-6 mr-2 inline-block">
-                <span className="block w-2 h-full border-r"></span>
-              </span>
+              <TodoIcon className="w-3.5 h-3.5 mr-2" />
               <span>Active</span>
             </Link>
             <Link

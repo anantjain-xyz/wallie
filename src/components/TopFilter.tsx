@@ -61,7 +61,7 @@ export default function ({
   if (filterState.status?.length) {
     if (eqStatuses([`backlog`])) {
       title = `Backlog`
-    } else if (eqStatuses([`todo`, `in_progress`])) {
+    } else if (eqStatuses([`todo`, `in_progress`, `in_review`])) {
       title = `Active`
     }
   }
