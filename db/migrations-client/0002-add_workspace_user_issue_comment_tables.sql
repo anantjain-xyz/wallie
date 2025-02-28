@@ -49,9 +49,7 @@ CREATE TABLE IF NOT EXISTS "app_user" (
     "sent_to_server" BOOLEAN NOT NULL DEFAULT FALSE, -- Flag to track if the row has been sent to the server
     "synced" BOOLEAN GENERATED ALWAYS AS (ARRAY_LENGTH(modified_columns, 1) IS NULL AND NOT deleted AND NOT new) STORED,
     "backup" JSONB, -- JSONB column to store the backup of the row data for modified columns
-    CONSTRAINT "app_user_pkey" PRIMARY KEY ("id"),
-    CONSTRAINT "app_user_email_key" UNIQUE ("email"),
-    CONSTRAINT "app_user_username_key" UNIQUE ("username")
+    CONSTRAINT "app_user_pkey" PRIMARY KEY ("id")
 );
 
 -- Add triggers for local state management
