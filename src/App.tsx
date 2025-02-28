@@ -142,7 +142,7 @@ const GlobalShortcutsHandler = ({ children }: { children: React.ReactNode }) => 
   };
 
   // Single key shortcuts
-  useHotkeys('c', () => {
+  useHotkeys('n', () => {
     setShowIssueModal(true);
   }, { enableOnFormTags: false }, [setShowIssueModal]);
 

@@ -85,7 +85,7 @@ function LeftMenu() {
                 </Link>
               </Tooltip>
 
-              <Tooltip content="Create new issue" shortcut="c">
+              <Tooltip content="Create new issue" shortcut="n">
                 <button
                   type="button"
                   className="inline-flex ms-2 items-center p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 h-7"
