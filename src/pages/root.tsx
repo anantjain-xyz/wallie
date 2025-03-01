@@ -15,9 +15,13 @@ export default function Root() {
   }
 
   return (
-    <div className="flex w-full h-screen overflow-y-hidden">
-      <LeftMenu />
-      <Outlet />
-    </div>
+    <>
+      <div className="flex w-full h-screen overflow-y-hidden">
+        <LeftMenu />
+        <Outlet />
+      </div>
+      {/* Portal target for CommandBar */}
+      <div id="command-bar-portal"></div>
+    </>
   )
 }

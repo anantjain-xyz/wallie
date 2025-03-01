@@ -6,6 +6,7 @@ import {
   RouterProvider,
   type Params,
   useNavigate,
+  Outlet,
 } from 'react-router-dom'
 import 'react-toastify/dist/ReactToastify.css'
 import { live, LiveQuery } from '@electric-sql/pglite/live'
@@ -30,6 +31,7 @@ import { useElectricAuth } from './auth'
 import type { PGliteWithExtensions } from './sync'
 import { useAuth } from '@clerk/clerk-react'
 import SignInPage from './components/SignInPage'
+import CommandBarWrapper from './components/CommandBarWrapper'
 
 interface MenuContextInterface {
   showMenu: boolean
@@ -41,8 +43,14 @@ interface IssueModalContextInterface {
   setShowIssueModal: (show: boolean) => void
 }
 
+interface CommandBarContextInterface {
+  showCommandBar: boolean
+  setShowCommandBar: (show: boolean) => void
+}
+
 export const MenuContext = createContext(null as MenuContextInterface | null)
 export const IssueModalContext = createContext(null as IssueModalContextInterface | null)
+export const CommandBarContext = createContext(null as CommandBarContextInterface | null)
 
 async function createPGlite() {
   return PGliteWorker.create(new PGWorker(), {
@@ -126,9 +134,11 @@ async function issueLoader({
   return { liveIssue }
 }
 
-const GlobalShortcutsHandler = ({ children }: { children: React.ReactNode }) => {
+// Move GlobalShortcutsHandler to be used inside the router
+const AppLayout = () => {
   const navigate = useNavigate();
   const { setShowIssueModal } = useContext(IssueModalContext)!;
+  const { setShowCommandBar } = useContext(CommandBarContext)!;
   const [lastKeyPressed, setLastKeyPressed] = useState<string | null>(null);
   const [keySequenceTimer, setKeySequenceTimer] = useState<NodeJS.Timeout | null>(null);
 
@@ -140,6 +150,12 @@ const GlobalShortcutsHandler = ({ children }: { children: React.ReactNode }) => 
     }, 1000); // 1 second timeout for key sequences
     setKeySequenceTimer(timer);
   };
+
+  // Command+K / Ctrl+K to open command bar
+  useHotkeys('mod+k', (e) => {
+    e.preventDefault();
+    setShowCommandBar(true);
+  }, { enableOnFormTags: false }, [setShowCommandBar]);
 
   // Single key shortcuts
   useHotkeys('c', () => {
@@ -172,45 +188,13 @@ const GlobalShortcutsHandler = ({ children }: { children: React.ReactNode }) => 
     }
   }, { enableOnFormTags: false }, [navigate, lastKeyPressed, keySequenceTimer]);
 
-  return <>{children}</>;
-}
-
-const router = createBrowserRouter([
-  {
-    path: `/`,
-    element: (
-      <GlobalShortcutsHandler>
-        <Root />
-      </GlobalShortcutsHandler>
-    ),
-    children: [
-      {
-        path: `/`,
-        element: <List />,
-        loader: issueListLoader,
-      },
-      {
-        path: `/search`,
-        element: <List showSearch={true} />,
-        loader: issueListLoader,
-      },
-      {
-        path: `/board`,
-        element: <Board />,
-        loader: boardIssueListLoader,
-      },
-      {
-        path: `/issue/:id`,
-        element: <Issue />,
-        loader: issueLoader,
-      },
-      {
-        path: `/settings`,
-        element: <Settings />,
-      },
-    ],
-  },
-])
+  return (
+    <>
+      <Root />
+      <CommandBarWrapper />
+    </>
+  );
+};
 
 const LoadingScreen = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -226,6 +210,7 @@ const LoadingScreen = ({ children }: { children: React.ReactNode }) => {
 const App = () => {
   const [showMenu, setShowMenu] = useState(false)
   const [showIssueModal, setShowIssueModal] = useState(false)
+  const [showCommandBar, setShowCommandBar] = useState(false)
   const [pgForProvider, setPgForProvider] =
     useState<PGliteWithExtensions | null>(null)
   const [syncStatus, syncMessage] = useSyncStatus()
@@ -248,36 +233,83 @@ const App = () => {
 
   const menuContextValue = useMemo(
     () => ({ showMenu, setShowMenu }),
-    [showMenu]
+    [showMenu, setShowMenu]
   )
 
   const issueModalContextValue = useMemo(
     () => ({ showIssueModal, setShowIssueModal }),
-    [showIssueModal]
+    [showIssueModal, setShowIssueModal]
   )
 
-  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth()
+  const commandBarContextValue = useMemo(
+    () => ({ showCommandBar, setShowCommandBar }),
+    [showCommandBar, setShowCommandBar]
+  )
 
-  if (!isAuthLoaded) return <LoadingScreen>Loading...</LoadingScreen>
+  // Create router inside the component to have access to context values
+  const router = useMemo(() => createBrowserRouter([
+    {
+      path: `/`,
+      element: <AppLayout />,
+      children: [
+        {
+          path: `/`,
+          element: <List />,
+          loader: issueListLoader,
+        },
+        {
+          path: `/search`,
+          element: <List showSearch={true} />,
+          loader: issueListLoader,
+        },
+        {
+          path: `/board`,
+          element: <Board />,
+          loader: boardIssueListLoader,
+        },
+        {
+          path: `/issue/:id`,
+          element: <Issue />,
+          loader: issueLoader,
+        },
+        {
+          path: `/settings`,
+          element: <Settings />,
+        },
+      ],
+    },
+  ]), []);
 
-  if (!isSignedIn) return <SignInPage />
+  const { isSignedIn, isLoaded } = useAuth()
 
-  if (!pgForProvider) return <LoadingScreen>Starting PGlite...</LoadingScreen>
+  if (!isLoaded) {
+    return <LoadingScreen>Signing in...</LoadingScreen>
+  }
 
-  if (syncStatus === 'initial-sync')
+  if (!isSignedIn) {
+    return <SignInPage />
+  }
+
+  if (!pgForProvider) {
+    return <LoadingScreen>Setting up the app...</LoadingScreen>
+  }
+
+  if (syncStatus === 'initial-sync') {
     return (
       <LoadingScreen>
-        Performing initial sync...
-        <br />
-        {syncMessage}
+        <div>Loading workspace...</div>
+        <div className="text-sm text-gray-500">{syncMessage}</div>
       </LoadingScreen>
     )
+  }
 
   return (
     <PGliteProvider db={pgForProvider}>
       <MenuContext.Provider value={menuContextValue}>
         <IssueModalContext.Provider value={issueModalContextValue}>
-          <RouterProvider router={router} />
+          <CommandBarContext.Provider value={commandBarContextValue}>
+            <RouterProvider router={router} />
+          </CommandBarContext.Provider>
         </IssueModalContext.Provider>
       </MenuContext.Provider>
     </PGliteProvider>
