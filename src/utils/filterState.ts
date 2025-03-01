@@ -11,9 +11,9 @@ export interface FilterState {
 export function getFilterStateFromSearchParams(
   searchParams: URLSearchParams
 ): FilterState {
-  const orderBy = searchParams.get(`orderBy`) ?? `created`
+  const orderBy = searchParams.get(`orderBy`) ?? `priority`
   const orderDirection =
-    (searchParams.get(`orderDirection`) as `asc` | `desc`) ?? `asc`
+    (searchParams.get(`orderDirection`) as `asc` | `desc`) ?? `desc`
   const status = searchParams
     .getAll(`status`)
     .map((status) => status.toLocaleLowerCase().split(`,`))
@@ -101,6 +101,22 @@ export function filterStateToSql(filterState: FilterState) {
     `)
     sqlParams.push(filterState.query)
   }
+  let orderByClause = filterState.orderBy;
+  
+  // Use a CASE statement to order priorities correctly
+  if (filterState.orderBy === 'priority') {
+    orderByClause = `
+      CASE priority
+        WHEN 'urgent' THEN 5
+        WHEN 'high' THEN 4
+        WHEN 'medium' THEN 3
+        WHEN 'low' THEN 2
+        WHEN 'none' THEN 1
+        ELSE 0
+      END
+    `;
+  }
+
   const sql = `
     SELECT id, title, priority, status, modified, created, kanbanorder, creator_id, synced
     FROM issue
@@ -108,7 +124,7 @@ export function filterStateToSql(filterState: FilterState) {
       ${sqlWhere.length ? `${sqlWhere.join(' AND ')} AND ` : ''}
       deleted = false
     ORDER BY
-      ${filterState.orderBy} ${filterState.orderDirection},
+      ${orderByClause} ${filterState.orderDirection},
       id ASC
   `
   return { sql, sqlParams }
