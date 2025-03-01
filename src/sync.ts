@@ -362,7 +362,14 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         SET sent_to_server = true
         WHERE id = $1 AND modified = $2
       `,
-        [workspace.id, workspace.modified]
+        [
+          workspace.id, 
+          workspace.modified instanceof Date 
+            ? workspace.modified 
+            : workspace.modified 
+              ? new Date(workspace.modified as string) 
+              : new Date()
+        ]
       )
     }
 
@@ -373,7 +380,14 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         SET sent_to_server = true
         WHERE id = $1 AND modified = $2
       `,
-        [user.id, user.modified]
+        [
+          user.id, 
+          user.modified instanceof Date 
+            ? user.modified 
+            : user.modified 
+              ? new Date(user.modified as string) 
+              : new Date()
+        ]
       )
     }
 
@@ -384,7 +398,14 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         SET sent_to_server = true
         WHERE id = $1 AND modified = $2
       `,
-        [issue.id, issue.modified]
+        [
+          issue.id, 
+          issue.modified instanceof Date 
+            ? issue.modified 
+            : issue.modified 
+              ? new Date(issue.modified as string) 
+              : new Date()
+        ]
       )
     }
 
@@ -395,7 +416,14 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         SET sent_to_server = true
         WHERE id = $1 AND modified = $2
       `,
-        [comment.id, comment.modified]
+        [
+          comment.id, 
+          comment.modified instanceof Date 
+            ? comment.modified 
+            : comment.modified 
+              ? new Date(comment.modified as string) 
+              : new Date()
+        ]
       )
     }
   })
