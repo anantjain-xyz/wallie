@@ -3,7 +3,6 @@ import { generateKeyBetween } from 'fractional-indexing'
 
 import { BsChevronRight as ChevronRight } from 'react-icons/bs'
 import { ReactComponent as CloseIcon } from '../assets/icons/close.svg'
-import { ReactComponent as ElectricIcon } from '../assets/images/icon.inverse.svg'
 
 import Modal from '../components/Modal'
 import Editor from '../components/editor/Editor'
@@ -22,7 +21,7 @@ import {
   PriorityValue,
 } from '../types/types'
 import { showInfo, showWarning } from '../utils/notification'
-import { usePGlite } from '@electric-sql/pglite-react'
+import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
 import { Issue } from '../types/types'
 import { useCurrentUser } from '../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
@@ -42,6 +41,13 @@ function IssueModal({ isOpen, onDismiss }: Props) {
   const pg = usePGlite()
   const currentUserResult = useCurrentUser(user)
   const currentUser = currentUserResult?.rows[0]
+  const workspaceId = currentUser?.workspace_id
+  
+  const workspaceResults = useLiveQuery.sql<{ name: string, avatar_url: string | null }>`
+    SELECT name, avatar_url FROM workspace WHERE id = ${workspaceId}
+  `
+  const workspaceName = workspaceResults?.rows[0]?.name ?? 'Wallie'
+  const workspaceAvatarUrl = workspaceResults?.rows[0]?.avatar_url
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,8 +132,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
       <div className="flex items-center justify-between flex-shrink-0 px-4">
         <div className="flex items-center">
           <span className="inline-flex items-center p-1 px-2 text-gray-400 bg-gray-100 rounded">
-            <ElectricIcon className="w-3 h-3 scale-150 mr-1" />
-            <span>Wallie</span>
+            <span>{workspaceName}</span>
           </span>
           <ChevronRight className="ml-1" />
           <span className="ml-1 font-normal text-gray-700">New Issue</span>
