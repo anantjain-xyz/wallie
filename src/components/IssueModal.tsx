@@ -17,6 +17,7 @@ import {
   Priority,
   Status,
   PriorityDisplay,
+  StatusDisplay,
   StatusValue,
   PriorityValue,
 } from '../types/types'
@@ -107,7 +108,9 @@ function IssueModal({ isOpen, onDismiss }: Props) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        handleSubmit(e);
+        // Create a synthetic event since we can't pass KeyboardEvent to handleSubmit
+        const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+        handleSubmit(syntheticEvent);
       }
     };
 
@@ -176,8 +179,23 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         </div>
       </div>
 
-      {/* Issue labels & priority */}
-      <div className="flex items-center px-4 pb-3 mt-1 border-b border-gray-200">
+      {/* Issue labels, status & priority */}
+      <div className="flex items-center px-4 pb-3 mt-1 border-b border-gray-200 gap-2">
+        <StatusMenu
+          id="status-dropdown-menu"
+          button={
+            <button
+              type="button"
+              className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+            >
+              <StatusIcon status={status} className="mr-1" />
+              <span>{StatusDisplay[status]}</span>
+            </button>
+          }
+          onSelect={(st) => {
+            setStatus(st as StatusValue)
+          }}
+        />
         <PriorityMenu
           id="priority-menu"
           button={
