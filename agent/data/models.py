@@ -8,6 +8,7 @@ class Issue(BaseModel):
     description: Optional[str] = None
     id: UUID
     workspace_id: UUID
+    github_repository_id: Optional[UUID] = None
 
 class AgentRunResponse(BaseModel):
     status: str

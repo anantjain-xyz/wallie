@@ -15,9 +15,12 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     logger.warning("DATABASE_URL not found in environment variables. Database monitoring will not work.")
 
-# GitHub settings
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-GITHUB_REPO = os.environ.get("GITHUB_REPO", "your-username/your-repo")
+# GitHub App settings
+GITHUB_APP_ID = os.environ.get("GITHUB_APP_ID")
+GITHUB_APP_CLIENT_ID = os.environ.get("GITHUB_APP_CLIENT_ID")
+GITHUB_APP_CLIENT_SECRET = os.environ.get("GITHUB_APP_CLIENT_SECRET")
+GITHUB_APP_PRIVATE_KEY = os.environ.get("GITHUB_APP_PRIVATE_KEY")
+GITHUB_APP_WEBHOOK_SECRET = os.environ.get("GITHUB_APP_WEBHOOK_SECRET")
 
 # Anthropic API settings
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")

@@ -15,10 +15,13 @@ def format_issue_message(title: str, description: str | None = "") -> str:
     """
 
 
-def create_codebase(repo_name: str, language: ProgrammingLanguage):
+def create_codebase(repo_name: str, language: ProgrammingLanguage, github_token: str):
     """Create a Codebase instance from a GitHub repository"""
     # Create secrets config with GitHub token
-    secrets = SecretsConfig(github_token=os.environ["GITHUB_TOKEN"])
+    if not github_token:
+        raise ValueError("GitHub token is required")
+    
+    secrets = SecretsConfig(github_token=github_token)
     
     return Codebase.from_repo(
         repo_name,

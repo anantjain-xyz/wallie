@@ -2,6 +2,8 @@ from .connection import db_pool
 from ..config import logger
 from typing import Optional, List, Dict, Any
 from uuid import UUID
+from datetime import datetime
+import pytz
 
 async def get_latest_issue_timestamp():
     """Get the timestamp of the most recent issue"""
@@ -15,6 +17,12 @@ async def get_latest_issue_timestamp():
     try:
         async with db_pool.acquire() as conn:
             result = await conn.fetchval("SELECT MAX(created) FROM issue")
+            # If no result, use current time with UTC timezone
+            if not result:
+                result = datetime.now(pytz.UTC)
+            # If result is naive (no timezone), assume it's in UTC
+            elif result.tzinfo is None:
+                result = pytz.UTC.localize(result)
             return result
     except Exception as e:
         logger.error(f"Error getting latest issue timestamp: {str(e)}")
@@ -32,7 +40,7 @@ async def get_new_issues(timestamp):
     try:
         async with db_pool.acquire() as conn:
             query = """
-                SELECT i.id, i.title, i.description, i.created, i.workspace_id
+                SELECT i.id, i.title, i.description, i.created, i.workspace_id, i.github_repository_id
                 FROM issue i
                 WHERE i.created > $1 OR ($1 IS NULL)
                 ORDER BY i.created ASC
