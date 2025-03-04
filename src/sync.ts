@@ -25,6 +25,23 @@ type SyncStatus = 'initial-sync' | 'done'
 
 export type PGliteWithExtensions = PGliteWithLive & PGliteWithSync
 
+// Create a reusable error handler for shape sync operations
+const createShapeErrorHandler = (getAuthHeaders: () => Promise<{ Authorization?: string }>) => {
+  return async (error: Error) => {
+    if (error.message.includes('401')) {
+      // If the error is due to an expired token, refresh the token and try again
+      // Clerk tokens expire every minute, so should expect to run into this every
+      // minute or so.
+      return {
+        headers: {
+          ...await getAuthHeaders(),
+          'Cache-Control': 'no-cache'
+        }
+      }
+    }
+  }
+}
+
 export async function startSync(pg: PGliteWithExtensions, getAuthHeaders: () => Promise<{ Authorization?: string }>) {
   await startSyncToDatabase(pg, getAuthHeaders)
   startWritePath(pg, getAuthHeaders)
@@ -83,6 +100,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
         ...await getAuthHeaders(),
         'Cache-Control': 'no-cache'
       },
+      onError: createShapeErrorHandler(getAuthHeaders)
     },
     table: 'workspace',
     primaryKey: ['id'],
@@ -119,6 +137,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
         ...await getAuthHeaders(),
         'Cache-Control': 'no-cache'
       },
+      onError: createShapeErrorHandler(getAuthHeaders)
     },
     table: 'app_user',
     primaryKey: ['id'],
@@ -155,6 +174,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
         ...await getAuthHeaders(),
         'Cache-Control': 'no-cache'
       },
+      onError: createShapeErrorHandler(getAuthHeaders)
     },
     table: 'issue',
     primaryKey: ['id'],
@@ -191,6 +211,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
         ...await getAuthHeaders(),
         'Cache-Control': 'no-cache'
       },
+      onError: createShapeErrorHandler(getAuthHeaders)
     },
     table: 'comment',
     primaryKey: ['id'],
@@ -227,6 +248,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
         ...await getAuthHeaders(),
         'Cache-Control': 'no-cache'
       },
+      onError: createShapeErrorHandler(getAuthHeaders)
     },
     table: 'github_installation',
     primaryKey: ['id'],
@@ -263,6 +285,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
         ...await getAuthHeaders(),
         'Cache-Control': 'no-cache'
       },
+      onError: createShapeErrorHandler(getAuthHeaders)
     },
     table: 'github_repository',
     primaryKey: ['id'],
@@ -662,6 +685,7 @@ export function waitForInitialSyncDone() {
       resolve()
       return
     }
+    
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'syncStatus' && e.newValue) {
         const [newStatus] = JSON.parse(e.newValue)
