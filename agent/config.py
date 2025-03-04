@@ -1,7 +1,6 @@
 import os
 import logging
 from dotenv import load_dotenv
-from codegen import ProgrammingLanguage
 
 # Load environment variables
 load_dotenv()
@@ -24,9 +23,6 @@ GITHUB_APP_WEBHOOK_SECRET = os.environ.get("GITHUB_APP_WEBHOOK_SECRET")
 
 # Anthropic API settings
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
-
-# Programming language for the codebase
-PROGRAMMING_LANGUAGE = ProgrammingLanguage.TYPESCRIPT  # Change as needed for your repo
 
 # Issue monitoring settings
 POLLING_INTERVAL_SECONDS = 2  # Check for new issues every 10 seconds

@@ -460,6 +460,7 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         private,
         html_url,
         description,
+        default_programming_language,
         modified,
         created,
         modified_columns,

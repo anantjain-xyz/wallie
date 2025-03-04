@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { toast } from 'react-toastify'
 import { useAuth } from '@clerk/clerk-react'
+import LanguageMenu, { getLanguageIcon } from '../../components/contextmenu/LanguageMenu'
+import { BsCode } from 'react-icons/bs'
 
 // Get the API server URL from environment variables
 const API_SERVER_URL = import.meta.env.VITE_API_SERVER_URL
@@ -22,6 +24,7 @@ interface GitHubRepository {
   full_name: string
   html_url: string
   private: boolean
+  default_programming_language: string | null
 }
 
 const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
@@ -34,17 +37,15 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
     SELECT id, installation_id, target_type, target_name, created 
     FROM github_installation 
     WHERE workspace_id = ${workspaceId}
-    AND deleted = false
     ORDER BY created DESC
     LIMIT 1
   `
   
   // Query GitHub repositories
   const repositoryResults = useLiveQuery.sql<GitHubRepository>`
-    SELECT id, name, full_name, html_url, private
+    SELECT id, name, full_name, html_url, private, default_programming_language
     FROM github_repository
     WHERE workspace_id = ${workspaceId}
-    AND deleted = false
     ORDER BY name ASC
   `
   
@@ -129,6 +130,22 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
       setIsLoading(false)
     }
   }
+
+  // Handle language change
+  const handleLanguageChange = async (repoId: string, language: string) => {
+    try {
+      await pg.sql`
+        UPDATE github_repository 
+        SET default_programming_language = ${language || null},
+            modified = NOW()
+        WHERE id = ${repoId}
+      `
+      toast.success('Repository language updated successfully')
+    } catch (error) {
+      console.error('Error updating repository language:', error)
+      toast.error('Failed to update repository language')
+    }
+  }
   
   return (
     <div className="bg-white shadow rounded-lg mb-6">
@@ -182,7 +199,7 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
                     {repositories.map(repo => (
                       <li key={repo.id} className="py-2">
                         <div className="flex items-center justify-between">
-                          <div>
+                          <div className="flex items-center space-x-2">
                             <a 
                               href={repo.html_url} 
                               target="_blank" 
@@ -192,10 +209,25 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
                               {repo.full_name}
                             </a>
                             {repo.private && (
-                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
                                 Private
                               </span>
                             )}
+                          </div>
+                          <div className="flex items-center">
+                            <LanguageMenu
+                              id={`language-menu-${repo.id}`}
+                              button={
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                                >
+                                  {getLanguageIcon(repo.default_programming_language)({ className: "mr-1 h-4 w-4" })}
+                                  <span>{repo.default_programming_language ? repo.default_programming_language.charAt(0) + repo.default_programming_language.slice(1).toLowerCase() : 'Auto-detect'}</span>
+                                </button>
+                              }
+                              onSelect={(language) => handleLanguageChange(repo.id, language)}
+                            />
                           </div>
                         </div>
                       </li>

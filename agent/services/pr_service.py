@@ -2,10 +2,11 @@ from codegen import CodeAgent
 from codegen.extensions.tools.github.create_pr import create_pr as github_create_pr
 from ..helpers import create_codebase, format_issue_message
 from ..data import Issue, AgentRunResponse
-from ..config import logger, ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, PROGRAMMING_LANGUAGE
+from ..config import logger, ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY
 from ..db.connection import db_pool
 from .comment_service import add_agent_comment
 from .issue_service import set_issue_in_review
+from .repository_service import get_repository_language
 import asyncio
 import aiohttp
 import jwt
@@ -22,80 +23,89 @@ async def get_installation_token(workspace_id):
     """Get GitHub installation token for a workspace"""
     # Get the current db_pool from the connection module
     from ..db.connection import db_pool
-    async with db_pool.acquire() as conn:
+    
+    if not db_pool:
+        logger.error("Database connection pool not available. Cannot get installation token.")
+        return None
+        
+    try:
         # Get installation from database
-        installation = await conn.fetchrow(
-            """
-            SELECT * FROM github_installation
-            WHERE workspace_id = $1
-            AND suspended = false
-            ORDER BY modified DESC
-            LIMIT 1
-            """,
-            workspace_id
-        )
-        
-        if not installation:
-            logger.error(f"No GitHub installation found for workspace {workspace_id}")
-            return None
-        
-        # Check if token is still valid using timezone-aware comparison
-        current_time = datetime.now(pytz.UTC)
-        if installation['access_token'] and installation['token_expires_at']:
-            # Ensure token_expires_at is timezone-aware
-            expires_at = installation['token_expires_at']
-            if expires_at.tzinfo is None:
-                expires_at = pytz.UTC.localize(expires_at)
+        async with db_pool.acquire() as conn:
+            installation = await conn.fetchrow(
+                """
+                SELECT * FROM github_installation
+                WHERE workspace_id = $1
+                AND suspended = false
+                ORDER BY modified DESC
+                LIMIT 1
+                """,
+                workspace_id
+            )
             
-            if expires_at > current_time:
-                return installation['access_token']
-        
-        # Get fresh token from GitHub
-        try:
-            # Create JWT for GitHub App
-            now = int(time.time())
-            payload = {
-                'iat': now,
-                'exp': now + 600,
-                'iss': GITHUB_APP_ID
-            }
-            jwt_token = jwt.encode(payload, GITHUB_APP_PRIVATE_KEY, algorithm='RS256')
+            if not installation:
+                logger.error(f"No GitHub installation found for workspace {workspace_id}")
+                return None
             
-            # Get installation token
-            async with aiohttp.ClientSession() as session:
-                headers = {
-                    'Authorization': f'Bearer {jwt_token}',
-                    'Accept': 'application/vnd.github.v3+json'
+            # Check if token is still valid using timezone-aware comparison
+            current_time = datetime.now(pytz.UTC)
+            if installation['access_token'] and installation['token_expires_at']:
+                # Ensure token_expires_at is timezone-aware
+                expires_at = installation['token_expires_at']
+                if expires_at.tzinfo is None:
+                    expires_at = pytz.UTC.localize(expires_at)
+                
+                if expires_at > current_time:
+                    return installation['access_token']
+            
+            # Get fresh token from GitHub
+            try:
+                # Create JWT for GitHub App
+                now = int(time.time())
+                payload = {
+                    'iat': now,
+                    'exp': now + 600,
+                    'iss': GITHUB_APP_ID
                 }
-                # Use the API server to get the token
-                url = f"{API_SERVER_URL}/token?workspace_id={workspace_id}"
-                async with session.get(url) as response:
-                    if response.status != 200:
-                        logger.error(f"Failed to get installation token: {await response.text()}")
-                        return None
-                    
-                    data = await response.json()
-                    if 'error' in data:
-                        logger.error(f"Error from external API: {data['error']}")
-                        return None
+                jwt_token = jwt.encode(payload, GITHUB_APP_PRIVATE_KEY, algorithm='RS256')
+                
+                # Get installation token
+                async with aiohttp.ClientSession() as session:
+                    headers = {
+                        'Authorization': f'Bearer {jwt_token}',
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                    # Use the API server to get the token
+                    url = f"{API_SERVER_URL}/token?workspace_id={workspace_id}"
+                    async with session.get(url) as response:
+                        if response.status != 200:
+                            logger.error(f"Failed to get installation token: {await response.text()}")
+                            return None
                         
-                    token = data['token']
-                    expires_at = datetime.fromisoformat(data['expiresAt'].replace('Z', '+00:00'))
-                    
-                    # Update token in database
-                    await conn.execute(
-                        """
-                        UPDATE github_installation
-                        SET access_token = $1, token_expires_at = $2
-                        WHERE id = $3
-                        """,
-                        token, expires_at, installation['id']
-                    )
-                    
-                    return token
-        except Exception as e:
-            logger.error(f"Error getting installation token: {str(e)}")
-            return None
+                        data = await response.json()
+                        if 'error' in data:
+                            logger.error(f"Error from external API: {data['error']}")
+                            return None
+                            
+                        token = data['token']
+                        expires_at = datetime.fromisoformat(data['expiresAt'].replace('Z', '+00:00'))
+                        
+                        # Update token in database
+                        await conn.execute(
+                            """
+                            UPDATE github_installation
+                            SET access_token = $1, token_expires_at = $2
+                            WHERE id = $3
+                            """,
+                            token, expires_at, installation['id']
+                        )
+                        
+                        return token
+            except Exception as e:
+                logger.error(f"Error getting installation token: {str(e)}")
+                return None
+    except Exception as e:
+        logger.error(f"Error getting installation token: {str(e)}")
+        return None
 
 async def process_issue(issue: Issue):
     """Process an issue by creating a PR"""
@@ -167,8 +177,11 @@ async def run_agent(issue: Issue) -> AgentRunResponse:
             message="No GitHub repository selected for this issue. Please select a repository in the issue details."
         )
     
+    # Get the programming language for this repository
+    language = await get_repository_language(issue.github_repository_id)
+    
     # Create codebase instance with the workspace token
-    codebase = create_codebase(repo_name, PROGRAMMING_LANGUAGE, token)
+    codebase = create_codebase(repo_name, language, token)
     
     # Format the issue message
     query = format_issue_message(issue.title, issue.description)

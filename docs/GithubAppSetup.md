@@ -84,6 +84,8 @@ pnpm write-server
 pnpm dev
 ```
 
+You can expose the `api-server` on port 3003 externally using Tailscale's [tunnels](https://tailscale.com/kb/1223/funnel#create-a-funnel). You'll have to update the Github app setting to allow your own tunnel's `GITHUB_CALLBACK_URL`.
+
 The API server runs on port 3003 by default and handles all GitHub-related API calls, including installation callbacks and webhooks.
 
 ## User Flow
