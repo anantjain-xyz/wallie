@@ -5,6 +5,7 @@ import { useCurrentUser } from '../../utils/userUtils'
 import { useDropzone } from 'react-dropzone'
 import { uploadFileToS3 } from '../../utils/s3Upload'
 import { toast, ToastContainer } from 'react-toastify'
+import GitHubIntegration from './GitHubIntegration'
 
 const Settings = () => {
   const { user } = useUser()
@@ -194,6 +195,9 @@ const Settings = () => {
             </div>
           </div>
         </div>
+        
+        {/* GitHub Integration */}
+        {workspaceId && <GitHubIntegration workspaceId={workspaceId} />}
       </div>
       <ToastContainer position="bottom-right" />
     </div>

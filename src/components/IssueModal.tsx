@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState, useCallback } from 'react'
 import { generateKeyBetween } from 'fractional-indexing'
+import { useNavigate } from 'react-router-dom'
 
 import { BsChevronRight as ChevronRight } from 'react-icons/bs'
 import { ReactComponent as CloseIcon } from '../assets/icons/close.svg'
@@ -10,7 +11,9 @@ import PriorityIcon from './PriorityIcon'
 import StatusIcon from './StatusIcon'
 import PriorityMenu from './contextmenu/PriorityMenu'
 import StatusMenu from './contextmenu/StatusMenu'
+import GithubRepoMenu from './contextmenu/GithubRepoMenu'
 import Tooltip from './Tooltip'
+import { FaGithub } from 'react-icons/fa'
 
 import {
   Priority,
@@ -33,10 +36,12 @@ interface Props {
 
 function IssueModal({ isOpen, onDismiss }: Props) {
   const ref = useRef<HTMLInputElement>(null)
+  const navigate = useNavigate()
   const [title, setTitle] = useState(``)
   const [description, setDescription] = useState<string>()
   const [priority, setPriority] = useState<PriorityValue>(Priority.NONE)
   const [status, setStatus] = useState<StatusValue>(Status.BACKLOG)
+  const [githubRepositoryId, setGithubRepositoryId] = useState<string>('')
   const { user } = useUser()
   const pg = usePGlite()
   const currentUserResult = useCurrentUser(user)
@@ -48,6 +53,21 @@ function IssueModal({ isOpen, onDismiss }: Props) {
   `
   const workspaceName = workspaceResults?.rows[0]?.name ?? 'Wallie'
   const workspaceAvatarUrl = workspaceResults?.rows[0]?.avatar_url
+
+  // Query GitHub repositories
+  const repositoryResults = useLiveQuery.sql<{
+    id: string,
+    name: string,
+    full_name: string,
+    private: boolean
+  }>`
+    SELECT id, name, full_name, private
+    FROM github_repository
+    WHERE workspace_id = ${workspaceId}
+    AND deleted = false
+    ORDER BY name ASC
+  `
+  const repositories = repositoryResults?.rows || []
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -73,8 +93,32 @@ function IssueModal({ isOpen, onDismiss }: Props) {
 
       const date = new Date()
       await pg.sql`
-        INSERT INTO issue (id, title, creator_id, priority, status, description, modified, created, kanbanorder, workspace_id)
-        VALUES (${crypto.randomUUID()}, ${title}, ${currentUser.id}, ${priority}, ${status}, ${description ?? ''}, ${date}, ${date}, ${kanbanorder}, ${currentUser.workspace_id})
+        INSERT INTO issue (
+          id,
+          title,
+          creator_id,
+          priority,
+          status,
+          description,
+          modified,
+          created,
+          kanbanorder,
+          workspace_id,
+          github_repository_id
+        )
+        VALUES (
+          ${crypto.randomUUID()},
+          ${title},
+          ${currentUser.id},
+          ${priority},
+          ${status},
+          ${description ?? ''},
+          ${date},
+          ${date},
+          ${kanbanorder},
+          ${currentUser.workspace_id},
+          ${githubRepositoryId || null}
+        )
       `
 
       if (onDismiss) onDismiss()
@@ -83,7 +127,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     } catch (error) {
       showWarning('Failed to create issue', error instanceof Error ? error.message : 'Unknown error')
     }
-  }, [title, description, priority, status, currentUser, pg, onDismiss])
+  }, [title, description, priority, status, githubRepositoryId, currentUser, pg, onDismiss])
 
   const handleClickCloseBtn = () => {
     if (onDismiss) onDismiss()
@@ -96,6 +140,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
       setDescription(``)
       setPriority(Priority.NONE)
       setStatus(Status.BACKLOG)
+      setGithubRepositoryId('')
     }, 250)
   }
 
@@ -216,6 +261,38 @@ function IssueModal({ isOpen, onDismiss }: Props) {
             setPriority(val as PriorityValue)
           }}
         />
+        
+        {repositories.length > 0 ? (
+          <GithubRepoMenu
+            id="github-repo-menu"
+            repositories={repositories}
+            button={
+              <button
+                type="button"
+                className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700 appearance-none pr-8 relative"
+              >
+                <FaGithub className="mr-2 h-4 w-4" />
+                <span>{githubRepositoryId ? repositories.find(r => r.id === githubRepositoryId)?.full_name : "Select GitHub repo"}</span>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                  <FaGithub className="h-4 w-4" />
+                </div>
+              </button>
+            }
+            onSelect={(repoId) => setGithubRepositoryId(repoId)}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              if (onDismiss) onDismiss();
+              navigate('/settings');
+            }}
+            className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+          >
+            <FaGithub className="mr-1 h-4 w-4" />
+            <span>Connect GitHub</span>
+          </button>
+        )}
       </div>
       {/* Footer */}
       <div className="flex items-center flex-shrink-0 px-4 pt-3 justify-end">

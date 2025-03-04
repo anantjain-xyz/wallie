@@ -7,6 +7,7 @@ export const issueChangeSchema = z.object({
   priority: z.string().nullable().optional(),
   status: z.string().nullable().optional(),
   workspace_id: z.string().nullable().optional(),
+  github_repository_id: z.string().nullable().optional(),
   modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
   created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
   kanbanorder: z.string().nullable().optional(),
@@ -64,11 +65,53 @@ export const appUserChangeSchema = z.object({
 
 export type AppUserChange = z.infer<typeof appUserChangeSchema>
 
+export const githubInstallationChangeSchema = z.object({
+  id: z.string(),
+  workspace_id: z.string().nullable().optional(),
+  installation_id: z.number().nullable().optional(),
+  installation_url: z.string().nullable().optional(),
+  app_id: z.number().nullable().optional(),
+  target_type: z.string().nullable().optional(),
+  target_name: z.string().nullable().optional(),
+  permissions: z.any().nullable().optional(),
+  access_token: z.string().nullable().optional(),
+  token_expires_at: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  suspended: z.boolean().nullable().optional(),
+  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified_columns: z.array(z.string()).nullable().optional(),
+  deleted: z.boolean().nullable().optional(),
+  new: z.boolean().nullable().optional(),
+})
+
+export type GithubInstallationChange = z.infer<typeof githubInstallationChangeSchema>
+
+export const githubRepositoryChangeSchema = z.object({
+  id: z.string(),
+  workspace_id: z.string().nullable().optional(),
+  installation_id: z.string().nullable().optional(),
+  repo_id: z.number().nullable().optional(),
+  name: z.string().nullable().optional(),
+  full_name: z.string().nullable().optional(),
+  private: z.boolean().nullable().optional(),
+  html_url: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified_columns: z.array(z.string()).nullable().optional(),
+  deleted: z.boolean().nullable().optional(),
+  new: z.boolean().nullable().optional(),
+})
+
+export type GithubRepositoryChange = z.infer<typeof githubRepositoryChangeSchema>
+
 export const changeSetSchema = z.object({
   issues: z.array(issueChangeSchema),
   comments: z.array(commentChangeSchema),
   workspaces: z.array(workspaceChangeSchema),
   users: z.array(appUserChangeSchema),
+  githubInstallations: z.array(githubInstallationChangeSchema),
+  githubRepositories: z.array(githubRepositoryChangeSchema),
 })
 
 export type ChangeSet = z.infer<typeof changeSetSchema>
