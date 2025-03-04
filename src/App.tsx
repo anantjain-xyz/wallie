@@ -6,7 +6,6 @@ import {
   RouterProvider,
   type Params,
   useNavigate,
-  Outlet,
 } from 'react-router-dom'
 import 'react-toastify/dist/ReactToastify.css'
 import { live, LiveQuery } from '@electric-sql/pglite/live'

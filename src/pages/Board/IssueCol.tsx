@@ -16,6 +16,8 @@ import { LiveQuery } from '@electric-sql/pglite/live'
 import { useLiveQuery } from '@electric-sql/pglite-react'
 
 const CHUNK_SIZE = 25
+// Define a constant empty array to use as default prop
+const EMPTY_ISSUES: Issue[] = []
 
 function calculateWindow(
   startIndex: number,
@@ -39,7 +41,7 @@ interface Props {
 
 const itemSpacing = 8
 
-function IssueCol({ title, status, issues = [], liveQuery }: Props) {
+function IssueCol({ title, status, issues = EMPTY_ISSUES, liveQuery }: Props) {
   const statusIcon = <StatusIcon status={status} />
 
   const issuesRes = useLiveQuery(liveQuery)

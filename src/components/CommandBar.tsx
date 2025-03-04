@@ -91,9 +91,12 @@ const CommandBar: React.FC<CommandBarProps> = ({
   // Focus input when modal opens
   useEffect(() => {
     if (isOpen && inputRef.current) {
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
+      
+      // Clean up the timeout when component unmounts or effect re-runs
+      return () => clearTimeout(timeoutId);
     }
   }, [isOpen]);
 
@@ -145,7 +148,7 @@ const CommandBar: React.FC<CommandBarProps> = ({
     return (
       <div className="flex items-center space-x-1">
         {shortcut.map((key, index) => (
-          <React.Fragment key={index}>
+          <React.Fragment key={`${key}`}>
             <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-50 rounded">
               {key}
             </kbd>

@@ -58,6 +58,7 @@ export async function uploadFileToS3(file: File, prefix = 'logos'): Promise<stri
     const publicUrl = `https://${spaceName}.${region}.digitaloceanspaces.com/${fileName}`;
     return publicUrl;
   } catch (error) {
+    console.error('Error uploading file to S3:', error);
     throw error;
   }
 } 

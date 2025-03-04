@@ -36,10 +36,10 @@ function SafeMarkdown({ children }: { children: string }) {
 
   try {
     return (
-      <ReactMarkdown 
+      <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          a: ({node, ...props}) => (
+          a: (props) => (
             <a target="_blank" rel="noopener noreferrer" {...props} />
           )
         }}
@@ -104,6 +104,7 @@ function Comments({ issue }: CommentsProps) {
             <span className="ms-auto"></span>
             {currentUser?.id === comment.creator_id && (
               <button
+                type="button"
                 className="ml-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
                 onClick={() => handleDeleteComment(comment.id)}
                 title="Delete comment"

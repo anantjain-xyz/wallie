@@ -52,7 +52,6 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     SELECT name, avatar_url FROM workspace WHERE id = ${workspaceId}
   `
   const workspaceName = workspaceResults?.rows[0]?.name ?? 'Wallie'
-  const workspaceAvatarUrl = workspaceResults?.rows[0]?.avatar_url
 
   // Query GitHub repositories
   const repositoryResults = useLiveQuery.sql<{
