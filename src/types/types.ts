@@ -24,6 +24,7 @@ export type Issue = {
   kanbanorder: string
   creator_id: string
   synced: boolean
+  github_repository_id: string | null
 }
 
 export type Comment = {

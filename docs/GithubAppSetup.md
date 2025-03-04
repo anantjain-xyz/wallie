@@ -47,7 +47,6 @@ Update your `.env` file with the following GitHub App configuration:
 # GitHub App Configuration
 GITHUB_CALLBACK_URL=https://your-api-server-domain.com/callback
 GITHUB_APP_ID=your_github_app_id
-GITHUB_APP_CLIENT_ID=your_github_app_client_id
 GITHUB_APP_CLIENT_SECRET=your_github_app_client_secret
 GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----
 ...your multi-line private key...

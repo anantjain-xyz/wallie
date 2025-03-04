@@ -1,12 +1,14 @@
 /* eslint-disable react-compiler/react-compiler */
 import { useNavigate, useLoaderData } from 'react-router-dom'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { LiveQuery } from '@electric-sql/pglite/live'
 import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
 import { BsTrash3 as DeleteIcon } from 'react-icons/bs'
 import { BsXLg as CloseIcon } from 'react-icons/bs'
+import { FaGithub } from 'react-icons/fa'
 import PriorityMenu from '../../components/contextmenu/PriorityMenu'
 import StatusMenu from '../../components/contextmenu/StatusMenu'
+import GithubRepoMenu from '../../components/contextmenu/GithubRepoMenu'
 import PriorityIcon from '../../components/PriorityIcon'
 import StatusIcon from '../../components/StatusIcon'
 import Avatar from '../../components/Avatar'
@@ -36,10 +38,62 @@ function IssuePage() {
   ` : null
   const issueCreator = issueCreatorResults?.rows[0]
 
+  // Query GitHub repositories for the workspace
+  const workspaceResults = useLiveQuery.sql<{ id: string }>`
+    SELECT id FROM workspace LIMIT 1
+  `
+  const workspaceId = workspaceResults?.rows[0]?.id
+
+  // Query GitHub repositories - always call this hook regardless of workspaceId
+  const repositoryResults = useLiveQuery.sql<{
+    id: string,
+    full_name: string
+  }>`
+    SELECT id, full_name
+    FROM github_repository
+    WHERE (${workspaceId ? true : false} = false OR workspace_id = ${workspaceId})
+    AND deleted = false
+    ORDER BY full_name ASC
+  `
+  const repositories = repositoryResults?.rows || []
+
+  // State for current repository information
+  const [currentRepoId, setCurrentRepoId] = useState<string | null>(null)
+  const [currentRepoName, setCurrentRepoName] = useState<string | null>(null)
+  
+  // Update repository information when issue.github_repository_id changes
+  useEffect(() => {
+    const newRepoId = issue?.github_repository_id || null
+    
+    // Only update if the ID has changed
+    if (newRepoId !== currentRepoId) {
+      setCurrentRepoId(newRepoId)
+      
+      // If we have a repository ID, fetch its name
+      if (newRepoId) {
+        // Use a regular SQL query instead of useLiveQuery
+        pg.sql<{ full_name: string }>`
+          SELECT full_name FROM github_repository WHERE id = ${newRepoId}
+        `.then(result => {
+          if (result.rows.length > 0) {
+            setCurrentRepoName(result.rows[0].full_name)
+          } else {
+            setCurrentRepoName(null)
+          }
+        }).catch(err => {
+          console.error('Error fetching repository name:', err)
+          setCurrentRepoName(null)
+        })
+      } else {
+        // No repository ID, so clear the name
+        setCurrentRepoName(null)
+      }
+    }
+  }, [issue?.github_repository_id, currentRepoId, pg])
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleTitleChangeDebounced = useCallback(
     debounce(async (title: string) => {
-      console.log(`handleTitleChangeDebounced`, title)
       pg.sql`
       UPDATE issue 
       SET title = ${title}, modified = ${new Date()} 
@@ -94,6 +148,14 @@ function IssuePage() {
     pg.sql`
       UPDATE issue 
       SET priority = ${priority}, modified = ${new Date()} 
+      WHERE id = ${issue.id}
+    `
+  }
+
+  const handleGithubRepoChange = (repoId: string | null) => {
+    pg.sql`
+      UPDATE issue 
+      SET github_repository_id = ${repoId || null}, modified = ${new Date()} 
       WHERE id = ${issue.id}
     `
   }
@@ -225,6 +287,38 @@ function IssuePage() {
                     }
                     onSelect={handlePriorityChange}
                   />
+                </div>
+              </div>
+              <div className="flex flex-1 mb-3 mr-5 md-mr-0">
+                <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
+                  GitHub Repo
+                </div>
+                <div className="flex flex-[3_0_0]">
+                  {repositories.length > 0 ? (
+                    <GithubRepoMenu
+                      id={`issue-github-repo-` + issue.id}
+                      repositories={repositories}
+                      button={
+                        <button
+                          type="button"
+                          className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                        >
+                          <FaGithub className="mr-2 h-4 w-4" />
+                          <span>{currentRepoName || "No repository"}</span>
+                        </button>
+                      }
+                      onSelect={handleGithubRepoChange}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/settings')}
+                      className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                    >
+                      <FaGithub className="mr-2 h-4 w-4" />
+                      <span>Connect GitHub</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

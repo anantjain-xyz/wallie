@@ -153,7 +153,7 @@ async def run_agent(issue: Issue) -> AgentRunResponse:
         return AgentRunResponse(
             status="error",
             pr_url=None,
-            message="GitHub integration not configured for this workspace. Please go to Settings and install the GitHub App."
+            message="GitHub integration not configured for this workspace. Please go to [Settings](/settings) and install the GitHub App."
         )
     
     # Get the current db_pool from the connection module

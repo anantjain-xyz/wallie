@@ -15,7 +15,7 @@ interface Props {
   repositories: Repository[]
   filterKeyword?: boolean
   className?: string
-  onSelect?: (repoId: string) => void
+  onSelect?: (repoId: string | null) => void
 }
 
 function GithubRepoMenu({
@@ -28,7 +28,7 @@ function GithubRepoMenu({
 }: Props) {
   const [keyword, setKeyword] = useState(``)
 
-  const handleSelect = (repoId: string) => {
+  const handleSelect = (repoId: string | null) => {
     setKeyword(``)
     if (onSelect) onSelect(repoId)
   }
@@ -42,7 +42,7 @@ function GithubRepoMenu({
   }
 
   const options = [
-    <Menu.Item key="no-repo" onClick={() => handleSelect("")}>
+    <Menu.Item key="no-repo" onClick={() => handleSelect(null)}>
       <FaGithub className="mr-3" /> <span>No repository</span>
     </Menu.Item>,
     ...filteredRepos.map((repo) => (

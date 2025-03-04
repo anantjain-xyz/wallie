@@ -268,13 +268,10 @@ function IssueModal({ isOpen, onDismiss }: Props) {
             button={
               <button
                 type="button"
-                className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700 appearance-none pr-8 relative"
+                className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700 appearance-none relative"
               >
                 <FaGithub className="mr-2 h-4 w-4" />
                 <span>{githubRepositoryId ? repositories.find(r => r.id === githubRepositoryId)?.full_name : "Select GitHub repo"}</span>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                  <FaGithub className="h-4 w-4" />
-                </div>
               </button>
             }
             onSelect={(repoId) => setGithubRepositoryId(repoId)}

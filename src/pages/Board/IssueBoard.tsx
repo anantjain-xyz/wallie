@@ -105,9 +105,6 @@ export default function IssueBoard({ columnsLiveIssues }: IssueBoardProps) {
       prevIssue = columnIssues[index - 1]
       nextIssue = columnIssues[index]
     }
-    console.log(`sameColumn`, sameColumn)
-    console.log(`prevIssue`, prevIssue)
-    console.log(`nextIssue`, nextIssue)
     return { prevIssue, nextIssue }
   }
 
@@ -180,7 +177,6 @@ export default function IssueBoard({ columnsLiveIssues }: IssueBoardProps) {
   }
 
   const onDragEnd = ({ source, destination, draggableId }: DropResult) => {
-    console.log(source, destination, draggableId)
     if (destination && destination.droppableId) {
       const { prevIssue, nextIssue } = adjacentIssues(
         destination.droppableId,
