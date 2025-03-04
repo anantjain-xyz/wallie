@@ -35,6 +35,7 @@ app.post('/', async (c) => {
     
     // Handle different webhook events
     const event = c.req.header('x-github-event');
+    console.log(`Webhook event received: `, event)
     
     switch (event) {
       case 'installation':

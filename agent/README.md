@@ -37,12 +37,7 @@ agent/
 
 ## Environment Variables
 
-The application uses the following environment variables:
-
-- `DATABASE_URL`: PostgreSQL connection string
-- `GITHUB_TOKEN`: GitHub token for creating PRs
-- `GITHUB_REPO`: GitHub repository in the format "username/repo"
-- `ANTHROPIC_API_KEY`: Anthropic API key for the Codebase agent
+The application's latest environment variables can be found in the `.env.example`.
 
 ## Running the Application
 
