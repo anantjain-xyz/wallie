@@ -17,17 +17,33 @@ declare module 'hono' {
   }
 }
 
-const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://postgres:password@localhost:54321/wallie';
-const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
+// Check for required environment variables
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
+
+if (!process.env.FRONTEND_URL) {
+  throw new Error('FRONTEND_URL environment variable is required');
+}
+
+if (!process.env.GITHUB_CALLBACK_URL) {
+  throw new Error('GITHUB_CALLBACK_URL environment variable is required');
+}
+
+const DATABASE_URL = process.env.DATABASE_URL;
+const FRONTEND_URL = process.env.FRONTEND_URL;
+const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL;
 const sql = postgres(DATABASE_URL);
 
 // Initialize GitHub App
-const githubApp = process.env.GITHUB_APP_ID && process.env.GITHUB_APP_PRIVATE_KEY
-  ? new App({
-      appId: Number(process.env.GITHUB_APP_ID),
-      privateKey: process.env.GITHUB_APP_PRIVATE_KEY,
-    })
-  : null;
+if (!process.env.GITHUB_APP_ID || !process.env.GITHUB_APP_PRIVATE_KEY) {
+  throw new Error('GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY environment variables are required');
+}
+
+const githubApp = new App({
+  appId: Number(process.env.GITHUB_APP_ID),
+  privateKey: process.env.GITHUB_APP_PRIVATE_KEY,
+});
 
 const app = new Hono();
 
@@ -44,7 +60,7 @@ app.use('*', async (c, next) => {
 // Get installation URL with state
 app.get('/prepare-install', async (c) => {
   if (!process.env.GITHUB_APP_NAME) {
-    return c.json({ error: 'GitHub App not configured' }, 500);
+    throw new Error('GITHUB_APP_NAME environment variable is required');
   }
   
   // Get workspace ID from the authenticated user
@@ -80,7 +96,7 @@ app.get('/prepare-install', async (c) => {
   });
   
   // Create the GitHub installation URL
-  const redirectUrl = `https://github.com/apps/${process.env.GITHUB_APP_NAME}/installations/new?state=${encodeURIComponent(state)}`;
+  const redirectUrl = `https://github.com/apps/${process.env.GITHUB_APP_NAME}/installations/new?state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(GITHUB_CALLBACK_URL)}`;
   return c.json({ redirectUrl });
 });
 
@@ -91,10 +107,6 @@ app.get('/callback', async (c) => {
   
   if (!installationId || !stateParam) {
     return c.json({ error: 'Invalid callback parameters' }, 400);
-  }
-  
-  if (!githubApp) {
-    return c.json({ error: 'GitHub App not configured' }, 500);
   }
   
   try {
@@ -253,10 +265,6 @@ app.post('/refresh-repos', async (c) => {
       return c.json({ error: 'Workspace ID is required' }, 400);
     }
     
-    if (!githubApp) {
-      return c.json({ error: 'GitHub App not configured' }, 500);
-    }
-    
     // Get the installation for this workspace
     const installations = await sql`
       SELECT * FROM github_installation 
@@ -353,10 +361,6 @@ app.get('/token', async (c) => {
     
     if (!workspaceId) {
       return c.json({ error: 'Workspace ID is required' }, 400);
-    }
-    
-    if (!githubApp) {
-      return c.json({ error: 'GitHub App not configured' }, 500);
     }
     
     // Get the installation for this workspace

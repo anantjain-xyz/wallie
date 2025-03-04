@@ -23,7 +23,7 @@ The implementation includes:
 2. Configure the app with the following settings:
    - **Name**: "Wallie" (or your preferred name)
    - **Homepage URL**: Your application's URL
-   - **Callback URL**: `https://your-api-server-domain.com/callback`
+   - **Callback URL**: `${GITHUB_CALLBACK_URL}` (configured in your .env file)
    - **Setup URL**: `https://your-app-domain.com/settings/github`
    - **Webhook URL**: `https://your-api-server-domain.com/webhook`
    - **Webhook Secret**: Generate a secure random string
@@ -45,6 +45,7 @@ Update your `.env` file with the following GitHub App configuration:
 
 ```
 # GitHub App Configuration
+GITHUB_CALLBACK_URL=https://your-api-server-domain.com/callback
 GITHUB_APP_ID=your_github_app_id
 GITHUB_APP_CLIENT_ID=your_github_app_client_id
 GITHUB_APP_CLIENT_SECRET=your_github_app_client_secret
