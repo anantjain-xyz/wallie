@@ -518,8 +518,8 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
           workspace.id, 
           workspace.modified instanceof Date 
             ? workspace.modified 
-            : workspace.modified 
-              ? new Date(workspace.modified as string) 
+            : typeof workspace.modified === 'string'
+              ? new Date(workspace.modified)
               : new Date()
         ]
       )
@@ -536,8 +536,8 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
           user.id, 
           user.modified instanceof Date 
             ? user.modified 
-            : user.modified 
-              ? new Date(user.modified as string) 
+            : typeof user.modified === 'string'
+              ? new Date(user.modified)
               : new Date()
         ]
       )
@@ -554,8 +554,8 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
           issue.id, 
           issue.modified instanceof Date 
             ? issue.modified 
-            : issue.modified 
-              ? new Date(issue.modified as string) 
+            : typeof issue.modified === 'string'
+              ? new Date(issue.modified)
               : new Date()
         ]
       )
@@ -572,8 +572,8 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
           comment.id,
           comment.modified instanceof Date
             ? comment.modified
-            : comment.modified
-              ? new Date(comment.modified as string)
+            : typeof comment.modified === 'string'
+              ? new Date(comment.modified)
               : new Date()
         ]
       )
@@ -590,8 +590,8 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
           installation.id,
           installation.modified instanceof Date
             ? installation.modified
-            : installation.modified
-              ? new Date(installation.modified as string)
+            : typeof installation.modified === 'string'
+              ? new Date(installation.modified)
               : new Date()
         ]
       )
@@ -608,8 +608,8 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
           repository.id,
           repository.modified instanceof Date
             ? repository.modified
-            : repository.modified
-              ? new Date(repository.modified as string)
+            : typeof repository.modified === 'string'
+              ? new Date(repository.modified)
               : new Date()
         ]
       )

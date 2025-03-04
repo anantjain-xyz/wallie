@@ -139,11 +139,12 @@ function Comments({ issue }: CommentsProps) {
 
     try {
       await pg.sql`
-        INSERT INTO comment (id, issue_id, body, created, creator_id, workspace_id)
+        INSERT INTO comment (id, issue_id, body, created, modified, creator_id, workspace_id)
         VALUES (
           ${crypto.randomUUID()},
           ${issue.id},
           ${newCommentBody},
+          ${new Date()},
           ${new Date()},
           ${currentUser.id},
           ${currentUser.workspace_id}

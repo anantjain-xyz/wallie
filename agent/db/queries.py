@@ -85,8 +85,8 @@ async def add_comment(conn, issue_id: UUID, workspace_id: UUID, body: str):
         
         # Insert the comment
         comment_query = """
-            INSERT INTO comment (id, body, creator_id, issue_id, workspace_id)
-            VALUES (gen_random_uuid(), $1, $2, $3, $4)
+            INSERT INTO comment (id, body, creator_id, issue_id, workspace_id, modified, created)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW(), NOW())
             RETURNING id
         """
         comment_id = await conn.fetchval(comment_query, body, agent_user_id, issue_id, workspace_id)
