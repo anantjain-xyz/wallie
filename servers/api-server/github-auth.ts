@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { App } from '@octokit/app';
 import type { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods';
 import postgres from 'postgres';
-import { validateProxyAuth } from '../auth';
+import { getWorkspaceIdFromUser } from '../auth';
 import { v4 as uuidv4 } from 'uuid';
 import { ClerkClient } from '@clerk/backend';
 import { getAuth } from '@hono/clerk-auth';
@@ -47,16 +47,6 @@ const githubApp = new App({
 
 const app = new Hono();
 
-// Middleware to check authentication
-app.use('*', async (c, next) => {
-  if (c.req.path === '/callback' || c.req.path === '/token') {
-    return next();
-  }
-  const authResult = await validateProxyAuth(c);
-  if (authResult) return authResult;
-  await next();
-});
-
 // Get installation URL with state
 app.get('/prepare-install', async (c) => {
   if (!process.env.GITHUB_APP_NAME) {
@@ -69,22 +59,11 @@ app.get('/prepare-install', async (c) => {
     return c.json({ error: 'User not authenticated' }, 401);
   }
   
-  // Get user's email from Clerk
-  const clerk = c.get('clerk');
-  const user = await clerk.users.getUser(auth.userId);
-  if (!user?.emailAddresses?.[0]?.emailAddress) {
-    return c.json({ error: 'No email found for user' }, 400);
+  // Get workspace ID using the utility function
+  const workspaceId = await getWorkspaceIdFromUser(auth.userId);
+  if (!workspaceId) {
+    return c.json({ error: 'Unable to determine workspace for user' }, 400);
   }
-  const email = user.emailAddresses[0].emailAddress;
-  
-  // Get workspace ID from database
-  const dbUser = await sql`
-    SELECT * FROM app_user WHERE email = ${email}
-  `;
-  if (!dbUser?.length) {
-    return c.json({ error: 'User not found in database' }, 404);
-  }
-  const workspaceId = dbUser[0].workspace_id;
   
   // Create a state parameter with installation context
   const state = JSON.stringify({
@@ -259,12 +238,17 @@ app.get('/callback', async (c) => {
 // Refresh repositories for an installation
 app.post('/refresh-repos', async (c) => {
   try {
-    const { workspaceId } = await c.req.json();
-    
-    if (!workspaceId) {
-      return c.json({ error: 'Workspace ID is required' }, 400);
+    const auth = getAuth(c);
+    if (!auth?.userId) {
+      return c.json({ error: 'Unauthorized' }, 401);
     }
-    
+
+    // Get the workspace ID for the authenticated user
+    const workspaceId = await getWorkspaceIdFromUser(auth.userId);
+    if (!workspaceId) {
+      return c.json({ error: 'Unauthorized - Unable to determine workspace' }, 401);
+    }
+
     // Get the installation for this workspace
     const installations = await sql`
       SELECT * FROM github_installation 

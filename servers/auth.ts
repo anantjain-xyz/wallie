@@ -46,7 +46,7 @@ async function addWorkspaceToRequest(userId: string, c: Context): Promise<Respon
   }
 }
 
-async function getWorkspaceIdFromUser(userId: string): Promise<string | null> {
+export async function getWorkspaceIdFromUser(userId: string): Promise<string | null> {
   try {
     const user = await clerk.users.getUser(userId);
     if (!user?.emailAddresses?.[0]?.emailAddress) {

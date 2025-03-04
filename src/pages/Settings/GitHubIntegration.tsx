@@ -114,7 +114,6 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ workspaceId }),
       })
       
       if (!response.ok) {
