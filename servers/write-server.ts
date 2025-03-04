@@ -8,6 +8,8 @@ import {
   IssueChange,
   WorkspaceChange,
   AppUserChange,
+  GithubInstallationChange,
+  GithubRepositoryChange,
 } from '../src/utils/changes'
 import { serve } from '@hono/node-server'
 import { authMiddleware, validateWriteAuth } from './auth'
@@ -73,7 +75,7 @@ serve({
 })
 
 async function applyChanges(changes: ChangeSet) {
-  const { issues, comments, workspaces, users } = changes
+  const { issues, comments, workspaces, users, githubInstallations, githubRepositories } = changes
   await sql.begin(async (sql) => {
     for (const workspace of workspaces) {
       await applyTableChange('workspace', workspace, sql)
@@ -87,12 +89,18 @@ async function applyChanges(changes: ChangeSet) {
     for (const comment of comments) {
       await applyTableChange('comment', comment, sql)
     }
+    for (const githubInstallation of githubInstallations) {
+      await applyTableChange('github_installation', githubInstallation, sql)
+    }
+    for (const githubRepository of githubRepositories) {
+      await applyTableChange('github_repository', githubRepository, sql)
+    }
   })
 }
 
 async function applyTableChange(
-  tableName: 'issue' | 'comment' | 'workspace' | 'app_user',
-  change: IssueChange | CommentChange | WorkspaceChange | AppUserChange,
+  tableName: 'issue' | 'comment' | 'workspace' | 'app_user' | 'github_installation' | 'github_repository',
+  change: IssueChange | CommentChange | WorkspaceChange | AppUserChange | GithubInstallationChange | GithubRepositoryChange,
   sql: postgres.TransactionSql
 ): Promise<void> {
   const {
