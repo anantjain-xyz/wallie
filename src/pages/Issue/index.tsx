@@ -96,7 +96,7 @@ function IssuePage() {
     debounce(async (title: string) => {
       pg.sql`
       UPDATE issue 
-      SET title = ${title}, modified = ${new Date()} 
+      SET title = ${title}, modified = NOW()
       WHERE id = ${issue.id}
     `
       // We can't set titleIsDirty.current = false here because we haven't yet received
@@ -110,7 +110,7 @@ function IssuePage() {
     debounce(async (description: string) => {
       pg.sql`
         UPDATE issue 
-        SET description = ${description}, modified = ${new Date()} 
+        SET description = ${description}, modified = NOW()
         WHERE id = ${issue.id}
       `
       // We can't set descriptionIsDirty.current = false here because we haven't yet received
@@ -139,7 +139,7 @@ function IssuePage() {
   const handleStatusChange = (status: string) => {
     pg.sql`
       UPDATE issue 
-      SET status = ${status}, modified = ${new Date()} 
+      SET status = ${status}, modified = NOW() 
       WHERE id = ${issue.id}
     `
   }
@@ -147,7 +147,7 @@ function IssuePage() {
   const handlePriorityChange = (priority: string) => {
     pg.sql`
       UPDATE issue 
-      SET priority = ${priority}, modified = ${new Date()} 
+      SET priority = ${priority}, modified = NOW() 
       WHERE id = ${issue.id}
     `
   }
@@ -155,7 +155,7 @@ function IssuePage() {
   const handleGithubRepoChange = (repoId: string | null) => {
     pg.sql`
       UPDATE issue 
-      SET github_repository_id = ${repoId || null}, modified = ${new Date()} 
+      SET github_repository_id = ${repoId || null}, modified = NOW() 
       WHERE id = ${issue.id}
     `
   }

@@ -41,7 +41,7 @@ const IssueItem = ({ issue, style, isDragging, provided }: IssueProps) => {
   const updatePriority = (priority: string) => {
     pg.sql`
       UPDATE issue 
-      SET priority = ${priority}, modified = ${new Date()} 
+      SET priority = ${priority}, modified = NOW()
       WHERE id = ${issue.id}
     `
   }

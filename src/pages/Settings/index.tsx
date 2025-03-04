@@ -44,7 +44,7 @@ const Settings = () => {
     try {
       await pg.sql`
         UPDATE workspace 
-        SET name = ${workspaceName}, url = ${workspaceUrl}, modified = ${new Date()}
+        SET name = ${workspaceName}, url = ${workspaceUrl}, modified = NOW()
         WHERE id = ${workspaceId}
       `
       toast.success('Workspace settings saved successfully')
@@ -80,7 +80,7 @@ const Settings = () => {
       // Update workspace with new avatar URL
       await pg.sql`
         UPDATE workspace 
-        SET avatar_url = ${uploadedUrl}, modified = ${new Date()}
+        SET avatar_url = ${uploadedUrl}, modified = NOW()
         WHERE id = ${workspaceId}
       `
       

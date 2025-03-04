@@ -39,7 +39,7 @@ function IssueRow({ issue, style }: Props) {
   const handleChangeStatus = (status: string) => {
     pg.sql`
       UPDATE issue 
-      SET status = ${status}, modified = ${new Date()} 
+      SET status = ${status}, modified = NOW()
       WHERE id = ${issue!.id}
     `
   }
@@ -47,7 +47,7 @@ function IssueRow({ issue, style }: Props) {
   const handleChangePriority = (priority: string) => {
     pg.sql`
       UPDATE issue 
-      SET priority = ${priority}, modified = ${new Date()} 
+      SET priority = ${priority}, modified = NOW() 
       WHERE id = ${issue!.id}
     `
   }

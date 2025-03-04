@@ -199,7 +199,7 @@ export default function IssueBoard({ columnsLiveIssues }: IssueBoardProps) {
       }))
       pg.sql`
         UPDATE issue
-        SET status = ${destination.droppableId}, kanbanorder = ${kanbanorder}, modified = ${modified}
+        SET status = ${destination.droppableId}, kanbanorder = ${kanbanorder}, modified = NOW()
         WHERE id = ${draggableId}
       `
     }
