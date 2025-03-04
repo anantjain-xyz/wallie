@@ -18,7 +18,7 @@ interface Props {
   onSelect?: (language: string) => void
 }
 
-export const getLanguageIcon = (language: string) => {
+export const getLanguageIcon = (language: string | null) => {
   switch (language) {
     case 'TYPESCRIPT':
       return BiLogoTypescript;

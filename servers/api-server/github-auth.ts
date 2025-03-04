@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { App } from '@octokit/app';
 import type { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods';
 import postgres from 'postgres';
-import { validateProxyAuth } from '../servers/auth';
+import { validateProxyAuth } from '../auth';
 import { v4 as uuidv4 } from 'uuid';
 import { ClerkClient } from '@clerk/backend';
 import { getAuth } from '@hono/clerk-auth';

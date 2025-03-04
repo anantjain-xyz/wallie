@@ -3,7 +3,6 @@ import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { toast } from 'react-toastify'
 import { useAuth } from '@clerk/clerk-react'
 import LanguageMenu, { getLanguageIcon } from '../../components/contextmenu/LanguageMenu'
-import { BsCode } from 'react-icons/bs'
 
 // Get the API server URL from environment variables
 const API_SERVER_URL = import.meta.env.VITE_API_SERVER_URL

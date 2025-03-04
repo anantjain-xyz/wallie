@@ -10,7 +10,7 @@
     "reset": "pnpm backend:down && pnpm backend:up && pnpm db:migrate",
     "write-server": "dotenv -- tsx servers/write-server.ts",
     "proxy-server": "dotenv -- tsx servers/proxy-server.ts",
-    "api-server": "dotenv -- tsx api-server/index.ts",
+    "api-server": "dotenv -- tsx servers/api-server/index.ts",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",

@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
-import { authMiddleware } from '../servers/auth'
+import { authMiddleware } from '../auth'
 import githubAuthApp from './github-auth'
 import githubWebhookApp from './github-webhook'
 
