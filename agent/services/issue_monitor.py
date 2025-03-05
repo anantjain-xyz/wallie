@@ -65,7 +65,31 @@ async def check_for_new_issues():
             created = row['created']
             workspace_id = row['workspace_id']
             github_repository_id = row['github_repository_id']
+            assignee_id = row['assignee_id']
+            
+            # Check if assignee is the 'wallie' user
+            if assignee_id is None:
+                logger.info(f"Issue {issue_id} has no assignee, skipping")
+                continue
+                
+            # Verify the assignee is 'wallie'
+            is_wallie_assignee = False
+            try:
+                async with db_pool.acquire() as conn:
+                    wallie_check = await conn.fetchval(
+                        "SELECT COUNT(*) FROM app_user WHERE id = $1 AND username = 'wallie'",
+                        assignee_id
+                    )
+                    is_wallie_assignee = wallie_check > 0
+            except Exception as e:
+                logger.error(f"Error checking assignee for issue {issue_id}: {str(e)}")
+                continue
+                
+            if not is_wallie_assignee:
+                logger.info(f"Issue {issue_id} is not assigned to 'wallie', skipping")
+                continue
 
+            # Check if GitHub repository is set
             if github_repository_id is None:
                 logger.info(f"Issue {issue_id} has no GitHub repository ID, skipping")
                 continue
@@ -84,7 +108,14 @@ async def check_for_new_issues():
             # Process the new issue
             logger.info(f"Processing new issue {issue_id} created at {created}: {title}")
             
-            issue = Issue(title=title, description=description, id=issue_id, workspace_id=workspace_id, github_repository_id=github_repository_id)
+            issue = Issue(
+                title=title,
+                description=description,
+                id=issue_id,
+                workspace_id=workspace_id,
+                github_repository_id=github_repository_id,
+                assignee_id=assignee_id
+            )
             
             try:
                 # Update issue status to in_progress and add a comment

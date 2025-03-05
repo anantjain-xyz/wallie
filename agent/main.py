@@ -2,9 +2,15 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import uvicorn
 import os
-from .config import logger
+import logging
 from .db.connection import init_db, close_db
 from .services.issue_monitor import start_issue_monitor
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    force=True  # Override any existing configuration
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
