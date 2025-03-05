@@ -25,6 +25,7 @@ export type Issue = {
   creator_id: string
   synced: boolean
   github_repository_id: string | null
+  assignee_id: string | null
 }
 
 export type Comment = {

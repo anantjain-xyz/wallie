@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { BsChevronRight as ChevronRight } from 'react-icons/bs'
 import { ReactComponent as CloseIcon } from '../assets/icons/close.svg'
+import { ReactComponent as AssigneeIcon } from '../assets/icons/assignee.svg'
 
 import Modal from '../components/Modal'
 import Editor from '../components/editor/Editor'
@@ -12,8 +13,10 @@ import StatusIcon from './StatusIcon'
 import PriorityMenu from './contextmenu/PriorityMenu'
 import StatusMenu from './contextmenu/StatusMenu'
 import GithubRepoMenu from './contextmenu/GithubRepoMenu'
+import AssigneeMenu from './contextmenu/AssigneeMenu'
 import Tooltip from './Tooltip'
 import { FaGithub } from 'react-icons/fa'
+import Avatar from './Avatar'
 
 import {
   Priority,
@@ -41,7 +44,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
   const [description, setDescription] = useState<string>()
   const [priority, setPriority] = useState<PriorityValue>(Priority.NONE)
   const [status, setStatus] = useState<StatusValue>(Status.BACKLOG)
-  const [githubRepositoryId, setGithubRepositoryId] = useState<string>('')
+  const [githubRepositoryId, setGithubRepositoryId] = useState<string | null>(null)
+  const [assigneeId, setAssigneeId] = useState<string | null>(null)
   const { user } = useUser()
   const pg = usePGlite()
   const currentUserResult = useCurrentUser(user)
@@ -67,6 +71,24 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     ORDER BY name ASC
   `
   const repositories = repositoryResults?.rows || []
+  
+  // Query users for assignee dropdown
+  const usersResults = useLiveQuery.sql<{
+    id: string,
+    username: string,
+    full_name: string | null,
+    profile_picture: string | null
+  }>`
+    SELECT id, username, full_name, profile_picture
+    FROM app_user
+    WHERE workspace_id = ${workspaceId}
+    AND deleted = false
+    ORDER BY full_name, username
+  `
+  const users = usersResults?.rows || []
+  
+  // Find the current assignee if set
+  const currentAssignee = assigneeId ? users.find(u => u.id === assigneeId) : null
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,7 +125,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           created,
           kanbanorder,
           workspace_id,
-          github_repository_id
+          github_repository_id,
+          assignee_id
         )
         VALUES (
           ${crypto.randomUUID()},
@@ -116,7 +139,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           ${date},
           ${kanbanorder},
           ${currentUser.workspace_id},
-          ${githubRepositoryId || null}
+          ${githubRepositoryId || null},
+          ${assigneeId}
         )
       `
 
@@ -126,7 +150,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     } catch (error) {
       showWarning('Failed to create issue', error instanceof Error ? error.message : 'Unknown error')
     }
-  }, [title, description, priority, status, githubRepositoryId, currentUser, pg, onDismiss])
+  }, [title, description, priority, status, githubRepositoryId, assigneeId, currentUser, pg, onDismiss])
 
   const handleClickCloseBtn = () => {
     if (onDismiss) onDismiss()
@@ -139,7 +163,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
       setDescription(``)
       setPriority(Priority.NONE)
       setStatus(Status.BACKLOG)
-      setGithubRepositoryId('')
+      setGithubRepositoryId(null)
+      setAssigneeId(null)
     }, 250)
   }
 
@@ -260,6 +285,38 @@ function IssueModal({ isOpen, onDismiss }: Props) {
             setPriority(val as PriorityValue)
           }}
         />
+        
+        {workspaceId && (
+          <AssigneeMenu
+            id="assignee-menu"
+            workspaceId={workspaceId}
+            currentAssigneeId={assigneeId}
+            button={
+              <button
+                type="button"
+                className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+              >
+                {assigneeId && currentAssignee ? (
+                  <>
+                    <Avatar
+                      name={currentAssignee.full_name || currentAssignee.username}
+                      avatarUrl={currentAssignee.profile_picture || undefined}
+                    />
+                    <span className="ml-1">
+                      {currentAssignee.full_name || currentAssignee.username}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <AssigneeIcon className="mr-1 w-4 h-4" />
+                    <span>Unassigned</span>
+                  </>
+                )}
+              </button>
+            }
+            onSelect={(userId) => setAssigneeId(userId)}
+          />
+        )}
         
         {repositories.length > 0 ? (
           <GithubRepoMenu

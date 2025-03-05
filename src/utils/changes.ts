@@ -8,6 +8,7 @@ export const issueChangeSchema = z.object({
   status: z.string().nullable().optional(),
   workspace_id: z.string().nullable().optional(),
   github_repository_id: z.string().nullable().optional(),
+  assignee_id: z.string().nullable().optional(),
   modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
   created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
   kanbanorder: z.string().nullable().optional(),

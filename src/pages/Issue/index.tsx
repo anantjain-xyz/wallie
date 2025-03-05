@@ -9,6 +9,8 @@ import { FaGithub } from 'react-icons/fa'
 import PriorityMenu from '../../components/contextmenu/PriorityMenu'
 import StatusMenu from '../../components/contextmenu/StatusMenu'
 import GithubRepoMenu from '../../components/contextmenu/GithubRepoMenu'
+import AssigneeMenu from '../../components/contextmenu/AssigneeMenu'
+import { ReactComponent as AssigneeIcon } from '../../assets/icons/assignee.svg'
 import PriorityIcon from '../../components/PriorityIcon'
 import StatusIcon from '../../components/StatusIcon'
 import Avatar from '../../components/Avatar'
@@ -33,10 +35,24 @@ function IssuePage() {
   const [dirtyDescription, setDirtyDescription] = useState<string | null>(null)
   const descriptionIsDirty = useRef(false)
 
-  const issueCreatorResults = issue?.creator_id ? useLiveQuery.sql<{ full_name: string }>`
-    SELECT full_name FROM app_user WHERE id = ${issue.creator_id}
-  ` : null
-  const issueCreator = issueCreatorResults?.rows[0]
+  // Always call hooks in the same order
+  const issueCreatorResults = useLiveQuery.sql<{ full_name: string }>`
+    SELECT full_name FROM app_user WHERE id = ${issue?.creator_id || '00000000-0000-0000-0000-000000000000'}
+  `
+  const issueCreator = issue?.creator_id ? issueCreatorResults?.rows[0] : null
+  
+  // Query for assignee information - always call this hook
+  const assigneeResults = useLiveQuery.sql<{
+    id: string,
+    username: string,
+    full_name: string | null,
+    profile_picture: string | null
+  }>`
+    SELECT id, username, full_name, profile_picture
+    FROM app_user
+    WHERE id = ${issue?.assignee_id || '00000000-0000-0000-0000-000000000000'}
+  `
+  const assignee = issue?.assignee_id ? assigneeResults?.rows[0] : null
 
   // Query GitHub repositories for the workspace
   const workspaceResults = useLiveQuery.sql<{ id: string }>`
@@ -154,8 +170,16 @@ function IssuePage() {
 
   const handleGithubRepoChange = (repoId: string | null) => {
     pg.sql`
-      UPDATE issue 
-      SET github_repository_id = ${repoId || null}, modified = NOW() 
+      UPDATE issue
+      SET github_repository_id = ${repoId || null}, modified = NOW()
+      WHERE id = ${issue.id}
+    `
+  }
+  
+  const handleAssigneeChange = (userId: string | null) => {
+    pg.sql`
+      UPDATE issue
+      SET assignee_id = ${userId}, modified = NOW()
       WHERE id = ${issue.id}
     `
   }
@@ -234,16 +258,40 @@ function IssuePage() {
             <div className="max-w-4xl flex flex-row md:flex-col">
               <div className="flex flex-1 mb-3 mr-5 md-mr-0">
                 <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
-                  Created by
+                  Assignee
                 </div>
                 <div className="flex flex-[3_0_0]">
-                  <button
-                    type="button"
-                    className="inline-flex items-center h-6 ps-1.5 pe-2 text-gray-500border-none rounded hover:bg-gray-100"
-                  >
-                    <Avatar name={issueCreator?.full_name} />
-                    <span className="ml-1">{issueCreator?.full_name}</span>
-                  </button>
+                  {workspaceId && (
+                    <AssigneeMenu
+                      id={`issue-assignee-` + issue.id}
+                      workspaceId={workspaceId}
+                      currentAssigneeId={issue.assignee_id}
+                      button={
+                        <button
+                          type="button"
+                          className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                        >
+                          {issue.assignee_id && assignee ? (
+                            <>
+                              <Avatar
+                                name={assignee.full_name || assignee.username}
+                                avatarUrl={assignee.profile_picture || undefined}
+                              />
+                              <span className="ml-1">
+                                {assignee.full_name || assignee.username}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <AssigneeIcon className="mr-1 w-4 h-4" />
+                              <span>Unassigned</span>
+                            </>
+                          )}
+                        </button>
+                      }
+                      onSelect={handleAssigneeChange}
+                    />
+                  )}
                 </div>
               </div>
               <div className="flex flex-1 mb-3 mr-5 md-mr-0">
