@@ -318,33 +318,36 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           />
         )}
         
-        {repositories.length > 0 ? (
-          <GithubRepoMenu
-            id="github-repo-menu"
-            repositories={repositories}
-            button={
-              <button
-                type="button"
-                className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700 appearance-none relative"
-              >
-                <FaGithub className="mr-2 h-4 w-4" />
-                <span>{githubRepositoryId ? repositories.find(r => r.id === githubRepositoryId)?.full_name : "Select GitHub repo"}</span>
-              </button>
-            }
-            onSelect={(repoId) => setGithubRepositoryId(repoId)}
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              if (onDismiss) onDismiss();
-              navigate('/settings');
-            }}
-            className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
-          >
-            <FaGithub className="mr-1 h-4 w-4" />
-            <span>Connect GitHub</span>
-          </button>
+        {/* Show GitHub Repo only if assigned to user with username 'wallie' */}
+        {currentAssignee?.username === 'wallie' && (
+          repositories.length > 0 ? (
+            <GithubRepoMenu
+              id="github-repo-menu"
+              repositories={repositories}
+              button={
+                <button
+                  type="button"
+                  className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700 appearance-none relative"
+                >
+                  <FaGithub className="mr-2 h-4 w-4" />
+                  <span>{githubRepositoryId ? repositories.find(r => r.id === githubRepositoryId)?.full_name : "Select GitHub repo"}</span>
+                </button>
+              }
+              onSelect={(repoId) => setGithubRepositoryId(repoId)}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                if (onDismiss) onDismiss();
+                navigate('/settings');
+              }}
+              className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+            >
+              <FaGithub className="mr-1 h-4 w-4" />
+              <span>Connect GitHub</span>
+            </button>
+          )
         )}
       </div>
       {/* Footer */}

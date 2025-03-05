@@ -258,44 +258,6 @@ function IssuePage() {
             <div className="max-w-4xl flex flex-row md:flex-col">
               <div className="flex flex-1 mb-3 mr-5 md-mr-0">
                 <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
-                  Assignee
-                </div>
-                <div className="flex flex-[3_0_0]">
-                  {workspaceId && (
-                    <AssigneeMenu
-                      id={`issue-assignee-` + issue.id}
-                      workspaceId={workspaceId}
-                      currentAssigneeId={issue.assignee_id}
-                      button={
-                        <button
-                          type="button"
-                          className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
-                        >
-                          {issue.assignee_id && assignee ? (
-                            <>
-                              <Avatar
-                                name={assignee.full_name || assignee.username}
-                                avatarUrl={assignee.profile_picture || undefined}
-                              />
-                              <span className="ml-1">
-                                {assignee.full_name || assignee.username}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <AssigneeIcon className="mr-1 w-4 h-4" />
-                              <span>Unassigned</span>
-                            </>
-                          )}
-                        </button>
-                      }
-                      onSelect={handleAssigneeChange}
-                    />
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-1 mb-3 mr-5 md-mr-0">
-                <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
                   Status
                 </div>
                 <div className="flex flex-[3_0_0]">
@@ -339,36 +301,77 @@ function IssuePage() {
               </div>
               <div className="flex flex-1 mb-3 mr-5 md-mr-0">
                 <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
-                  GitHub Repo
+                  Assignee
                 </div>
                 <div className="flex flex-[3_0_0]">
-                  {repositories.length > 0 ? (
-                    <GithubRepoMenu
-                      id={`issue-github-repo-` + issue.id}
-                      repositories={repositories}
+                  {workspaceId && (
+                    <AssigneeMenu
+                      id={`issue-assignee-` + issue.id}
+                      workspaceId={workspaceId}
+                      currentAssigneeId={issue.assignee_id}
                       button={
                         <button
                           type="button"
                           className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
                         >
-                          <FaGithub className="mr-2 h-4 w-4" />
-                          <span>{currentRepoName || "No repository"}</span>
+                          {issue.assignee_id && assignee ? (
+                            <>
+                              <Avatar
+                                name={assignee.full_name || assignee.username}
+                                avatarUrl={assignee.profile_picture || undefined}
+                              />
+                              <span className="ml-1">
+                                {assignee.full_name || assignee.username}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <AssigneeIcon className="mr-1 w-4 h-4" />
+                              <span>Unassigned</span>
+                            </>
+                          )}
                         </button>
                       }
-                      onSelect={handleGithubRepoChange}
+                      onSelect={handleAssigneeChange}
                     />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => navigate('/settings')}
-                      className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
-                    >
-                      <FaGithub className="mr-2 h-4 w-4" />
-                      <span>Connect GitHub</span>
-                    </button>
                   )}
                 </div>
               </div>
+              {/* Show GitHub Repo only if assigned to user with username 'wallie' */}
+              {assignee?.username === 'wallie' && (
+                <div className="flex flex-1 mb-3 mr-5 md-mr-0">
+                  <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
+                    GitHub repo
+                  </div>
+                  <div className="flex flex-[3_0_0]">
+                    {repositories.length > 0 ? (
+                      <GithubRepoMenu
+                        id={`issue-github-repo-` + issue.id}
+                        repositories={repositories}
+                        button={
+                          <button
+                            type="button"
+                            className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                          >
+                            <FaGithub className="mr-2 h-4 w-4" />
+                            <span>{currentRepoName || "No repository"}</span>
+                          </button>
+                        }
+                        onSelect={handleGithubRepoChange}
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => navigate('/settings')}
+                        className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                      >
+                        <FaGithub className="mr-2 h-4 w-4" />
+                        <span>Connect GitHub</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex flex-col md:flex-[3_0_0] md:p-3 border-gray-200 md:border-r min-h-0 min-w-0 overflow-auto">
