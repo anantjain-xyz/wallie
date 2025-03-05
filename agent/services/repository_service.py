@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 async def get_repository_language(repo_id: UUID) -> ProgrammingLanguage:
     """Get the default programming language for a repository from the database.
-    Falls back to TypeScript if not set."""
+    Falls back to None if not set."""
 
     from ..db.connection import db_pool
     try:

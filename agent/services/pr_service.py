@@ -58,51 +58,48 @@ async def get_installation_token(workspace_id):
                     return installation['access_token']
             
             # Get fresh token from GitHub
-            try:
-                # Create JWT for GitHub App
-                now = int(time.time())
-                payload = {
-                    'iat': now,
-                    'exp': now + 600,
-                    'iss': GITHUB_APP_ID
+
+            # Create JWT for GitHub App
+            now = int(time.time())
+            payload = {
+                'iat': now,
+                'exp': now + 600,
+                'iss': GITHUB_APP_ID
+            }
+            jwt_token = jwt.encode(payload, GITHUB_APP_PRIVATE_KEY, algorithm='RS256')
+            
+            # Get installation token
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    'Authorization': f'Bearer {jwt_token}',
+                    'Accept': 'application/vnd.github.v3+json'
                 }
-                jwt_token = jwt.encode(payload, GITHUB_APP_PRIVATE_KEY, algorithm='RS256')
-                
-                # Get installation token
-                async with aiohttp.ClientSession() as session:
-                    headers = {
-                        'Authorization': f'Bearer {jwt_token}',
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                    # Use the API server to get the token
-                    url = f"{API_SERVER_URL}/token?workspace_id={workspace_id}"
-                    async with session.get(url) as response:
-                        if response.status != 200:
-                            logger.error(f"Failed to get installation token: {await response.text()}")
-                            return None
+                # Use the API server to get the token
+                url = f"{API_SERVER_URL}/token?workspace_id={workspace_id}"
+                async with session.get(url) as response:
+                    if response.status != 200:
+                        logger.error(f"Failed to get installation token: {await response.text()}")
+                        return None
+                    
+                    data = await response.json()
+                    if 'error' in data:
+                        logger.error(f"Error from external API: {data['error']}")
+                        return None
                         
-                        data = await response.json()
-                        if 'error' in data:
-                            logger.error(f"Error from external API: {data['error']}")
-                            return None
-                            
-                        token = data['token']
-                        expires_at = datetime.fromisoformat(data['expiresAt'].replace('Z', '+00:00'))
-                        
-                        # Update token in database
-                        await conn.execute(
-                            """
-                            UPDATE github_installation
-                            SET access_token = $1, token_expires_at = $2
-                            WHERE id = $3
-                            """,
-                            token, expires_at, installation['id']
-                        )
-                        
-                        return token
-            except Exception as e:
-                logger.error(f"Error getting installation token: {str(e)}")
-                return None
+                    token = data['token']
+                    expires_at = datetime.fromisoformat(data['expiresAt'].replace('Z', '+00:00'))
+                    
+                    # Update token in database
+                    await conn.execute(
+                        """
+                        UPDATE github_installation
+                        SET access_token = $1, token_expires_at = $2
+                        WHERE id = $3
+                        """,
+                        token, expires_at, installation['id']
+                    )
+                    
+                    return token
     except Exception as e:
         logger.error(f"Error getting installation token: {str(e)}")
         return None
@@ -174,7 +171,7 @@ async def run_agent(issue: Issue) -> AgentRunResponse:
         return AgentRunResponse(
             status="error",
             pr_url=None,
-            message="No GitHub repository selected for this issue. Please select a repository in the issue details."
+            message="GitHub repository for this issue seems to have been removed. Please select a repository in the issue details whenever you're ready to delegate this to Wallie."
         )
     
     # Get the programming language for this repository
