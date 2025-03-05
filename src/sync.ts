@@ -12,6 +12,7 @@ import type {
 } from './utils/changes'
 import { postInitialSync } from './migrations'
 import { useEffect, useState } from 'react'
+import { useAuth } from '@clerk/clerk-react'
 
 const WRITE_SERVER_URL = import.meta.env.VITE_WRITE_SERVER_URL
   ? import.meta.env.VITE_WRITE_SERVER_URL
@@ -28,7 +29,10 @@ export type PGliteWithExtensions = PGliteWithLive & PGliteWithSync
 // Create a reusable error handler for shape sync operations
 const createShapeErrorHandler = (getAuthHeaders: () => Promise<{ Authorization?: string }>) => {
   return async (error: Error) => {
-    if (error.message.includes('401')) {
+    const { isSignedIn } = useAuth()
+    // Only refresh the token if the user is signed in
+    // Otherwise, it will lead to an infinite loop of refreshing the token
+    if (error.message.includes('401') && !isSignedIn) {
       // If the error is due to an expired token, refresh the token and try again
       // Clerk tokens expire every minute, so should expect to run into this every
       // minute or so.
