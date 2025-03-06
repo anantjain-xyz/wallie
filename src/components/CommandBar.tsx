@@ -193,7 +193,7 @@ const CommandBar: React.FC<CommandBarProps> = ({
                   className={classnames(
                     "flex items-center justify-between px-3 py-2 cursor-pointer",
                     {
-                      "bg-blue-50": index === selectedOptionIndex
+                      "bg-purple-50": index === selectedOptionIndex
                     }
                   )}
                   onClick={() => option.action()}
