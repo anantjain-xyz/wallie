@@ -9,6 +9,7 @@ import { FilterState, useFilterState } from '../utils/filterState'
 import { PriorityDisplay, StatusDisplay } from '../types/types'
 import debounce from 'lodash.debounce'
 import { createFTSIndex } from '../migrations'
+import DisplayToggle from './DisplayToggle'
 
 interface Props {
   filteredIssuesCount: number
@@ -16,14 +17,18 @@ interface Props {
   showSearch?: boolean
   title?: string
   filterState?: FilterState
+  onViewModeChange: (viewMode: 'list' | 'board') => void
+  viewMode: 'list' | 'board'
 }
 
-export default function ({
+export default function({
   filteredIssuesCount,
   hideSort,
   showSearch,
   title = `All issues`,
   filterState,
+  onViewModeChange,
+  viewMode,
 }: Props) {
   const [usedFilterState, setFilterState] = useFilterState()
   const [showViewOption, setShowViewOption] = useState(false)
@@ -85,8 +90,8 @@ export default function ({
   const showFTSIndexProgress = showSearch && !FTSIndexReady
 
   return (
-    <>
-      <div className="flex justify-between flex-shrink-0 pl-2 pr-6 border-b border-gray-200 h-14 lg:pl-9">
+    <div className='flex items-center justify-between border-b border-gray-200 w-full'>
+      <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 h-14 lg:pl-9">
         {/* left section */}
         <div className="flex items-center">
           <button
@@ -110,7 +115,7 @@ export default function ({
             button={
               <button
                 type="button"
-                className="px-1 py-0.5 ml-3 border border-gray-300 border-dashed rounded text-gray-500 hover:border-gray-400 hover:text-gray-800 flex items-center"
+                className="px-2 py-1 ml-9 border border-gray-300 border-dashed rounded text-gray-500 hover:border-gray-400 hover:text-gray-800 flex items-center"
               >
                 <BsPlus className="inline" size="16" />
                 Filter
@@ -119,26 +124,12 @@ export default function ({
             id={`filter-menu`}
           />
         </div>
-
-        <div className="flex items-center">
-          {!hideSort && (
-            <button
-              type="button"
-              className="p-2 rounded hover:bg-gray-100"
-              onClick={() => setShowViewOption(true)}
-            >
-              <BsSortUp size="16" className="inline" />
-            </button>
-          )}
-        </div>
-      </div>
-
       {(!!filterState.status?.length || !!filterState.priority?.length) && (
-        <div className="flex flex-shrink-0 pl-2 pr-6 border-b border-gray-200 lg:pl-9 py-2">
+        <div className="flex items-center flex-shrink-0 pl-4 pr-6 py-2">
           {!!filterState.priority?.length && (
             <div className="flex pr-4 space-x-[1px]">
-              <span className="px-1 bg-gray-300 rounded-l">Priority is</span>
-              <span className="px-1 bg-gray-300 ">
+              <span className="px-2 py-1 bg-gray-200 rounded-l">Priority is</span>
+              <span className="px-2 py-1 bg-gray-200 ">
                 {filterState.priority
                   ?.map(
                     (priority) =>
@@ -147,7 +138,7 @@ export default function ({
                   .join(`, `)}
               </span>
               <span
-                className="px-1 bg-gray-300 rounded-r cursor-pointer flex items-center"
+                className="px-2 py-1 bg-gray-200 rounded-r cursor-pointer flex items-center"
                 onClick={() => {
                   setFilterState({
                     ...filterState,
@@ -161,8 +152,8 @@ export default function ({
           )}
           {!!filterState.status?.length && (
             <div className="flex pr-4 space-x-[1px]">
-              <span className="px-1 bg-gray-300 rounded-l">Status is</span>
-              <span className="px-1 bg-gray-300 ">
+              <span className="px-2 py-1 bg-gray-200 rounded-l">Status is</span>
+              <span className="px-2 py-1 bg-gray-200 ">
                 {filterState.status
                   ?.map(
                     (status) =>
@@ -171,7 +162,7 @@ export default function ({
                   .join(`, `)}
               </span>
               <span
-                className="px-1 bg-gray-300 rounded-r cursor-pointer flex items-center"
+                className="px-2 py-1 bg-gray-200 rounded-r cursor-pointer flex items-center"
                 onClick={() => {
                   setFilterState({
                     ...filterState,
@@ -202,15 +193,38 @@ export default function ({
         <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 border-b border-gray-200 lg:pl-9 py-2">
           <div className="flex items-center gap-2">
             <div className="animate-spin h-4 w-4 border-2 border-gray-500 rounded-full border-t-transparent"></div>
-            <span>Building full text search index... (only happens once)</span>
+            <span>Optimizing...</span>
           </div>
         </div>
       )}
+      </div>
 
-      <ViewOptionMenu
-        isOpen={showViewOption}
-        onDismiss={() => setShowViewOption(false)}
-      />
-    </>
+      <div className='flex items-center justify-between flex-shrink-0 pl-2 pr-6 h-14 lg:pl-9'>
+        {/* right section */}
+        <div className="flex-shrink-0 mr-6">
+          <DisplayToggle
+            viewMode={viewMode}
+            onViewModeChange={onViewModeChange}
+          />
+        </div>
+
+        <div className="flex items-center">
+          {!hideSort && (
+            <button
+              type="button"
+              className="p-2 rounded hover:bg-gray-100"
+              onClick={() => setShowViewOption(true)}
+            >
+              <BsSortUp size="16" className="inline" />
+            </button>
+          )}
+        </div>
+
+        <ViewOptionMenu
+          isOpen={showViewOption}
+          onDismiss={() => setShowViewOption(false)}
+        />
+      </div>
+    </div>
   )
 }

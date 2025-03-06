@@ -1,15 +1,16 @@
-import { useLiveQuery } from '@electric-sql/pglite-react'
+import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { LiveQuery } from '@electric-sql/pglite/live'
 import { useLoaderData } from 'react-router-dom'
 import { type ListOnItemsRenderedProps } from 'react-window'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import TopFilter from '../../components/TopFilter'
+import TopBar from '../../components/TopBar'
 import IssueList from './IssueList'
+import IssueBoard from '../Board/IssueBoard'
 import BulkActionBar from '../../components/BulkActionBar'
-import { Issue } from '../../types/types'
-import { FilterState } from '../../utils/filterState'
-const CHUNK_SIZE = 50
+import { Issue, Status, StatusValue } from '../../types/types'
+import { FilterState, filterStateToSql } from '../../utils/filterState'
+const CHUNK_SIZE = 100
 
 function calculateWindow(
   startIndex: number,
@@ -30,9 +31,16 @@ function List({ showSearch = false }) {
     filterState: FilterState
   }
 
+  // State for view mode (list or board)
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('list')
+  
   // State for selected issues and selection mode
   const [selectedIssues, setSelectedIssues] = useState<Set<string>>(new Set())
   const [selectionMode, setSelectionMode] = useState(false)
+  
+  // State for board view
+  const [columnsLiveIssues, setColumnsLiveIssues] = useState<Record<StatusValue, LiveQuery<Issue>>>({} as Record<StatusValue, LiveQuery<Issue>>)
+  const pg = usePGlite()
   
   // Get workspace ID for the AssigneeMenu
   const workspaceResults = useLiveQuery.sql<{ id: string }>`
@@ -51,6 +59,43 @@ function List({ showSearch = false }) {
   issues.forEach((issue, index) => {
     filledItems[index + currentOffset] = issue
   })
+
+  // Set viewMode to list when `showSearch` is set to true
+  useEffect(() => {
+    if (showSearch) {
+      setViewMode('list')
+    }
+  }, [showSearch])
+
+  // Load board data when view mode is 'board'
+  useEffect(() => {
+    if (viewMode === 'board' && pg) {
+      const loadBoardData = async () => {
+        const newColumnsLiveIssues: Partial<Record<StatusValue, LiveQuery<Issue>>> = {}
+        
+        for (const status of Object.values(Status)) {
+          const colFilterState: FilterState = {
+            ...filterState,
+            orderBy: 'kanbanorder',
+            orderDirection: 'asc',
+            status: [status],
+          }
+          const { sql: colSql, sqlParams: colSqlParams } = filterStateToSql(colFilterState)
+          const colLiveIssues = await pg.live.query<Issue>({
+            query: colSql,
+            params: colSqlParams,
+            offset: 0,
+            limit: 10,
+          })
+          newColumnsLiveIssues[status] = colLiveIssues
+        }
+        
+        setColumnsLiveIssues(newColumnsLiveIssues as Record<StatusValue, LiveQuery<Issue>>)
+      }
+      
+      loadBoardData()
+    }
+  }, [viewMode, pg, filterState])
 
   const updateOffsetAndLimit = (itemsRendered: ListOnItemsRenderedProps) => {
     const { offset: newOffset, limit: newLimit } = calculateWindow(
@@ -114,20 +159,33 @@ function List({ showSearch = false }) {
 
   return (
     <div className="flex flex-col flex-grow">
-      <TopFilter
-        filterState={filterState}
-        filteredIssuesCount={issuesRes.totalCount ?? issuesRes.rows.length}
-        showSearch={showSearch}
-      />
-      <IssueList
-        onItemsRendered={(itemsRendered) => updateOffsetAndLimit(itemsRendered)}
-        issues={filledItems}
-        selectedIssues={selectedIssues}
-        onSelectIssue={handleSelectIssue}
-        selectionMode={selectionMode}
-        workspaceId={workspaceId}
-      />
-      {selectedIssues.size > 0 && workspaceId && (
+      <div className="flex justify-between items-center w-full">
+        <TopBar
+          filterState={filterState}
+          filteredIssuesCount={issuesRes.totalCount ?? issuesRes.rows.length}
+          showSearch={showSearch}
+          hideSort={viewMode === 'board'}
+          onViewModeChange={setViewMode}
+          viewMode={viewMode}
+        />
+      </div>
+      
+      {viewMode === 'list' ? (
+        <IssueList
+          onItemsRendered={(itemsRendered) => updateOffsetAndLimit(itemsRendered)}
+          issues={filledItems}
+          selectedIssues={selectedIssues}
+          onSelectIssue={handleSelectIssue}
+          selectionMode={selectionMode}
+          workspaceId={workspaceId}
+        />
+      ) : (
+        Object.keys(columnsLiveIssues).length > 0 && (
+          <IssueBoard columnsLiveIssues={columnsLiveIssues} />
+        )
+      )}
+      
+      {viewMode === 'list' && selectedIssues.size > 0 && workspaceId && (
         <BulkActionBar
           selectedIssues={selectedIssues}
           workspaceId={workspaceId}

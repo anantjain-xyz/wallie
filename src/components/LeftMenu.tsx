@@ -1,12 +1,12 @@
 import { ReactComponent as MenuIcon } from '../assets/icons/menu.svg'
 import { ReactComponent as BacklogIcon } from '../assets/icons/circle-dot.svg'
+import { ReactComponent as DoneIcon } from '../assets/icons/done.svg'
 import { ReactComponent as TodoIcon } from '../assets/icons/circle.svg'
 import { MenuContext, IssueModalContext } from '../App'
 import classnames from 'classnames'
 import { memo, RefObject, useRef, useState, useContext } from 'react'
 import { BsPencilSquare as AddIcon } from 'react-icons/bs'
 import { BsSearch as SearchIcon } from 'react-icons/bs'
-import { BsFillGrid3X3GapFill as BoardIcon } from 'react-icons/bs'
 import { BsCollectionFill as IssuesIcon } from 'react-icons/bs'
 import { BsTerminalFill as ConsoleIcon } from 'react-icons/bs'
 import { BsGearFill as SettingsIcon } from 'react-icons/bs'
@@ -110,27 +110,29 @@ function LeftMenu() {
               <IssuesIcon className="w-3.5 h-3.5 mr-2" />
               <span>All Issues</span>
             </Link>
-            <Link
-              to="/?status=todo,in_progress,in_review"
-              className="flex items-center pl-6 rounded cursor-pointer h-7 hover:bg-gray-100"
-            >
-              <TodoIcon className="w-3.5 h-3.5 mr-2" />
-              <span>Active</span>
-            </Link>
-            <Link
-              to="/?status=backlog"
-              className="flex items-center pl-6 rounded cursor-pointer h-7 hover:bg-gray-100"
-            >
-              <BacklogIcon className="w-3.5 h-3.5 mr-2" />
-              <span>Backlog</span>
-            </Link>
-            <Link
-              to="/board"
-              className="flex items-center pl-6 rounded cursor-pointer h-7 hover:bg-gray-100"
-            >
-              <BoardIcon className="w-3.5 h-3.5 mr-2" />
-              <span>Board</span>
-            </Link>
+            <div className="border-l border-gray-300 pl-3 ml-[1.9rem]">
+              <Link
+                to="/?status=todo,in_progress,in_review"
+                className="flex items-center pl-2 rounded cursor-pointer h-7 hover:bg-gray-100"
+              >
+                <TodoIcon className="w-3.5 h-3.5 mr-2" />
+                <span>Active</span>
+              </Link>
+              <Link
+                to="/?status=backlog"
+                className="flex items-center pl-2 rounded cursor-pointer h-7 hover:bg-gray-100"
+              >
+                <BacklogIcon className="w-3.5 h-3.5 mr-2" />
+                <span>Backlog</span>
+              </Link>
+              <Link
+                to="/?status=done"
+                className="flex items-center pl-2 rounded cursor-pointer h-7 hover:bg-gray-100"
+              >
+                <DoneIcon className="w-3.5 h-3.5 mr-2" />
+                <span>Done</span>
+              </Link>
+            </div>
           </ItemGroup>
 
           {/* extra space */}

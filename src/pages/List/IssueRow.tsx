@@ -105,7 +105,7 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
       onClick={handleRowClick}
       style={style}
     >
-      <div className="flex-shrink-0 ml-2" onClick={handleCheckboxClick}>
+      <div className="flex-shrink-0 ml-1" onClick={handleCheckboxClick}>
         <input
           type="checkbox"
           checked={isSelected}

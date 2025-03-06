@@ -1,5 +1,4 @@
 import 'animate.css/animate.min.css'
-import Board from './pages/Board'
 import { useState, createContext, useEffect, useMemo, useContext } from 'react'
 import {
   createBrowserRouter,
@@ -79,43 +78,6 @@ async function issueListLoader({ request }: { request: Request }) {
     limit: 100,
   })
   return { liveIssues, filterState }
-}
-
-async function boardIssueListLoader({ request }: { request: Request }) {
-  await waitForInitialSyncDone()
-  const pg = await pgPromise
-  const url = new URL(request.url)
-  const filterState = getFilterStateFromSearchParams(url.searchParams)
-
-  const columnsLiveIssues: Partial<Record<StatusValue, LiveQuery<IssueType>>> =
-    {}
-
-  for (const status of Object.values(Status)) {
-    const colFilterState: FilterState = {
-      ...filterState,
-      orderBy: 'kanbanorder',
-      orderDirection: 'asc',
-      status: [status],
-    }
-    const { sql: colSql, sqlParams: colSqlParams } =
-      filterStateToSql(colFilterState)
-    const colLiveIssues = await pg.live.query<IssueType>({
-      query: colSql,
-      params: colSqlParams,
-      signal: request.signal,
-      offset: 0,
-      limit: 10,
-    })
-    columnsLiveIssues[status] = colLiveIssues
-  }
-
-  return {
-    columnsLiveIssues: columnsLiveIssues as Record<
-      StatusValue,
-      LiveQuery<IssueType>
-    >,
-    filterState,
-  }
 }
 
 async function issueLoader({
@@ -261,11 +223,6 @@ const App = () => {
           path: `/search`,
           element: <List showSearch={true} />,
           loader: issueListLoader,
-        },
-        {
-          path: `/board`,
-          element: <Board />,
-          loader: boardIssueListLoader,
         },
         {
           path: `/issue/:id`,
