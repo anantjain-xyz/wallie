@@ -63,6 +63,7 @@ function Comments({ issue }: CommentsProps) {
     FROM comment c
     LEFT JOIN app_user u ON c.creator_id = u.id 
     WHERE c.issue_id = ${issue.id}
+    ORDER BY c.created ASC
   `
   const comments = commentsResults?.rows
   const currentUserResult = useCurrentUser(user)
