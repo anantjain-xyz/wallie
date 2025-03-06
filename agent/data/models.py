@@ -10,7 +10,6 @@ class Issue(BaseModel):
     workspace_id: UUID
     github_repository_id: Optional[UUID] = None
     assignee_id: Optional[UUID] = None
-    modified: Optional[str] = None
 
 class AgentRunResponse(BaseModel):
     """

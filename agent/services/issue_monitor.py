@@ -122,7 +122,6 @@ async def check_for_new_issues():
                 workspace_id=workspace_id,
                 github_repository_id=github_repository_id,
                 assignee_id=assignee_id,
-                modified=str(modified)
             )
             
             try:
