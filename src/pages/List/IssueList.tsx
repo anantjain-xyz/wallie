@@ -12,9 +12,20 @@ import { Issue } from '../../types/types'
 export interface IssueListProps {
   issues: (Issue | undefined)[]
   onItemsRendered?: (props: ListOnItemsRenderedProps) => void
+  selectedIssues?: Set<string>
+  onSelectIssue?: (issueId: string, selected: boolean) => void
+  selectionMode?: boolean
+  workspaceId?: string
 }
 
-function IssueList({ issues, onItemsRendered }: IssueListProps) {
+function IssueList({
+  issues,
+  onItemsRendered,
+  selectedIssues = new Set<string>(),
+  onSelectIssue,
+  selectionMode = false,
+  workspaceId = ''
+}: IssueListProps) {
   return (
     <div className="grow">
       <AutoSizer>
@@ -23,7 +34,13 @@ function IssueList({ issues, onItemsRendered }: IssueListProps) {
             height={height}
             itemCount={issues.length}
             itemSize={36}
-            itemData={issues}
+            itemData={{
+              issues,
+              selectedIssues,
+              onSelectIssue,
+              selectionMode,
+              workspaceId
+            }}
             width={width}
             onItemsRendered={onItemsRendered}
           >
@@ -37,20 +54,33 @@ function IssueList({ issues, onItemsRendered }: IssueListProps) {
 
 const VirtualIssueRow = memo(
   ({
-    data: issues,
+    data,
     index,
     style,
   }: {
-    data: (Issue | undefined)[]
+    data: {
+      issues: (Issue | undefined)[]
+      selectedIssues: Set<string>
+      onSelectIssue?: (issueId: string, selected: boolean) => void
+      selectionMode: boolean
+      workspaceId: string
+    }
     index: number
     style: CSSProperties
   }) => {
+    const { issues, selectedIssues, onSelectIssue, selectionMode, workspaceId } = data
     const issue = issues[index]
+    const isSelected = issue?.id ? selectedIssues.has(issue.id) : false
+    
     return (
       <IssueRow
         key={`issue-${issue?.id ?? 'index' + index}`}
         issue={issue}
         style={style}
+        isSelected={isSelected}
+        onSelect={onSelectIssue}
+        selectionMode={selectionMode}
+        workspaceId={workspaceId}
       />
     )
   },

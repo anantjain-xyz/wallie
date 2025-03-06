@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { usePGlite } from '@electric-sql/pglite-react'
 import PriorityMenu from '../../components/contextmenu/PriorityMenu'
 import StatusMenu from '../../components/contextmenu/StatusMenu'
+import AssigneeMenu from '../../components/contextmenu/AssigneeMenu'
 import PriorityIcon from '../../components/PriorityIcon'
 import StatusIcon from '../../components/StatusIcon'
 import Avatar from '../../components/Avatar'
@@ -14,31 +15,40 @@ import React from 'react'
 interface Props {
   issue: Issue | undefined
   style: CSSProperties
+  isSelected?: boolean
+  onSelect?: (issueId: string, selected: boolean) => void
+  selectionMode?: boolean
+  workspaceId?: string
 }
 
-function IssueRow({ issue, style }: Props) {
+function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = false, workspaceId = '' }: Props) {
   const pg = usePGlite()
   const navigate = useNavigate()
-  const [creatorName, setCreatorName] = React.useState<string>('')
+  const [assigneeName, setAssigneeName] = React.useState<string | undefined>(undefined)
+  const [assigneeProfilePicture, setAssigneeProfilePicture] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    if (issue?.creator_id) {
+    if (issue?.assignee_id) {
       pg.sql`
-        SELECT full_name 
-        FROM app_user 
-        WHERE id = ${issue.creator_id}
+        SELECT full_name, profile_picture
+        FROM app_user
+        WHERE id = ${issue.assignee_id}
       `.then((result: { rows: unknown[] }) => {
         if (result.rows.length > 0) {
-          const row = result.rows[0] as { full_name: string };
-          setCreatorName(row.full_name);
+          const row = result.rows[0] as { full_name: string, profile_picture: string | null };
+          setAssigneeName(row.full_name);
+          setAssigneeProfilePicture(row.profile_picture);
         }
       })
+    } else {
+      setAssigneeName(undefined);
+      setAssigneeProfilePicture(null);
     }
-  }, [issue?.creator_id, pg.sql])
+  }, [issue?.assignee_id, pg.sql])
 
   const handleChangeStatus = (status: string) => {
     pg.sql`
-      UPDATE issue 
+      UPDATE issue
       SET status = ${status}, modified = NOW()
       WHERE id = ${issue!.id}
     `
@@ -46,10 +56,35 @@ function IssueRow({ issue, style }: Props) {
 
   const handleChangePriority = (priority: string) => {
     pg.sql`
-      UPDATE issue 
-      SET priority = ${priority}, modified = NOW() 
+      UPDATE issue
+      SET priority = ${priority}, modified = NOW()
       WHERE id = ${issue!.id}
     `
+  }
+  
+  const handleChangeAssignee = (userId: string | null) => {
+    pg.sql`
+      UPDATE issue
+      SET assignee_id = ${userId}, modified = NOW()
+      WHERE id = ${issue!.id}
+    `
+  }
+
+  const handleRowClick = (e: React.MouseEvent) => {
+    if (selectionMode && onSelect && issue?.id) {
+      onSelect(issue.id, !isSelected);
+      e.preventDefault();
+      e.stopPropagation();
+    } else if (issue?.id) {
+      navigate(`/issue/${issue.id}`);
+    }
+  }
+
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    if (onSelect && issue?.id) {
+      onSelect(issue.id, !isSelected);
+      e.stopPropagation();
+    }
   }
 
   if (!issue?.id) {
@@ -62,16 +97,23 @@ function IssueRow({ issue, style }: Props) {
       </div>
     )
   }
-
   return (
     <div
       key={issue.id}
-      className="flex items-center flex-grow w-full min-w-0 pl-2 pr-8 text-sm border-b border-gray-100 hover:bg-gray-100 shrink-0"
+      className={`flex items-center flex-grow w-full min-w-0 pl-2 pr-8 text-sm border-b border-gray-100 hover:bg-gray-100 shrink-0 ${isSelected ? 'bg-blue-50' : ''} ${selectionMode ? 'cursor-pointer' : ''}`}
       id={issue.id}
-      onClick={() => navigate(`/issue/${issue.id}`)}
+      onClick={handleRowClick}
       style={style}
     >
-      <div className="flex-shrink-0 ml-4">
+      <div className="flex-shrink-0 ml-2" onClick={handleCheckboxClick}>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => {}}
+          className={`w-4 h-4 text-blue-600 rounded focus:ring-0 ${selectionMode ? 'border-gray-300' : 'border-gray-200'}`}
+        />
+      </div>
+      <div className="flex-shrink-0 ml-3">
         <PriorityMenu
           id={`r-priority-` + issue.id}
           button={<PriorityIcon priority={issue.priority} />}
@@ -92,7 +134,26 @@ function IssueRow({ issue, style }: Props) {
         {formatDate(issue.created)}
       </div>
       <div className="flex-shrink-0 hidden ml-4 font-normal text-gray-500 sm:block w-15 md:block">
-        <Avatar name={creatorName} />
+        {workspaceId ? (
+          <AssigneeMenu
+            id={`r-assignee-` + issue.id}
+            workspaceId={workspaceId}
+            button={
+              <div
+                className="flex items-center hover:bg-gray-100 rounded p-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Avatar
+                  name={assigneeName}
+                  avatarUrl={assigneeProfilePicture || undefined}
+                />
+              </div>
+            }
+            onSelect={handleChangeAssignee}
+          />
+        ) : (
+          <Avatar name={assigneeName} />
+        )}
       </div>
     </div>
   )

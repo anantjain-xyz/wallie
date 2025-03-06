@@ -20,7 +20,6 @@ interface Props {
   filterKeyword?: boolean
   className?: string
   onSelect?: (userId: string | null) => void
-  currentAssigneeId?: string | null
 }
 
 export default function AssigneeMenu({ 
@@ -30,7 +29,6 @@ export default function AssigneeMenu({
   filterKeyword = false, 
   className, 
   onSelect,
-  currentAssigneeId
 }: Props) {
   const [keyword, setKeyword] = useState(``)
   

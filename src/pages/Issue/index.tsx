@@ -35,12 +35,6 @@ function IssuePage() {
   const [dirtyDescription, setDirtyDescription] = useState<string | null>(null)
   const descriptionIsDirty = useRef(false)
 
-  // Always call hooks in the same order
-  const issueCreatorResults = useLiveQuery.sql<{ full_name: string }>`
-    SELECT full_name FROM app_user WHERE id = ${issue?.creator_id || '00000000-0000-0000-0000-000000000000'}
-  `
-  const issueCreator = issue?.creator_id ? issueCreatorResults?.rows[0] : null
-  
   // Query for assignee information - always call this hook
   const assigneeResults = useLiveQuery.sql<{
     id: string,
@@ -308,7 +302,6 @@ function IssuePage() {
                     <AssigneeMenu
                       id={`issue-assignee-` + issue.id}
                       workspaceId={workspaceId}
-                      currentAssigneeId={issue.assignee_id}
                       button={
                         <button
                           type="button"
