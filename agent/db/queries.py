@@ -5,8 +5,8 @@ from uuid import UUID
 from datetime import datetime
 import pytz
 
-async def get_latest_issue_timestamp():
-    """Get the timestamp of the most recent issue"""
+async def get_last_modified_issue_timestamp():
+    """Get the timestamp of the most recent issue modification"""
     # Get the current db_pool from the connection module
     from .connection import db_pool
     
@@ -16,7 +16,7 @@ async def get_latest_issue_timestamp():
         
     try:
         async with db_pool.acquire() as conn:
-            result = await conn.fetchval("SELECT MAX(created) FROM issue")
+            result = await conn.fetchval("SELECT MAX(modified) FROM issue")
             # If no result, use current time with UTC timezone
             if not result:
                 result = datetime.now(pytz.UTC)
@@ -29,7 +29,7 @@ async def get_latest_issue_timestamp():
         return None
 
 async def get_new_issues(timestamp):
-    """Get all issues created after the given timestamp"""
+    """Get all issues modified after the given timestamp"""
     # Get the current db_pool from the connection module
     from .connection import db_pool
     
@@ -40,10 +40,10 @@ async def get_new_issues(timestamp):
     try:
         async with db_pool.acquire() as conn:
             query = """
-                SELECT i.id, i.title, i.description, i.created, i.workspace_id, i.github_repository_id, i.assignee_id
+                SELECT i.id, i.title, i.description, i.created, i.modified, i.workspace_id, i.github_repository_id, i.assignee_id
                 FROM issue i
-                WHERE i.created > $1 OR ($1 IS NULL)
-                ORDER BY i.created ASC
+                WHERE i.modified > $1 OR ($1 IS NULL)
+                ORDER BY i.modified ASC
             """
             rows = await conn.fetch(query, timestamp)
             return rows
@@ -95,4 +95,21 @@ async def add_comment(conn, issue_id: UUID, workspace_id: UUID, body: str):
         return comment_id
     except Exception as e:
         logger.error(f"Error adding comment: {str(e)}")
-        raise 
+        raise
+
+async def get_issue_comments(conn, issue_id: UUID):
+    """Get all comments for an issue"""
+    try:
+        query = """
+            SELECT c.id, c.body, c.created, c.creator_id, u.full_name as author_name, u.username as author_username
+            FROM comment c
+            LEFT JOIN app_user u ON c.creator_id = u.id
+            WHERE c.issue_id = $1
+            ORDER BY c.created ASC
+        """
+        rows = await conn.fetch(query, issue_id)
+        logger.info(f"Retrieved {len(rows)} comments for issue {issue_id}")
+        return rows
+    except Exception as e:
+        logger.error(f"Error getting comments for issue {issue_id}: {str(e)}")
+        return [] 

@@ -10,8 +10,16 @@ class Issue(BaseModel):
     workspace_id: UUID
     github_repository_id: Optional[UUID] = None
     assignee_id: Optional[UUID] = None
+    modified: Optional[str] = None
 
 class AgentRunResponse(BaseModel):
-    status: str
+    """
+    Response from the agent run process
+    
+    Possible status values:
+    - success: PR was created successfully
+    - error: An error occurred during processing
+    """
+    status: str  # 'success', 'error'
     pr_url: Optional[str] = None
     message: Optional[str] = None

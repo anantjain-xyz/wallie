@@ -1,9 +1,9 @@
 import asyncio
 from ..config import logger, POLLING_INTERVAL_SECONDS, ERROR_RETRY_SECONDS
 from ..db.connection import db_pool, get_db
-from ..db.queries import get_latest_issue_timestamp, get_new_issues
+from ..db.queries import get_last_modified_issue_timestamp, get_new_issues
 from ..data import Issue
-from .comment_service import add_agent_comment
+from .comment_service import add_agent_comment, is_last_comment_from_wallie
 from .issue_service import set_issue_in_progress
 from .pr_service import process_issue
 import pytz
@@ -27,7 +27,7 @@ async def monitor_issues():
     
     # Get the latest timestamp on startup
     try:
-        last_checked_timestamp = await get_latest_issue_timestamp()
+        last_checked_timestamp = await get_last_modified_issue_timestamp()
         if last_checked_timestamp:
             logger.info(f"Starting issue monitoring from timestamp: {last_checked_timestamp}")
     except Exception as e:
@@ -63,6 +63,7 @@ async def check_for_new_issues():
             title = row['title']
             description = row['description'] or ""
             created = row['created']
+            modified = row['modified']
             workspace_id = row['workspace_id']
             github_repository_id = row['github_repository_id']
             assignee_id = row['assignee_id']
@@ -81,8 +82,14 @@ async def check_for_new_issues():
                         assignee_id
                     )
                     is_wallie_assignee = wallie_check > 0
+                    
+                    # Check if the last comment is from 'wallie'
+                    is_last_comment_from_wallie_check = await is_last_comment_from_wallie(conn, issue_id)
+                    if is_last_comment_from_wallie_check:
+                        logger.info(f"Issue {issue_id} last comment is from 'wallie', skipping processing")
+                        continue
             except Exception as e:
-                logger.error(f"Error checking assignee for issue {issue_id}: {str(e)}")
+                logger.error(f"Error checking assignee or comments for issue {issue_id}: {str(e)}")
                 continue
                 
             if not is_wallie_assignee:
@@ -94,19 +101,19 @@ async def check_for_new_issues():
                 logger.info(f"Issue {issue_id} has no GitHub repository ID, skipping")
                 continue
 
-            # Ensure created timestamp has timezone info
-            if created.tzinfo is None:
-                created = pytz.UTC.localize(created)
+            # Ensure modified timestamp has timezone info
+            if modified.tzinfo is None:
+                modified = pytz.UTC.localize(modified)
             
             # Update the last checked timestamp for this issue regardless of processing outcome
             # This prevents infinite loops if processing fails
             if last_checked_timestamp is None:
-                last_checked_timestamp = created
-            elif created > last_checked_timestamp:
-                last_checked_timestamp = created
+                last_checked_timestamp = modified
+            elif modified > last_checked_timestamp:
+                last_checked_timestamp = modified
             
             # Process the new issue
-            logger.info(f"Processing new issue {issue_id} created at {created}: {title}")
+            logger.info(f"Processing new issue {issue_id} modified at {modified}: {title}")
             
             issue = Issue(
                 title=title,
@@ -114,7 +121,8 @@ async def check_for_new_issues():
                 id=issue_id,
                 workspace_id=workspace_id,
                 github_repository_id=github_repository_id,
-                assignee_id=assignee_id
+                assignee_id=assignee_id,
+                modified=str(modified)
             )
             
             try:
@@ -139,8 +147,8 @@ async def check_for_new_issues():
                 except Exception as comment_error:
                     logger.error(f"Failed to add error comment: {str(comment_error)}")
 
-        # Set last checked timestamp to the max of all issues created that were processed
-        last_checked_timestamp = max(row['created'] for row in rows) if rows else last_checked_timestamp
+        # Set last checked timestamp to the max of all issues modified that were processed
+        last_checked_timestamp = max(row['modified'] for row in rows) if rows else last_checked_timestamp
     except Exception as e:
         logger.error(f"Error checking for new issues: {str(e)}")
 

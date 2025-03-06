@@ -4,7 +4,7 @@ from ..helpers import create_codebase, format_issue_message
 from ..data import Issue, AgentRunResponse
 from ..config import logger, ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY
 from ..db.connection import db_pool
-from .comment_service import add_agent_comment
+from .comment_service import add_agent_comment, get_comments_for_issue
 from .issue_service import set_issue_in_review
 from .repository_service import get_repository_language
 import asyncio
@@ -106,12 +106,12 @@ async def get_installation_token(workspace_id):
 
 async def process_issue(issue: Issue):
     """Process an issue by creating a PR"""
+    # Get the current db_pool from the connection module
+    from ..db.connection import db_pool
+    
     # Call run_agent directly since it's now async
     result = await run_agent(issue)
     logger.info(f"Successfully processed issue: {issue.title}, Result: {result}")
-    
-    # Get the current db_pool from the connection module
-    from ..db.connection import db_pool
     
     # If we have issue_id and workspace_id, add a comment with the PR URL
     if issue.id and issue.workspace_id and db_pool:
@@ -180,8 +180,19 @@ async def run_agent(issue: Issue) -> AgentRunResponse:
     # Create codebase instance with the workspace token
     codebase = create_codebase(repo_name, language, token)
     
-    # Format the issue message
-    query = format_issue_message(issue.title, issue.description)
+    # Get comments for this issue
+    comments = []
+    if issue.id and db_pool:
+        try:
+            async with db_pool.acquire() as conn:
+                comments = await get_comments_for_issue(conn, issue.id)
+                logger.info(f"Retrieved {len(comments)} comments for issue {issue.id}")
+        except Exception as e:
+            logger.error(f"Error retrieving comments for issue {issue.id}: {str(e)}")
+    
+
+    # Format the issue message with comments
+    query = format_issue_message(issue.title, issue.description, comments)
     
     # Create and run the agent
     agent = CodeAgent(codebase)
