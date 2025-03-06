@@ -2,6 +2,7 @@ import postgres from 'postgres';
 import { createClerkClient } from '@clerk/backend';
 import { getAuth, clerkMiddleware } from '@hono/clerk-auth';
 import type { Context } from 'hono';
+import {v4 as uuidv4} from 'uuid';
 
 const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://postgres:password@localhost:54321/wallie';
 const sql = postgres(DATABASE_URL);
@@ -55,15 +56,63 @@ export async function getWorkspaceIdFromUser(userId: string): Promise<string | n
     }
     const email = user.emailAddresses[0].emailAddress;
 
+    // Try to find the user in the database
     const dbUser = await sql`
       SELECT * FROM app_user WHERE email = ${email}
     `;
-    if (!dbUser?.length) {
-      console.error('User not found in database');
+    
+    // If user exists, return their workspace_id
+    if (dbUser?.length) {
+      return dbUser[0].workspace_id;
+    }
+    
+    // User not found in database, extract domain from email
+    const domain = email.split('@')[1];
+    if (!domain) {
+      console.error('Invalid email format');
       return null;
     }
+    
+    // Find workspaces where the domain is in allowlisted_domains
+    const workspaces = await sql`
+      SELECT * FROM workspace
+      WHERE ${domain} = ANY(allowlisted_domains)
+    `;
+    
+    // If no workspace allows this domain
+    if (!workspaces?.length) {
+      console.error('No workspace found for domain:', domain);
+      return null;
+    }
+    
+    // Pick the first workspace that allows the domain
+    const workspace = workspaces[0];
 
-    return dbUser[0].workspace_id;
+    // Insert the user if they don't exist, or get the existing user
+    // This handles race conditions where another thread might have inserted the user
+    const upsertedUser = await sql`
+      INSERT INTO app_user (
+        id,
+        email,
+        username,
+        full_name,
+        profile_picture,
+        workspace_id
+      ) VALUES (
+        ${uuidv4()},
+        ${email},
+        ${null},
+        ${user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || null},
+        ${user.imageUrl || null},
+        ${workspace.id}
+      )
+      ON CONFLICT (email, workspace_id) DO UPDATE SET
+        full_name = COALESCE(app_user.full_name, EXCLUDED.full_name),
+        profile_picture = COALESCE(app_user.profile_picture, EXCLUDED.profile_picture)
+      RETURNING *
+    `;
+    
+    return workspace.id;
   } catch (error) {
     console.error('Failed to get workspace ID:', error);
     return null;
