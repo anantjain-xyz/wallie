@@ -1,8 +1,7 @@
 import { ReactComponent as MenuIcon } from '../assets/icons/menu.svg'
 import { useState, useContext, useEffect } from 'react'
-import { BsSortUp, BsPlus, BsX, BsSearch as SearchIcon } from 'react-icons/bs'
+import { BsPlus, BsX, BsSearch as SearchIcon } from 'react-icons/bs'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
-import ViewOptionMenu from './ViewOptionMenu'
 import { MenuContext } from '../App'
 import FilterMenu from './contextmenu/FilterMenu'
 import { FilterState, useFilterState } from '../utils/filterState'
@@ -13,7 +12,6 @@ import DisplayToggle from './DisplayToggle'
 
 interface Props {
   filteredIssuesCount: number
-  hideSort?: boolean
   showSearch?: boolean
   title?: string
   filterState?: FilterState
@@ -23,7 +21,6 @@ interface Props {
 
 export default function({
   filteredIssuesCount,
-  hideSort,
   showSearch,
   title = `All issues`,
   filterState,
@@ -31,7 +28,6 @@ export default function({
   viewMode,
 }: Props) {
   const [usedFilterState, setFilterState] = useFilterState()
-  const [showViewOption, setShowViewOption] = useState(false)
   const { showMenu, setShowMenu } = useContext(MenuContext)!
   const [searchQuery, setSearchQuery] = useState(``)
   const [FTSIndexReady, setFTSIndexReady] = useState(true)
@@ -201,29 +197,12 @@ export default function({
 
       <div className='flex items-center justify-between flex-shrink-0 pl-2 pr-6 h-14 lg:pl-9'>
         {/* right section */}
-        <div className="flex-shrink-0 mr-6">
+        <div className="flex-shrink-0">
           <DisplayToggle
             viewMode={viewMode}
             onViewModeChange={onViewModeChange}
           />
         </div>
-
-        <div className="flex items-center">
-          {!hideSort && (
-            <button
-              type="button"
-              className="p-2 rounded hover:bg-gray-100"
-              onClick={() => setShowViewOption(true)}
-            >
-              <BsSortUp size="16" className="inline" />
-            </button>
-          )}
-        </div>
-
-        <ViewOptionMenu
-          isOpen={showViewOption}
-          onDismiss={() => setShowViewOption(false)}
-        />
       </div>
     </div>
   )

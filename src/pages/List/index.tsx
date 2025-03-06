@@ -186,7 +186,7 @@ function List({ showSearch = false }) {
           filterState={filterState}
           filteredIssuesCount={issuesRes.totalCount ?? issuesRes.rows.length}
           showSearch={showSearch}
-          hideSort={viewMode === 'board'}
+          title={viewMode === 'board' ? 'Board' : undefined}
           onViewModeChange={setViewMode}
           viewMode={viewMode}
         />
