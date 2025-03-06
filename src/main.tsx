@@ -13,9 +13,14 @@ if (!PUBLISHABLE_KEY) {
 
 const container = document.getElementById(`root`)!
 const root = createRoot(container)
-root.render(<ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
-  <App />
-</ClerkProvider>)
+root.render(
+  <ClerkProvider 
+    publishableKey={PUBLISHABLE_KEY} 
+    afterSignOutUrl="/"
+  >
+    <App />
+  </ClerkProvider>
+)
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

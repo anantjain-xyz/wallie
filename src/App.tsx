@@ -31,6 +31,7 @@ import type { PGliteWithExtensions } from './sync'
 import { useAuth } from '@clerk/clerk-react'
 import SignInPage from './components/SignInPage'
 import CommandBarWrapper from './components/CommandBarWrapper'
+import ClerkEventListener from './components/ClerkEventListener'
 
 interface MenuContextInterface {
   showMenu: boolean
@@ -302,12 +303,13 @@ const App = () => {
     )
   }
 
-  return (
+return (
     <PGliteProvider db={pgForProvider}>
       <MenuContext.Provider value={menuContextValue}>
         <IssueModalContext.Provider value={issueModalContextValue}>
           <CommandBarContext.Provider value={commandBarContextValue}>
             <RouterProvider router={router} />
+            <ClerkEventListener />
           </CommandBarContext.Provider>
         </IssueModalContext.Provider>
       </MenuContext.Provider>
