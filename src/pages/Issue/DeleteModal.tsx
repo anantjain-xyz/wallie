@@ -7,7 +7,7 @@ interface Props {
   deleteIssue: () => void
 }
 
-export default function AboutModal({
+export default function DeleteModal({
   isOpen,
   setIsOpen,
   onDismiss,

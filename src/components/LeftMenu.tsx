@@ -11,7 +11,6 @@ import { BsCollectionFill as IssuesIcon } from 'react-icons/bs'
 import { BsTerminalFill as ConsoleIcon } from 'react-icons/bs'
 import { BsGearFill as SettingsIcon } from 'react-icons/bs'
 import { Link } from 'react-router-dom'
-import AboutModal from './AboutModal'
 import IssueModal from './IssueModal'
 import PGliteConsoleModal from './PGliteConsoleModal'
 import ItemGroup from './ItemGroup'
@@ -23,7 +22,6 @@ import { useCurrentUser } from '../utils/userUtils'
 
 function LeftMenu() {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>
-  const [showAboutModal, setShowAboutModal] = useState(false)
   const [showPGliteConsoleModal, setShowPGliteConsoleModal] = useState(false)
   const { showMenu, setShowMenu } = useContext(MenuContext)!
   const { showIssueModal, setShowIssueModal } = useContext(IssueModalContext)!
@@ -161,7 +159,6 @@ function LeftMenu() {
           </div>
         </div>
       </div>
-      {showAboutModal && <AboutModal isOpen={showAboutModal} onDismiss={() => setShowAboutModal(false)} />}
       {showIssueModal && <IssueModal isOpen={showIssueModal} onDismiss={() => setShowIssueModal(false)} />}
       {showPGliteConsoleModal && (
         <PGliteConsoleModal isOpen={showPGliteConsoleModal} onDismiss={() => setShowPGliteConsoleModal(false)} />
