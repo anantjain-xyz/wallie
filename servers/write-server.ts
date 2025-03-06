@@ -118,6 +118,8 @@ async function applyTableChange(
   } else if (isNew) {
     await sql`
       INSERT INTO ${sql(tableName)} ${sql(change, 'id', ...modified_columns)}
+      ON CONFLICT (id) DO UPDATE
+      SET ${sql(change, ...modified_columns.filter(col => col !== 'id'))}
     `
   } else {
     await sql`
