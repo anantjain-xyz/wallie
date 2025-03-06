@@ -26,13 +26,30 @@ function IssueList({
   selectionMode = false,
   workspaceId = ''
 }: IssueListProps) {
+  // Add 1 to itemCount to create space for bottom padding
+  const itemCount = issues.length + 1;
+  
+  // Custom onItemsRendered handler to adjust for the extra padding item
+  const handleItemsRendered = (props: ListOnItemsRenderedProps) => {
+    if (onItemsRendered) {
+      // Adjust the indices to account for the padding item
+      // Only pass real items to the original handler
+      const adjustedProps = {
+        ...props,
+        overscanStopIndex: Math.min(props.overscanStopIndex, issues.length - 1),
+        visibleStopIndex: Math.min(props.visibleStopIndex, issues.length - 1)
+      };
+      onItemsRendered(adjustedProps);
+    }
+  };
+
   return (
     <div className="grow">
       <AutoSizer>
         {({ height, width }) => (
           <List
             height={height}
-            itemCount={issues.length}
+            itemCount={itemCount}
             itemSize={36}
             itemData={{
               issues,
@@ -42,7 +59,7 @@ function IssueList({
               workspaceId
             }}
             width={width}
-            onItemsRendered={onItemsRendered}
+            onItemsRendered={handleItemsRendered}
           >
             {VirtualIssueRow}
           </List>
@@ -69,6 +86,19 @@ const VirtualIssueRow = memo(
     style: CSSProperties
   }) => {
     const { issues, selectedIssues, onSelectIssue, selectionMode, workspaceId } = data
+    
+    // If this is our padding item (last item), render an empty div with height of 3 rows
+    if (index === issues.length) {
+      return (
+        <div 
+          style={{
+            ...style,
+            height: 36 * 3, // 3 rows of padding, each row is 36px high
+          }}
+        />
+      );
+    }
+    
     const issue = issues[index]
     const isSelected = issue?.id ? selectedIssues.has(issue.id) : false
     
