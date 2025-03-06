@@ -9,6 +9,9 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Wallie app URL
+FRONTEND_URL = os.environ.get("FRONTEND_URL")
+
 # Database connection settings
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:

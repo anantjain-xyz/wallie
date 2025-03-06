@@ -2,7 +2,7 @@ from codegen import CodeAgent
 from codegen.extensions.tools.github.create_pr import create_pr as github_create_pr
 from ..helpers import create_codebase, format_issue_message
 from ..data import Issue, AgentRunResponse
-from ..config import logger, ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY
+from ..config import logger, ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, FRONTEND_URL
 from ..db.connection import db_pool
 from .comment_service import add_agent_comment, get_comments_for_issue
 from .issue_service import set_issue_in_review
@@ -202,7 +202,8 @@ async def run_agent(issue: Issue) -> AgentRunResponse:
 
         # Create the PR
         pr_title = issue.title
-        pr_body = f"This PR was automatically created by Wallie on behalf of the author. Please review the changes and merge if everything is looking good."
+        pr_body = f"This PR was automatically created by Wallie :robot:"
+        pr_body += f"\n\nIssue: [{issue.title}]({FRONTEND_URL}/issue/{issue.id})"
         if issue.description:
             pr_body += f"\n\nDescription: {issue.description}"
         
