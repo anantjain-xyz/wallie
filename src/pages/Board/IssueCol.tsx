@@ -60,7 +60,7 @@ function IssueCol({ title, status, issues = EMPTY_ISSUES, liveQuery }: Props) {
   }
 
   return (
-    <div className="flex flex-col flex-shrink-0 mr-3 select-none w-90">
+    <div className="flex flex-col flex-shrink-0 mr-3 select-none w-70">
       <div className="flex items-center justify-between pb-3 text-sm">
         <div className="flex items-center">
           {statusIcon}

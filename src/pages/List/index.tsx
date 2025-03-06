@@ -73,21 +73,43 @@ function List({ showSearch = false }) {
       const loadBoardData = async () => {
         const newColumnsLiveIssues: Partial<Record<StatusValue, LiveQuery<Issue>>> = {}
         
+        // Always load all status columns to maintain consistent hook calls
+        // but respect the status filters by applying them to each column's query
         for (const status of Object.values(Status)) {
-          const colFilterState: FilterState = {
-            ...filterState,
-            orderBy: 'kanbanorder',
-            orderDirection: 'asc',
-            status: [status],
+          // Only include this status column if no status filters are applied
+          // or if this status is included in the filters
+          const shouldIncludeStatus = !filterState.status?.length || 
+                                     filterState.status.includes(status);
+          
+          if (shouldIncludeStatus) {
+            // For included statuses, create a real query with the actual filters
+            const colFilterState: FilterState = {
+              ...filterState,
+              orderBy: 'kanbanorder',
+              orderDirection: 'asc',
+              status: [status],
+            }
+            const { sql: colSql, sqlParams: colSqlParams } = filterStateToSql(colFilterState)
+            const colLiveIssues = await pg.live.query<Issue>({
+              query: colSql,
+              params: colSqlParams,
+              offset: 0,
+              limit: 10,
+            })
+            newColumnsLiveIssues[status] = colLiveIssues
+          } else {
+            // For filtered-out statuses, create an empty query that will result in no items
+            // This ensures the column won't be rendered in the Board view
+            const emptyQuery = await pg.live.query<Issue>({
+              query: 'SELECT * FROM issue WHERE 1=0 LIMIT 0',
+              params: [],
+              offset: 0,
+              limit: 0,
+            });
+            
+            // Set empty results to ensure the column is not rendered
+            newColumnsLiveIssues[status] = emptyQuery;
           }
-          const { sql: colSql, sqlParams: colSqlParams } = filterStateToSql(colFilterState)
-          const colLiveIssues = await pg.live.query<Issue>({
-            query: colSql,
-            params: colSqlParams,
-            offset: 0,
-            limit: 10,
-          })
-          newColumnsLiveIssues[status] = colLiveIssues
         }
         
         setColumnsLiveIssues(newColumnsLiveIssues as Record<StatusValue, LiveQuery<Issue>>)
