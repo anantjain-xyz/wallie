@@ -3,6 +3,7 @@ import { LiveQuery } from '@electric-sql/pglite/live'
 import { useLoaderData } from 'react-router-dom'
 import { type ListOnItemsRenderedProps } from 'react-window'
 import { useState, useCallback } from 'react'
+import { useHotkeys } from 'react-hotkeys-hook'
 import TopFilter from '../../components/TopFilter'
 import IssueList from './IssueList'
 import BulkActionBar from '../../components/BulkActionBar'
@@ -44,6 +45,13 @@ function List({ showSearch = false }) {
   const limit = liveIssues.initialResults.limit ?? issuesRes.limit ?? CHUNK_SIZE
   const issues = issuesRes?.rows
 
+  const currentTotalCount = issuesRes.totalCount ?? issuesRes.rows.length
+  const currentOffset = issuesRes.offset ?? 0
+  const filledItems = new Array(currentTotalCount).fill(null)
+  issues.forEach((issue, index) => {
+    filledItems[index + currentOffset] = issue
+  })
+
   const updateOffsetAndLimit = (itemsRendered: ListOnItemsRenderedProps) => {
     const { offset: newOffset, limit: newLimit } = calculateWindow(
       itemsRendered.overscanStartIndex,
@@ -79,12 +87,30 @@ function List({ showSearch = false }) {
     setSelectionMode(false)
   }, [])
 
-  const currentTotalCount = issuesRes.totalCount ?? issuesRes.rows.length
-  const currentOffset = issuesRes.offset ?? 0
-  const filledItems = new Array(currentTotalCount).fill(null)
-  issues.forEach((issue, index) => {
-    filledItems[index + currentOffset] = issue
-  })
+  // Select all visible issues
+  const handleSelectAll = useCallback(() => {
+    const visibleIssueIds = filledItems
+      .filter(issue => issue?.id)
+      .map(issue => issue?.id as string);
+    
+    if (visibleIssueIds.length > 0) {
+      setSelectedIssues(new Set(visibleIssueIds));
+      setSelectionMode(true);
+    }
+  }, [filledItems]);
+
+  // Add Cmd+A shortcut to select all visible issues
+  useHotkeys('mod+a', (e) => {
+    e.preventDefault(); // Prevent default browser select all behavior
+    handleSelectAll();
+  }, [handleSelectAll]);
+
+  // Add Esc shortcut to exit selection mode and deselect all items
+  useHotkeys('esc', () => {
+    if (selectionMode || selectedIssues.size > 0) {
+      handleClearSelection();
+    }
+  }, [selectionMode, selectedIssues, handleClearSelection]);
 
   return (
     <div className="flex flex-col flex-grow">

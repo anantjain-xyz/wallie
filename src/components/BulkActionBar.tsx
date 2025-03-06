@@ -2,6 +2,7 @@ import { usePGlite } from '@electric-sql/pglite-react'
 import AssigneeMenu from './contextmenu/AssigneeMenu'
 import StatusMenu from './contextmenu/StatusMenu'
 import PriorityMenu from './contextmenu/PriorityMenu'
+import Tooltip from './Tooltip'
 import { ReactComponent as AssigneeIcon } from '../assets/icons/assignee.svg'
 import { ReactComponent as CloseIcon } from '../assets/icons/close.svg'
 import PriorityIcon from './PriorityIcon'
@@ -104,13 +105,15 @@ export default function BulkActionBar({
           onSelect={handleBulkAssigneeChange}
         />
         <div className="ml-auto">
+          <Tooltip content="Clear selected" shortcut="Esc" placement="top">
             <button
-            type="button"
-            className="inline-flex items-center p-2 text-gray-500 bg-white rounded-md hover:bg-gray-100 focus:outline-none"
-            onClick={onClearSelection}
+              type="button"
+              className="inline-flex items-center p-2 text-gray-500 bg-white rounded-md hover:bg-gray-100 focus:outline-none"
+              onClick={onClearSelection}
             >
-            <CloseIcon className="w-5 h-5" />
+              <CloseIcon className="w-5 h-5" />
             </button>
+          </Tooltip>
         </div>
       </div>
     </div>
