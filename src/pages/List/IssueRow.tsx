@@ -110,7 +110,7 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
           type="checkbox"
           checked={isSelected}
           onChange={() => {}}
-          className={`w-4 h-4 text-blue-600 rounded focus:ring-0 ${selectionMode ? 'border-gray-300' : 'border-gray-200'}`}
+          className={`w-4 h-4 text-red-600 rounded focus:ring-0 ${selectionMode ? 'border-gray-300' : 'border-gray-200'}`}
         />
       </div>
       <div className="flex-shrink-0 ml-3">

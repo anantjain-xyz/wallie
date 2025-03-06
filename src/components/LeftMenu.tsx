@@ -72,7 +72,7 @@ function LeftMenu() {
                   className="w-5 h-5 mr-2 rounded object-cover border border-gray-300"
                 />
               ) : (
-                <div className="font-prosto text-md mr-2 text-blue-600">W</div>
+                <div className="font-prosto text-md mr-2 text-red-600">W</div>
               )}
               <span className="flex text-sm font-medium">{workspaceName}</span>
             </Link>
