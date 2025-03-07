@@ -139,20 +139,40 @@ function Comments({ issue }: CommentsProps) {
     }
 
     try {
-      await pg.sql`
-        INSERT INTO comment (id, issue_id, body, created, modified, creator_id, workspace_id)
-        VALUES (
-          ${crypto.randomUUID()},
-          ${issue.id},
-          ${newCommentBody},
-          ${new Date()},
-          ${new Date()},
-          ${currentUser.id},
-          ${currentUser.workspace_id}
-        )
-      `
-
-      setNewCommentBody(``)
+      // Begin a transaction to ensure both operations are atomic
+      await pg.exec('BEGIN')
+      
+      try {
+        // Insert the comment
+        await pg.sql`
+          INSERT INTO comment (id, issue_id, body, created, modified, creator_id, workspace_id)
+          VALUES (
+            ${crypto.randomUUID()},
+            ${issue.id},
+            ${newCommentBody},
+            ${new Date()},
+            ${new Date()},
+            ${currentUser.id},
+            ${currentUser.workspace_id}
+          )
+        `
+        
+        // Update the issue's modified timestamp
+        await pg.sql`
+          UPDATE issue
+          SET modified = ${new Date()}
+          WHERE id = ${issue.id}
+        `
+        
+        // Commit the transaction
+        await pg.exec('COMMIT')
+        
+        setNewCommentBody(``)
+      } catch (innerError) {
+        // Rollback the transaction if any operation fails
+        await pg.exec('ROLLBACK')
+        throw innerError
+      }
     } catch (error) {
       showWarning('Failed to post comment', error instanceof Error ? error.message : 'Unknown error')
     }
