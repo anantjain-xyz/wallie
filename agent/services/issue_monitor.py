@@ -130,9 +130,6 @@ async def check_for_new_issues():
                     # First set the status to in_progress
                     await set_issue_in_progress(conn, issue_id)
                     logger.info(f"Updated issue {issue_id} status to 'in_progress'")
-                    
-                    # Then add the comment
-                    await add_agent_comment(conn, issue_id, workspace_id, "⏱️ On it, will create a PR soon.")
                 
                 # Process the ticket asynchronously
                 await process_issue(issue)
