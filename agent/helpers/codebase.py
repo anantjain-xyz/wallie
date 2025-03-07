@@ -1,5 +1,6 @@
 from codegen import Codebase, ProgrammingLanguage
 from codegen.configs.models.secrets import SecretsConfig
+from codegen.git.schemas.enums import SetupOption
 import os
 import logging
 
@@ -47,5 +48,6 @@ def create_codebase(repo_name: str, language: ProgrammingLanguage, github_token:
     return Codebase.from_repo(
         repo_name,
         language=language,
-        secrets=secrets
+        secrets=secrets,
+        setup_option=SetupOption.CLONE
     )
