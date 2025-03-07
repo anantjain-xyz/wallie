@@ -9,3 +9,6 @@ CREATE INDEX IF NOT EXISTS "comment_issue_id_idxx" ON "comment" ("issue_id");
 CREATE INDEX IF NOT EXISTS "comment_created_idx" ON "comment" ("created");
 CREATE INDEX IF NOT EXISTS "comment_deleted_idx" ON "comment" ("deleted");
 CREATE INDEX IF NOT EXISTS "comment_synced_idx" ON "comment" ("synced");
+CREATE INDEX IF NOT EXISTS "github_branch_branch_name_idx" ON "github_branch" ("branch_name");
+CREATE INDEX IF NOT EXISTS "github_branch_github_repository_id_idx" ON "github_branch" ("github_repository_id");
+CREATE INDEX IF NOT EXISTS "github_branch_synced_idx" ON "github_branch" ("synced");

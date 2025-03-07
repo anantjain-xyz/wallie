@@ -1,1 +1,2 @@
 CREATE INDEX IF NOT EXISTS "issue_search_idx" ON "issue" USING GIN ((setweight(to_tsvector('simple', coalesce(title, '')), 'A') || setweight(to_tsvector('simple', coalesce(description, '')), 'B')));
+CREATE INDEX IF NOT EXISTS "github_branch_search_idx" ON "github_branch" USING GIN (to_tsvector('simple', coalesce(branch_name, '')));
