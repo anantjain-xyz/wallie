@@ -8,7 +8,8 @@ import type {
   ChangeSet,
   AppUserChange,
   GithubInstallationChange,
-  GithubRepositoryChange
+  GithubRepositoryChange,
+  GithubBranchChange
 } from './utils/changes'
 import { postInitialSync } from './migrations'
 import { useEffect, useState } from 'react'
@@ -66,6 +67,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
   let appUserShapeInitialSyncDone = false
   let githubInstallationShapeInitialSyncDone = false
   let githubRepositoryShapeInitialSyncDone = false
+  let githubBranchShapeInitialSyncDone = false
   let postInitialSyncDone = false
 
   if (!hasIssuesAtStart && !postInitialSyncDone) {
@@ -86,6 +88,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       appUserShapeInitialSyncDone &&
       githubInstallationShapeInitialSyncDone &&
       githubRepositoryShapeInitialSyncDone &&
+      githubBranchShapeInitialSyncDone &&
       !postInitialSyncDone
     ) {
       postInitialSyncDone = true
@@ -317,6 +320,42 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
     }
   )
 
+  // GitHub Branches Sync
+  const githubBranchUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
+  const githubBranchSync = await pg.sync.syncShapeToTable({
+    shape: {
+      url: githubBranchUrl.toString(),
+      params: {
+        table: 'github_branch',
+      },
+      headers: {
+        ...await getAuthHeaders(),
+        'Cache-Control': 'no-cache'
+      },
+      onError: createShapeErrorHandler(getAuthHeaders)
+    },
+    table: 'github_branch',
+    primaryKey: ['id'],
+    shapeKey: 'github_branches',
+    commitGranularity: 'up-to-date',
+    useCopy: true,
+    onInitialSync: async () => {
+      githubBranchShapeInitialSyncDone = true
+      await pg.exec(`ALTER TABLE github_branch ENABLE TRIGGER ALL`)
+      doPostInitialSync()
+    },
+  })
+  githubBranchSync.subscribe(
+    () => {
+      if (!hasIssuesAtStart && !postInitialSyncDone) {
+        updateSyncStatus('initial-sync', 'Inserting GitHub branches...')
+      }
+    },
+    (error) => {
+      console.error('githubBranchSync error', error)
+    }
+  )
+
   if (!hasIssuesAtStart) {
     await postInitialSyncDonePromise
     await pg.query(`SELECT 1;`) // Do a query to ensure PGlite is idle
@@ -337,6 +376,7 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
   await pg.exec(`ALTER TABLE comment ENABLE TRIGGER ALL`)
   await pg.exec(`ALTER TABLE github_installation ENABLE TRIGGER ALL`)
   await pg.exec(`ALTER TABLE github_repository ENABLE TRIGGER ALL`)
+  await pg.exec(`ALTER TABLE github_branch ENABLE TRIGGER ALL`)
 
   // Use a live query to watch for changes to the local tables that need to be synced
   pg.live.query<{
@@ -346,6 +386,7 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
     user_count: number
     github_installation_count: number
     github_repository_count: number
+    github_branch_count: number
   }>(
     `
       SELECT * FROM
@@ -354,7 +395,8 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         (SELECT count(id) as workspace_count FROM workspace WHERE synced = false),
         (SELECT count(id) as user_count FROM app_user WHERE synced = false),
         (SELECT count(id) as github_installation_count FROM github_installation WHERE synced = false),
-        (SELECT count(id) as github_repository_count FROM github_repository WHERE synced = false)
+        (SELECT count(id) as github_repository_count FROM github_repository WHERE synced = false),
+        (SELECT count(id) as github_branch_count FROM github_branch WHERE synced = false)
     `,
     [],
     async (results) => {
@@ -364,7 +406,8 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         workspace_count,
         user_count,
         github_installation_count,
-        github_repository_count
+        github_repository_count,
+        github_branch_count
       } = results.rows[0]
       if (
         issue_count > 0 ||
@@ -372,7 +415,8 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         workspace_count > 0 ||
         user_count > 0 ||
         github_installation_count > 0 ||
-        github_repository_count > 0
+        github_repository_count > 0 ||
+        github_branch_count > 0
       ) {
         await syncMutex.acquire()
         try {
@@ -393,6 +437,7 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
   let appUserChanges: AppUserChange[]
   let githubInstallationChanges: GithubInstallationChange[]
   let githubRepositoryChanges: GithubRepositoryChange[]
+  let githubBranchChanges: GithubBranchChange[]
   await pg.transaction(async (tx) => {
     const workspaceRes = await tx.query<WorkspaceChange>(`
       SELECT
@@ -501,12 +546,28 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
       FROM github_repository
       WHERE synced = false AND sent_to_server = false
     `)
+    const githubBranchRes = await tx.query<GithubBranchChange>(`
+      SELECT
+        id,
+        issue_id,
+        workspace_id,
+        name,
+        pull_request_link,
+        modified,
+        created,
+        modified_columns,
+        deleted,
+        new
+      FROM github_branch
+      WHERE synced = false AND sent_to_server = false
+    `)
     issueChanges = issueRes.rows
     commentChanges = commentRes.rows
     workspaceChanges = workspaceRes.rows
     appUserChanges = appUserRes.rows
     githubInstallationChanges = githubInstallationRes.rows
     githubRepositoryChanges = githubRepositoryRes.rows
+    githubBranchChanges = githubBranchRes.rows
   })
   const changeSet: ChangeSet = {
     issues: issueChanges!,
@@ -515,6 +576,7 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
     users: appUserChanges!,
     githubInstallations: githubInstallationChanges!,
     githubRepositories: githubRepositoryChanges!,
+    githubBranches: githubBranchChanges!,
   }
   const authHeaders = await getAuthHeaders()
   const headers = new Headers({
@@ -642,6 +704,24 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
             ? repository.modified
             : typeof repository.modified === 'string'
               ? new Date(repository.modified)
+              : new Date()
+        ]
+      )
+    }
+
+    for (const branch of githubBranchChanges!) {
+      await tx.query(
+        `
+        UPDATE github_branch
+        SET sent_to_server = true
+        WHERE id = $1 AND modified = $2
+      `,
+        [
+          branch.id,
+          branch.modified instanceof Date
+            ? branch.modified
+            : typeof branch.modified === 'string'
+              ? new Date(branch.modified)
               : new Date()
         ]
       )

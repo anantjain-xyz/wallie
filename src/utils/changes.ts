@@ -107,6 +107,21 @@ export const githubRepositoryChangeSchema = z.object({
 
 export type GithubRepositoryChange = z.infer<typeof githubRepositoryChangeSchema>
 
+export const githubBranchChangeSchema = z.object({
+  id: z.string(),
+  issue_id: z.string().nullable().optional(),
+  workspace_id: z.string().nullable().optional(),
+  name: z.string().nullable().optional(),
+  pull_request_link: z.string().nullable().optional(),
+  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified_columns: z.array(z.string()).nullable().optional(),
+  deleted: z.boolean().nullable().optional(),
+  new: z.boolean().nullable().optional(),
+})
+
+export type GithubBranchChange = z.infer<typeof githubBranchChangeSchema>
+
 export const changeSetSchema = z.object({
   issues: z.array(issueChangeSchema),
   comments: z.array(commentChangeSchema),
@@ -114,6 +129,7 @@ export const changeSetSchema = z.object({
   users: z.array(appUserChangeSchema),
   githubInstallations: z.array(githubInstallationChangeSchema),
   githubRepositories: z.array(githubRepositoryChangeSchema),
+  githubBranches: z.array(githubBranchChangeSchema),
 })
 
 export type ChangeSet = z.infer<typeof changeSetSchema>
