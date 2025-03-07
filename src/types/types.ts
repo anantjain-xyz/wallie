@@ -37,6 +37,17 @@ export type Comment = {
   synced: boolean
 }
 
+export type GithubBranch = {
+  id: string
+  branch_name: string
+  pull_request_link: string | null
+  github_repository_id: string | null
+  created: Date
+  modified: Date
+  creator_id: string | null
+  synced: boolean
+}
+
 export const Priority = {
   NONE: `none`,
   URGENT: `urgent`,
