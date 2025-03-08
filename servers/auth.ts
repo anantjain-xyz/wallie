@@ -79,14 +79,39 @@ export async function getWorkspaceIdFromUser(userId: string): Promise<string | n
       WHERE ${domain} = ANY(allowlisted_domains)
     `;
     
-    // If no workspace allows this domain
-    if (!workspaces?.length) {
-      console.error('No workspace found for domain:', domain);
-      return null;
-    }
+    let workspace;
     
-    // Pick the first workspace that allows the domain
-    const workspace = workspaces[0];
+    // If no workspace allows this domain, create a new workspace
+    if (!workspaces?.length) {
+      console.log('Creating new workspace for domain:', domain);
+      const workspaceId = uuidv4();
+      const newWorkspaces = await sql`
+        INSERT INTO workspace (
+          id,
+          name,
+          allowlisted_domains,
+          created_at,
+          updated_at
+        ) VALUES (
+          ${workspaceId},
+          ${`${domain} Workspace`},
+          ${[domain]},
+          NOW(),
+          NOW()
+        )
+        RETURNING *
+      `;
+      
+      if (!newWorkspaces?.length) {
+        console.error('Failed to create workspace for domain:', domain);
+        return null;
+      }
+      
+      workspace = newWorkspaces[0];
+    } else {
+      // Pick the first workspace that allows the domain
+      workspace = workspaces[0];
+    }
 
     // Insert the user if they don't exist, or get the existing user
     // This handles race conditions where another thread might have inserted the user
