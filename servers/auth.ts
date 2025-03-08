@@ -79,7 +79,7 @@ export async function getWorkspaceIdFromUser(userId: string): Promise<string | n
       WHERE ${domain} = ANY(allowlisted_domains)
     `;
     
-    // If no workspace allows this domain
+    // If no workspace allows this domain, create a new workspace
     if (!workspaces?.length) {
       console.error('No workspace found for domain:', domain);
       return null;
