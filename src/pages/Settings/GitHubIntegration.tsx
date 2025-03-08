@@ -202,7 +202,7 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
                               href={repo.html_url} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                              className="text-sm font-medium text-red-600 hover:text-red-800"
                             >
                               {repo.full_name}
                             </a>
