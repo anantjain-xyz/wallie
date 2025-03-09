@@ -26,6 +26,7 @@ export type Issue = {
   synced: boolean
   github_repository_id: string | null
   assignee_id: string | null
+  estimate: number | null
 }
 
 export type Comment = {

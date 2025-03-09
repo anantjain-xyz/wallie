@@ -10,6 +10,7 @@ import PriorityMenu from '../../components/contextmenu/PriorityMenu'
 import StatusMenu from '../../components/contextmenu/StatusMenu'
 import GithubRepoMenu from '../../components/contextmenu/GithubRepoMenu'
 import AssigneeMenu from '../../components/contextmenu/AssigneeMenu'
+import EstimateMenu from '../../components/contextmenu/EstimateMenu'
 import { ReactComponent as AssigneeIcon } from '../../assets/icons/assignee.svg'
 import PriorityIcon from '../../components/PriorityIcon'
 import StatusIcon from '../../components/StatusIcon'
@@ -177,6 +178,14 @@ function IssuePage() {
       WHERE id = ${issue.id}
     `
   }
+  
+  const handleEstimateChange = (estimate: number | null) => {
+    pg.sql`
+      UPDATE issue
+      SET estimate = ${estimate}, modified = NOW()
+      WHERE id = ${issue.id}
+    `
+  }
 
   const handleTitleChange = (title: string) => {
     setDirtyTitle(title)
@@ -290,6 +299,26 @@ function IssuePage() {
                       </button>
                     }
                     onSelect={handlePriorityChange}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-1 mb-3 mr-5 md-mr-0">
+                <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
+                  Estimate
+                </div>
+                <div className="flex flex-[3_0_0]">
+                  <EstimateMenu
+                    id={`issue-estimate-` + issue.id}
+                    currentEstimate={issue.estimate}
+                    button={
+                      <button
+                        type="button"
+                        className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                      >
+                        <span>{issue.estimate !== null ? `${issue.estimate} point${issue.estimate !== 1 ? 's' : ''}` : 'No estimate'}</span>
+                      </button>
+                    }
+                    onSelect={handleEstimateChange}
                   />
                 </div>
               </div>

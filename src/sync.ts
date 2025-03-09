@@ -480,6 +480,7 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         workspace_id,
         github_repository_id,
         assignee_id,
+        estimate,
         modified,
         created,
         kanbanorder,

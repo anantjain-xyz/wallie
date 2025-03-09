@@ -14,6 +14,7 @@ import PriorityMenu from './contextmenu/PriorityMenu'
 import StatusMenu from './contextmenu/StatusMenu'
 import GithubRepoMenu from './contextmenu/GithubRepoMenu'
 import AssigneeMenu from './contextmenu/AssigneeMenu'
+import EstimateMenu from './contextmenu/EstimateMenu'
 import Tooltip from './Tooltip'
 import { FaGithub } from 'react-icons/fa'
 import Avatar from './Avatar'
@@ -46,6 +47,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
   const [status, setStatus] = useState<StatusValue>(Status.BACKLOG)
   const [githubRepositoryId, setGithubRepositoryId] = useState<string | null>(null)
   const [assigneeId, setAssigneeId] = useState<string | null>(null)
+  const [estimate, setEstimate] = useState<number | null>(null)
   const { user } = useUser()
   const pg = usePGlite()
   const currentUserResult = useCurrentUser(user)
@@ -126,7 +128,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           kanbanorder,
           workspace_id,
           github_repository_id,
-          assignee_id
+          assignee_id,
+          estimate
         )
         VALUES (
           ${crypto.randomUUID()},
@@ -140,7 +143,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           ${kanbanorder},
           ${currentUser.workspace_id},
           ${githubRepositoryId || null},
-          ${assigneeId}
+          ${assigneeId},
+          ${estimate}
         )
       `
 
@@ -150,7 +154,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     } catch (error) {
       showWarning('Failed to create issue', error instanceof Error ? error.message : 'Unknown error')
     }
-  }, [title, description, priority, status, githubRepositoryId, assigneeId, currentUser, pg, onDismiss])
+  }, [title, description, priority, status, githubRepositoryId, assigneeId, estimate, currentUser, pg, onDismiss])
 
   const handleClickCloseBtn = () => {
     if (onDismiss) onDismiss()
@@ -165,6 +169,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
       setStatus(Status.BACKLOG)
       setGithubRepositoryId(null)
       setAssigneeId(null)
+      setEstimate(null)
     }, 250)
   }
 
@@ -284,6 +289,20 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           onSelect={(val) => {
             setPriority(val as PriorityValue)
           }}
+        />
+        
+        <EstimateMenu
+          id="estimate-menu"
+          currentEstimate={estimate}
+          button={
+            <button
+              type="button"
+              className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+            >
+              <span>{estimate !== null ? `${estimate} point${estimate !== 1 ? 's' : ''}` : 'No estimate'}</span>
+            </button>
+          }
+          onSelect={(val) => setEstimate(val)}
         />
         
         {workspaceId && (
