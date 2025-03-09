@@ -58,13 +58,6 @@ body {
   max-height: calc(100vh - 32px);
 }
 
-.editor ul {
-  list-style-type: circle;
-}
-.editor ol {
-  list-style-type: decimal;
-}
-
 #root,
 body,
 html {

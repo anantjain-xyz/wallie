@@ -55,9 +55,9 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
         leaveTo="transform opacity-0 scale-95"
         className="absolute right-0 z-30 mt-2 bg-white rounded-lg shadow-modal w-60"
       >
-        <div className="p-1">
+        <div className="p-4">
           {/* View Mode Section */}
-          <div className="p-4 font-medium text-gray-700">
+          <div className="pb-4 font-medium text-gray-700">
             <div className="grid grid-cols-2 gap-2">
               <button
                 className={`flex items-center justify-center px-3 py-2 rounded border ${
@@ -86,7 +86,7 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
 
           {/* Ordering Section */}
           {viewMode === 'list' && (
-            <div className="p-4 font-medium text-gray-700 border-t border-gray-200">
+            <div className="pt-4 font-medium text-gray-700 border-t border-gray-200">
               <div className="flex items-center justify-between mb-2">
                 <span>Ordering</span>
                 <div className="flex items-center">
