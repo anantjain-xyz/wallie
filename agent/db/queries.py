@@ -1,9 +1,12 @@
 from .connection import db_pool
-from ..config import logger
+from ..logging_config import get_logger
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 from datetime import datetime
 import pytz
+
+# Get logger for this module
+logger = get_logger(__name__)
 
 async def get_last_modified_issue_timestamp():
     """Get the timestamp of the most recent issue modification"""

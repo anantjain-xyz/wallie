@@ -1,23 +1,27 @@
+import aiohttp
+import jwt
+import time
+import os
+import uuid
+from datetime import datetime
+import pytz
+import re
 from codegen import CodeAgent
 from codegen.extensions.tools.github.create_pr import create_pr as github_create_pr
 from ..helpers import create_codebase, format_issue_message
 from ..data import Issue, AgentRunResponse
-from ..config import logger, ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, FRONTEND_URL
+from ..config import ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, FRONTEND_URL
 from ..db.connection import db_pool
 from .comment_service import add_agent_comment, get_comments_for_issue
 from .issue_service import set_issue_in_review
 from .repository_service import get_repository_language
-import asyncio
-import aiohttp
-import jwt
-import time
-import json
-import os
-from datetime import datetime
-import pytz
+from ..logging_config import get_logger
 
 # Get the API server URL from environment variables
 API_SERVER_URL = os.environ.get('VITE_API_SERVER_URL', 'http://localhost:3003')
+
+# Get logger for this module
+logger = get_logger(__name__)
 
 async def get_installation_token(workspace_id):
     """Get GitHub installation token for a workspace"""
@@ -104,6 +108,32 @@ async def get_installation_token(workspace_id):
         logger.error(f"Error getting installation token: {str(e)}")
         return None
 
+async def store_github_branch(conn, issue_id, workspace_id, branch_name, pr_url):
+    """Store GitHub branch information in the database"""
+    logger.info(f"Storing GitHub branch in database: {branch_name} for issue {issue_id}")
+    try:
+        # Generate a UUID for the new record
+        branch_id = str(uuid.uuid4())
+        
+        # Insert the record into the github_branch table
+        await conn.execute(
+            """
+            INSERT INTO github_branch (
+                id, issue_id, workspace_id, name, pull_request_link, 
+                created, modified
+            ) VALUES (
+                $1, $2, $3, $4, $5, NOW(), NOW()
+            )
+            """,
+            branch_id, issue_id, workspace_id, branch_name, pr_url
+        )
+        
+        logger.info(f"Stored GitHub branch in database: {branch_id} for issue {issue_id}")
+        return branch_id
+    except Exception as e:
+        logger.error(f"Error storing GitHub branch: {str(e)}")
+        return None
+
 async def process_issue(issue: Issue):
     """Process an issue by creating a PR"""
     # Get the current db_pool from the connection module
@@ -111,6 +141,8 @@ async def process_issue(issue: Issue):
     
     # Call run_agent directly since it's now async
     result = await run_agent(issue)
+    
+    # Log the result
     logger.info(f"Successfully processed issue: {issue.title}, Result: {result}")
     
     # If we have issue_id and workspace_id, add a comment with the PR URL
@@ -124,6 +156,9 @@ async def process_issue(issue: Issue):
                     
                     # Update issue status to 'in_review'
                     await set_issue_in_review(conn, issue.id)
+                    
+                    # Store the PR in the github_branch table
+                    await store_github_branch(conn, issue.id, issue.workspace_id, result.branch_name, result.pr_url)
             except Exception as comment_error:
                 logger.error(f"Failed to add PR success comment or update status: {str(comment_error)}")
         else:
@@ -140,7 +175,6 @@ async def run_agent(issue: Issue) -> AgentRunResponse:
     if not ANTHROPIC_API_KEY:
         return AgentRunResponse(
             status="error",
-            pr_url=None,
             message="Anthropic API key not configured"
         )
     
@@ -149,7 +183,6 @@ async def run_agent(issue: Issue) -> AgentRunResponse:
     if not token:
         return AgentRunResponse(
             status="error",
-            pr_url=None,
             message="GitHub integration not configured for this workspace. Please go to [Settings](/settings) and install the GitHub App."
         )
     
@@ -170,7 +203,6 @@ async def run_agent(issue: Issue) -> AgentRunResponse:
     if not repo_name:
         return AgentRunResponse(
             status="error",
-            pr_url=None,
             message="GitHub repository for this issue seems to have been removed. Please select a repository in the issue details whenever you're ready to delegate this to Wallie."
         )
     
@@ -196,6 +228,7 @@ async def run_agent(issue: Issue) -> AgentRunResponse:
     
     # Create and run the agent
     agent = CodeAgent(codebase)
+    branch_name = None
     try:
         agent_result = agent.run(query)
         logger.info(f"Agent result: {agent_result}")
@@ -206,9 +239,13 @@ async def run_agent(issue: Issue) -> AgentRunResponse:
         pr_body += f"\n\nIssue: [{issue.title}]({FRONTEND_URL}/issue/{issue.id})"
         if issue.description:
             pr_body += f"\n\nDescription: {issue.description}"
+
+        branch_name = f"wallie/{re.sub(r'[^a-z0-9-]', '-', pr_title.lower())}"
         
+        # TODO: Start passing in branch name to github_create_pr
         create_pr_result = github_create_pr(codebase, pr_title, pr_body)
         logger.info(f"PR created: {create_pr_result.model_dump_json()}")
+        
     except Exception as e:
         logger.error(f"Error running agent: {str(e)}")
         raise
@@ -220,11 +257,11 @@ async def run_agent(issue: Issue) -> AgentRunResponse:
         return AgentRunResponse(
             status="success",
             pr_url=create_pr_result.url,
+            branch_name=branch_name,
             message=agent_result
         )
     else:
         return AgentRunResponse(
             status="error",
-            pr_url=None,
             message=agent_result
         )

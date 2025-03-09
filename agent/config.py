@@ -1,13 +1,12 @@
 import os
-import logging
 from dotenv import load_dotenv
+from .logging_config import get_logger
 
 # Load environment variables
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Get logger for this module
+logger = get_logger(__name__)
 
 # Wallie app URL
 FRONTEND_URL = os.environ.get("FRONTEND_URL")

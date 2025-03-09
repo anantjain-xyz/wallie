@@ -1,5 +1,6 @@
 import asyncio
-from ..config import logger, POLLING_INTERVAL_SECONDS, ERROR_RETRY_SECONDS
+from ..config import POLLING_INTERVAL_SECONDS, ERROR_RETRY_SECONDS
+from ..logging_config import get_logger
 from ..db.connection import db_pool, get_db
 from ..db.queries import get_last_modified_issue_timestamp, get_new_issues
 from ..data import Issue
@@ -8,6 +9,9 @@ from .issue_service import set_issue_in_progress
 from .pr_service import process_issue
 import pytz
 from datetime import datetime
+
+# Get logger for this module
+logger = get_logger(__name__)
 
 # Global variable to store the last checked timestamp
 last_checked_timestamp = None

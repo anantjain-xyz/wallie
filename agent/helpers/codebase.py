@@ -1,11 +1,10 @@
 from codegen import Codebase, ProgrammingLanguage
 from codegen.configs.models.secrets import SecretsConfig
 from codegen.git.schemas.enums import SetupOption
-import os
-import logging
+from ..logging_config import get_logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Get logger for this module
+logger = get_logger(__name__)
 
 
 def format_issue_message(title: str, description: str | None = "", comments=None) -> str:

@@ -1,6 +1,9 @@
-from ..config import logger
+from ..logging_config import get_logger
 from typing import Optional
 from uuid import UUID
+
+# Get logger for this module
+logger = get_logger(__name__)
 
 async def update_issue_status(conn, issue_id: UUID, status: str) -> bool:
     """

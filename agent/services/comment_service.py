@@ -1,6 +1,9 @@
 from ..db.queries import add_comment, get_issue_comments
-from ..config import logger
+from ..logging_config import get_logger
 from uuid import UUID
+
+# Get logger for this module
+logger = get_logger(__name__)
 
 async def add_agent_comment(conn, issue_id: UUID, workspace_id: UUID, body: str):
     """Add a comment from the agent to the database"""

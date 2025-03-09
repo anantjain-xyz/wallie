@@ -1,8 +1,10 @@
 from codegen import ProgrammingLanguage
 import logging
 from uuid import UUID
+from ..logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+# Get logger for this module
+logger = get_logger(__name__)
 
 async def get_repository_language(repo_id: UUID) -> ProgrammingLanguage:
     """Get the default programming language for a repository from the database.

@@ -1,6 +1,10 @@
 import asyncpg
 from fastapi import HTTPException
-from ..config import DATABASE_URL, logger
+from ..config import DATABASE_URL
+from ..logging_config import get_logger
+
+# Get logger for this module
+logger = get_logger(__name__)
 
 # Database connection pool
 db_pool = None

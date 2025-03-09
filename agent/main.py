@@ -2,23 +2,23 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import uvicorn
 import os
-import logging
 from .db.connection import init_db, close_db
 from .services.issue_monitor import start_issue_monitor
+from .logging_config import configure_logging, get_logger
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    force=True  # Override any existing configuration
-)
+# Configure logging using our centralized configuration
+configure_logging()
+logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager for setup and cleanup"""
     # Setup: create connection pool and start background task
+    logger.info("Initializing database connection pool")
     db_pool = await init_db()
     if db_pool:
         # Start the issue monitoring task
+        logger.info("Starting issue monitoring task")
         start_issue_monitor()
     
     yield

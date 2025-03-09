@@ -22,3 +22,4 @@ class AgentRunResponse(BaseModel):
     status: str  # 'success', 'error'
     pr_url: Optional[str] = None
     message: Optional[str] = None
+    branch_name: Optional[str] = None
