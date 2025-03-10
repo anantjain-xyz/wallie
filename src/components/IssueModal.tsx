@@ -293,7 +293,6 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         
         <EstimateMenu
           id="estimate-menu"
-          currentEstimate={estimate}
           button={
             <button
               type="button"
@@ -309,7 +308,6 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           <AssigneeMenu
             id="assignee-menu"
             workspaceId={workspaceId}
-            currentAssigneeId={assigneeId}
             button={
               <button
                 type="button"
