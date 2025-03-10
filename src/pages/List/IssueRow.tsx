@@ -11,6 +11,8 @@ import { useNavigate } from 'react-router-dom'
 import { formatDate } from '../../utils/date'
 import { Issue } from '../../types/types'
 import React from 'react'
+import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
+import EstimateMenu from '../../components/contextmenu/EstimateMenu'
 
 interface Props {
   issue: Issue | undefined
@@ -26,6 +28,22 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
   const navigate = useNavigate()
   const [assigneeName, setAssigneeName] = React.useState<string | undefined>(undefined)
   const [assigneeProfilePicture, setAssigneeProfilePicture] = React.useState<string | null>(null)
+  const [issueEstimate, setIssueEstimate] = React.useState<number | null>(null)
+  
+  React.useEffect(() => {
+    if (issue?.id) {
+      pg.sql`
+        SELECT estimate
+        FROM issue
+        WHERE id = ${issue.id}
+      `.then((result: { rows: unknown[] }) => {
+        if (result.rows.length > 0) {
+          const row = result.rows[0] as { estimate: number | null };
+          setIssueEstimate(row.estimate);
+        }
+      })
+    }
+  }, [issue?.id, pg.sql])
 
   React.useEffect(() => {
     if (issue?.assignee_id) {
@@ -66,6 +84,14 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
     pg.sql`
       UPDATE issue
       SET assignee_id = ${userId}, modified = NOW()
+      WHERE id = ${issue!.id}
+    `
+  }
+  
+  const handleChangeEstimate = (estimate: number | null) => {
+    pg.sql`
+      UPDATE issue
+      SET estimate = ${estimate}, modified = NOW()
       WHERE id = ${issue!.id}
     `
   }
@@ -154,6 +180,25 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
         ) : (
           <Avatar name={assigneeName} />
         )}
+      </div>
+      <div className="flex-shrink-0 hidden ml-4 font-normal text-gray-500 sm:block w-15 md:block">
+        <EstimateMenu
+          id={`r-estimate-` + issue.id}
+          button={
+            <div
+              className="flex items-center hover:bg-gray-100 rounded p-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-1">
+                <EstimateIcon className="w-4 h-4" />
+                <div className="w-4">
+                  {issueEstimate !== null && <span>{issueEstimate}</span>}
+                </div>
+              </div>
+            </div>
+          }
+          onSelect={handleChangeEstimate}
+        />
       </div>
     </div>
   )

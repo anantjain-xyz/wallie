@@ -2,13 +2,13 @@ import { Portal } from '../Portal'
 import { ReactNode, useState } from 'react'
 import { ContextMenuTrigger } from '@firefox-devtools/react-contextmenu'
 import { Menu } from './menu'
+import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 
 interface Props {
   id: string
   button: ReactNode
   filterKeyword?: boolean
   className?: string
-  currentEstimate?: number | null
   onSelect?: (estimate: number | null) => void
 }
 
@@ -27,7 +27,6 @@ function EstimateMenu({
   button,
   filterKeyword = false,
   className,
-  currentEstimate,
   onSelect,
 }: Props) {
   const [keyword, setKeyword] = useState(``)
@@ -50,7 +49,10 @@ function EstimateMenu({
       key={`estimate-${option.label}`}
       onClick={() => handleSelect(option.value)}
     >
-      <span>{option.label}</span>
+      <div className="flex items-center">
+        <EstimateIcon className="w-4 h-4 mb-1 mr-2" />
+        <span>{option.label}</span>
+      </div>
     </Menu.Item>
   ))
 

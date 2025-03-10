@@ -20,7 +20,7 @@ import Editor from '../../components/editor/Editor'
 import DeleteModal from './DeleteModal'
 import Comments from './Comments'
 import debounce from 'lodash.debounce'
-
+import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 const debounceTime = 500
 
 function IssuePage() {
@@ -309,12 +309,12 @@ function IssuePage() {
                 <div className="flex flex-[3_0_0]">
                   <EstimateMenu
                     id={`issue-estimate-` + issue.id}
-                    currentEstimate={issue.estimate}
                     button={
                       <button
                         type="button"
                         className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
                       >
+                        <EstimateIcon className="mr-2 mb-1 h-4 w-4" />
                         <span>{issue.estimate !== null ? `${issue.estimate} point${issue.estimate !== 1 ? 's' : ''}` : 'No estimate'}</span>
                       </button>
                     }
