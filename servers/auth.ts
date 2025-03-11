@@ -79,14 +79,65 @@ export async function getWorkspaceIdFromUser(userId: string): Promise<string | n
       WHERE ${domain} = ANY(allowlisted_domains)
     `;
     
-    // If no workspace allows this domain
-    if (!workspaces?.length) {
-      console.error('No workspace found for domain:', domain);
-      return null;
-    }
+    let workspace;
     
-    // Pick the first workspace that allows the domain
-    const workspace = workspaces[0];
+    // If no workspace allows this domain, create a new workspace
+    if (!workspaces?.length) {
+      console.log('Creating new workspace for domain:', domain);
+      const workspaceId = uuidv4();
+      const newWorkspaces = await sql`
+        INSERT INTO workspace (
+          id,
+          name,
+          url,
+          allowlisted_domains,
+          created,
+          modified
+        ) VALUES (
+          ${workspaceId},
+          ${`${domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1).toLowerCase()}`},
+          ${`${domain.split('.')[0]}`},
+          ${[domain]},
+          NOW(),
+          NOW()
+        )
+        RETURNING *
+      `;
+      
+      if (!newWorkspaces?.length) {
+        console.error('Failed to create workspace for domain:', domain);
+        return null;
+      }
+
+      console.log("Creating Wallie user for domain:", domain);
+      await sql`
+        INSERT INTO app_user (
+          id,
+          email,
+          username,
+          full_name,
+          profile_picture,
+          workspace_id,
+          created,
+          modified
+        ) VALUES (
+          ${uuidv4()},
+          ${'agent@wallie.app'},
+          ${'wallie'},
+          ${'Wallie'},
+          ${'https://wallie.sfo2.digitaloceanspaces.com/production/workspace-avatars/4ddf8d2f-fce0-433f-af07-c970b43db995.png'},
+          ${workspaceId},
+          NOW(),
+          NOW()
+        )
+      `;
+      
+      workspace = newWorkspaces[0];
+    } else {
+      // Pick the first workspace that allows the domain
+      workspace = workspaces[0];
+    }
+
 
     // Insert the user if they don't exist, or get the existing user
     // This handles race conditions where another thread might have inserted the user
