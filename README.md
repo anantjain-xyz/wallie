@@ -44,22 +44,38 @@ Start the example backend services using [Docker Compose](https://docs.docker.co
 pnpm backend:up
 ```
 
-Start the proxy server that sits in front of Electric and authorizes requests:
-
-```shell
-pnpm run proxy-server
-```
-
 Start the write path server (also authorizes requests):
 
 ```shell
 pnpm run write-server
 ```
 
+Start the proxy server that sits in front of Electric and authorizes requests:
+
+```shell
+pnpm run proxy-server
+```
+
+Start the api server that handles external API requests (eg., Github auth)
+
+```shell
+pnpm run api-server
+```
+
 Now start the dev server for the frontend app:
 
 ```shell
 pnpm dev
+```
+
+Finally start the agent:
+
+```shell
+cd agent
+uv venv
+uv sync --dev
+cd ..
+python -m agent.main
 ```
 
 When you're done, stop the backend services using:
