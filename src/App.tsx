@@ -7,7 +7,7 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import 'react-toastify/dist/ReactToastify.css'
-import { live, LiveQuery } from '@electric-sql/pglite/live'
+import { live } from '@electric-sql/pglite/live'
 import { PGliteWorker } from '@electric-sql/pglite/worker'
 import { PGliteProvider } from '@electric-sql/pglite-react'
 import { useHotkeys } from 'react-hotkeys-hook'
@@ -19,9 +19,8 @@ import Settings from './pages/Settings'
 import {
   getFilterStateFromSearchParams,
   filterStateToSql,
-  FilterState,
 } from './utils/filterState'
-import { Issue as IssueType, Status, StatusValue } from './types/types'
+import { Issue as IssueType } from './types/types'
 import { startSync, useSyncStatus, waitForInitialSyncDone } from './sync'
 import { electricSync } from '@electric-sql/pglite-sync'
 import { ImSpinner8 } from 'react-icons/im'

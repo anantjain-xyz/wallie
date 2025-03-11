@@ -18,8 +18,9 @@ const estimateOptions = [
   { label: '1 point', value: 1 },
   { label: '2 points', value: 2 },
   { label: '3 points', value: 3 },
-  { label: '5 points', value: 5 },
-  { label: '8 points', value: 8 },
+  { label: '5 points (S)', value: 5 },
+  { label: '8 points (M)', value: 8 },
+  { label: '13 points (L)', value: 13 },
 ]
 
 function EstimateMenu({

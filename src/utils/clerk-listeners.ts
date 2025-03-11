@@ -38,7 +38,7 @@ export const updateUserProfile = async (user: User, db: any) => {
     
     // Update the user in the database
     // Set the modified timestamp, but let triggers handle modified_columns
-    const result = await db.query(`
+    await db.query(`
       UPDATE app_user
       SET 
         full_name = $1,

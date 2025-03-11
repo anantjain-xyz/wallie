@@ -1,7 +1,7 @@
 import { Transition } from '@headlessui/react'
 import { useClickOutside } from '../hooks/useClickOutside'
 import { useRef, useState } from 'react'
-import { BsGrid3X3Gap, BsListUl, BsArrowDown, BsArrowUp } from 'react-icons/bs'
+import { BsGrid3X3Gap, BsListUl } from 'react-icons/bs'
 import Select from './Select'
 import { useFilterState } from '../utils/filterState'
 
@@ -60,6 +60,7 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
           <div className="pb-4 font-medium text-gray-700">
             <div className="grid grid-cols-2 gap-2">
               <button
+                type="button"
                 className={`flex items-center justify-center px-3 py-2 rounded border ${
                   viewMode === 'list' ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'
                 }`}
@@ -71,6 +72,7 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
                 List
               </button>
               <button
+                type="button"
                 className={`flex items-center justify-center px-3 py-2 rounded border ${
                   viewMode === 'board' ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'
                 }`}

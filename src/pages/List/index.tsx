@@ -35,7 +35,7 @@ function List({ showSearch = false }) {
   const [viewMode, setViewMode] = useState<'list' | 'board'>('list')
   
   // State for selected issues and selection mode
-  const [selectedIssues, setSelectedIssues] = useState<Set<string>>(new Set())
+  const [selectedIssues, setSelectedIssues] = useState<Set<string>>(() => new Set())
   const [selectionMode, setSelectionMode] = useState(false)
   
   // State for board view

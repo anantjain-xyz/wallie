@@ -224,6 +224,19 @@ function IssuePage() {
     }
   }
 
+  // Helper function to format estimate display
+  const formatEstimate = (estimate: number | null): string => {
+    if (estimate === null) return 'No estimate';
+    
+    let sizeLabel = '';
+    if (estimate === 5) sizeLabel = ' (S)';
+    else if (estimate === 8) sizeLabel = ' (M)';
+    else if (estimate === 13) sizeLabel = ' (L)';
+    
+    const pointText = estimate === 1 ? 'point' : 'points';
+    return `${estimate} ${pointText}${sizeLabel}`;
+  }
+
   return (
     <>
       <div className="flex flex-col flex-1 overflow-hidden">
@@ -315,7 +328,7 @@ function IssuePage() {
                         className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
                       >
                         <EstimateIcon className="mr-2 mb-1 h-4 w-4" />
-                        <span>{issue.estimate !== null ? `${issue.estimate} point${issue.estimate !== 1 ? 's' : ''}` : 'No estimate'}</span>
+                        <span>{formatEstimate(issue.estimate)}</span>
                       </button>
                     }
                     onSelect={handleEstimateChange}

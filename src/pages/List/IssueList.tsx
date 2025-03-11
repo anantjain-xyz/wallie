@@ -18,10 +18,13 @@ export interface IssueListProps {
   workspaceId?: string
 }
 
+// Define constant for default empty set outside the component
+const EMPTY_SET = new Set<string>();
+
 function IssueList({
   issues,
   onItemsRendered,
-  selectedIssues = new Set<string>(),
+  selectedIssues = EMPTY_SET,
   onSelectIssue,
   selectionMode = false,
   workspaceId = ''
