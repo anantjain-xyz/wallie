@@ -126,7 +126,7 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
   return (
     <div
       key={issue.id}
-      className={`flex items-center flex-grow w-full min-w-0 pl-2 pr-8 text-sm border-b border-gray-100 hover:bg-gray-100 shrink-0 ${isSelected ? 'bg-blue-50' : ''} ${selectionMode ? 'cursor-pointer' : ''}`}
+      className={`flex items-center flex-grow w-full min-w-0 pl-2 pr-8 text-sm border-b border-gray-100 hover:bg-gray-100 shrink-0 ${isSelected ? 'bg-red-50' : ''} ${selectionMode ? 'cursor-pointer' : ''}`}
       id={issue.id}
       onClick={handleRowClick}
       style={style}
@@ -136,7 +136,7 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
           type="checkbox"
           checked={isSelected}
           onChange={() => {}}
-          className={`w-4 h-4 text-blue-600 rounded focus:ring-0 ${selectionMode ? 'border-gray-300' : 'border-gray-200'}`}
+          className={`w-4 h-4 text-red-600 rounded focus:ring-0 ${selectionMode ? 'border-gray-300' : 'border-gray-200'}`}
         />
       </div>
       <div className="flex-shrink-0 ml-3">
