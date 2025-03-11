@@ -76,6 +76,44 @@ export default {
       zIndex: {
         100: 100,
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            h1: {
+              fontSize: '1.875rem', // 30px
+              fontWeight: '600',
+              lineHeight: '1.2',
+              marginTop: '1.5rem',
+              marginBottom: '1rem',
+              color: 'rgb(17, 24, 39)', // text-gray-900
+            },
+            h2: {
+              fontSize: '1.5rem', // 24px
+              fontWeight: '600',
+              lineHeight: '1.3',
+              marginTop: '1.5rem',
+              marginBottom: '0.75rem',
+              color: 'rgb(17, 24, 39)', // text-gray-900
+            },
+            h3: {
+              fontSize: '1.25rem', // 20px
+              fontWeight: '600',
+              lineHeight: '1.4',
+              marginTop: '1.5rem',
+              marginBottom: '0.75rem',
+              color: 'rgb(17, 24, 39)', // text-gray-900
+            },
+            h4: {
+              fontSize: '1.125rem', // 18px
+              fontWeight: '600',
+              lineHeight: '1.5',
+              marginTop: '1.5rem',
+              marginBottom: '0.5rem',
+              color: 'rgb(17, 24, 39)', // text-gray-900
+            }
+          },
+        },
+      },
     },
   },
   variants: {
@@ -84,5 +122,23 @@ export default {
       borderColor: ['checked'],
     },
   },
-  plugins: [require('@tailwindcss/forms'), require('@tailwindcss/typography')],
+  plugins: [
+    require('@tailwindcss/forms'), 
+    require('@tailwindcss/typography'),
+    function({ addComponents }) {
+      addComponents({
+        // Custom styles for issue title inputs
+        'input[placeholder="Issue title"]': {
+          fontSize: '1.875rem', // 30px - same as h1
+          fontWeight: '600',
+          lineHeight: '1.2',
+          color: 'rgb(17, 24, 39)', // text-gray-900
+          '&:focus': {
+            outline: 'none',
+            boxShadow: 'none',
+          },
+        },
+      });
+    },
+  ],
 }
