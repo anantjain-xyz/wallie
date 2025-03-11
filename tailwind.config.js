@@ -124,21 +124,6 @@ export default {
   },
   plugins: [
     require('@tailwindcss/forms'), 
-    require('@tailwindcss/typography'),
-    function({ addComponents }) {
-      addComponents({
-        // Custom styles for issue title inputs
-        'input[placeholder="Issue title"]': {
-          fontSize: '1.875rem', // 30px - same as h1
-          fontWeight: '600',
-          lineHeight: '1.2',
-          color: 'rgb(17, 24, 39)', // text-gray-900
-          '&:focus': {
-            outline: 'none',
-            boxShadow: 'none',
-          },
-        },
-      });
-    },
+    require('@tailwindcss/typography')
   ],
 }
