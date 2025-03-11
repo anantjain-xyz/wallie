@@ -2,7 +2,7 @@
 name = "codebase-pr-api"
 version = "0.1.0"
 description = "A REST API that uses the Codebase agent to create PRs from tickets"
-requires-python = ">=3.10"
+requires-python = ">=3.12, <3.14"
 dependencies = [
   "codegen>=0.48.4",
   "fastapi>=0.115.8",
