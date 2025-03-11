@@ -63,14 +63,8 @@ async def get_agent_user_id(conn, workspace_id: UUID):
         agent_user_id = await conn.fetchval(agent_user_query, workspace_id)
         
         if not agent_user_id:
-            logger.warning(f"Agent user not found in workspace {workspace_id}")
-            # Create a new agent user
-            agent_user_query = """
-                INSERT INTO app_user (id, username, full_name, email, workspace_id)
-                VALUES (gen_random_uuid(), 'wallie', 'Wallie', 'agent@wallie.app', $1)
-                RETURNING id
-            """
-            agent_user_id = await conn.fetchval(agent_user_query, workspace_id)
+            logger.error(f"Agent user not found in workspace {workspace_id}")
+            raise Exception(f"Agent user not found in workspace {workspace_id}")
         
         return agent_user_id
     except Exception as e:
