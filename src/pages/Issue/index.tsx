@@ -19,6 +19,7 @@ import { Issue, PriorityDisplay, StatusDisplay } from '../../types/types'
 import Editor from '../../components/editor/Editor'
 import DeleteModal from './DeleteModal'
 import Comments from './Comments'
+import GithubPullRequests from '../../components/GithubPullRequests'
 import debounce from 'lodash.debounce'
 import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 const debounceTime = 500
@@ -420,6 +421,9 @@ function IssuePage() {
                   </div>
                 </div>
               )}
+              
+              {/* Pull Requests associated with this issue */}
+              <GithubPullRequests issueId={issue.id} />
             </div>
           </div>
           <div className="flex flex-col md:flex-[3_0_0] md:p-3 border-gray-200 md:border-r min-h-0 min-w-0 overflow-auto">
@@ -467,6 +471,13 @@ function IssuePage() {
         setIsOpen={setShowDeleteModal}
         onDismiss={() => setShowDeleteModal(false)}
         deleteIssue={handleDelete}
+      />
+    </>
+  )
+}
+
+export default IssuePage
+ssue={handleDelete}
       />
     </>
   )
