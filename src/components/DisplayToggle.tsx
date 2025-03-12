@@ -1,9 +1,10 @@
 import { Transition } from '@headlessui/react'
 import { useClickOutside } from '../hooks/useClickOutside'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { BsGrid3X3Gap, BsListUl } from 'react-icons/bs'
 import Select from './Select'
 import { useFilterState } from '../utils/filterState'
+import { useUserPreferences } from '../hooks/useUserPreferences'
 
 interface Props {
   viewMode: 'list' | 'board'
@@ -14,25 +15,54 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
   const [isOpen, setIsOpen] = useState(false)
   const ref = useRef(null)
   const [filterState, setFilterState] = useFilterState()
+  const [userPreferences, updateUserPreferences] = useUserPreferences()
 
   useClickOutside(ref, () => {
     if (isOpen) setIsOpen(false)
   })
 
+  // Sync view mode with user preferences when they load
+  useEffect(() => {
+    if (userPreferences.view_mode !== viewMode) {
+      onViewModeChange(userPreferences.view_mode)
+    }
+  }, [userPreferences, onViewModeChange, viewMode])
+
+  // Sync filter state with user preferences when they load
+  useEffect(() => {
+    if (userPreferences.order_by !== filterState.orderBy || 
+        userPreferences.order_direction !== filterState.orderDirection) {
+      setFilterState({
+        ...filterState,
+        orderBy: userPreferences.order_by,
+        orderDirection: userPreferences.order_direction as 'asc' | 'desc'
+      })
+    }
+  }, [userPreferences, setFilterState, filterState])
+
+  const handleViewModeChange = (mode: 'list' | 'board') => {
+    onViewModeChange(mode)
+    updateUserPreferences({ view_mode: mode })
+  }
+
   const handleOrderByChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newOrderBy = e.target.value
     setFilterState({
       ...filterState,
-      orderBy: e.target.value,
+      orderBy: newOrderBy,
     })
+    updateUserPreferences({ order_by: newOrderBy })
   }
 
   const handleOrderDirectionChange = (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
+    const newOrderDirection = e.target.value as 'asc' | 'desc'
     setFilterState({
       ...filterState,
-      orderDirection: e.target.value as `asc` | `desc`,
+      orderDirection: newOrderDirection,
     })
+    updateUserPreferences({ order_direction: newOrderDirection })
   }
 
   return (
@@ -65,7 +95,7 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
                   viewMode === 'list' ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'
                 }`}
                 onClick={() => {
-                  onViewModeChange('list')
+                  handleViewModeChange('list')
                 }}
               >
                 <BsListUl className="w-4 h-4 mr-2" />
@@ -77,7 +107,7 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
                   viewMode === 'board' ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'
                 }`}
                 onClick={() => {
-                  onViewModeChange('board')
+                  handleViewModeChange('board')
                 }}
               >
                 <BsGrid3X3Gap className="w-4 h-4 mr-2" />
