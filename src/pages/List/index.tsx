@@ -181,7 +181,7 @@ function List({ showSearch = false }) {
   }, [selectionMode, selectedIssues, handleClearSelection]);
 
   return (
-    <div className="flex flex-col flex-grow">
+    <div className="flex flex-col flex-1 overflow-x-auto">
       <div className="flex justify-between items-center w-full">
         <TopBar
           filterState={filterState}
