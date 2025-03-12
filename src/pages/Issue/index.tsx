@@ -49,6 +49,20 @@ function IssuePage() {
   `
   const assignee = issue?.assignee_id ? assigneeResults?.rows[0] : null
 
+  // Query for pull requests associated with this issue
+  const pullRequestsResults = useLiveQuery.sql<{
+    id: string,
+    name: string,
+    pull_request_link: string | null
+  }>`
+    SELECT id, name, pull_request_link
+    FROM github_branch
+    WHERE issue_id = ${issue?.id || '00000000-0000-0000-0000-000000000000'}
+    AND pull_request_link IS NOT NULL
+    ORDER BY created ASC
+  `
+  const pullRequests = pullRequestsResults?.rows || []
+
   // Query GitHub repositories for the workspace
   const workspaceResults = useLiveQuery.sql<{ id: string }>`
     SELECT id FROM workspace LIMIT 1
@@ -417,6 +431,37 @@ function IssuePage() {
                         <span>Connect GitHub</span>
                       </button>
                     )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Pull Requests section */}
+              {pullRequests.length > 0 && (
+                <div className="flex flex-1 mb-3 mr-5 md-mr-0 items-baseline">
+                  <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
+                    Pull Request{pullRequests.length > 1 ? 's' : ''}
+                  </div>
+                  <div className="flex flex-[3_0_0] flex-col">
+                    {pullRequests.map(pr => {
+                      // Extract PR number from the URL
+                      const prNumberMatch = pr.pull_request_link?.match(/\/pull\/(\d+)$/);
+                      const prNumber = prNumberMatch ? prNumberMatch[1] : null;
+                      
+                      if (!pr.pull_request_link || !prNumber) return null;
+                      
+                      return (
+                        <a 
+                          key={pr.id}
+                          href={pr.pull_request_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700 mb-1"
+                        >
+                          <FaGithub className="mr-2 h-4 w-4" />
+                          <span>#{prNumber}</span>
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               )}
