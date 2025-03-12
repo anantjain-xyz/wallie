@@ -43,7 +43,7 @@ async def get_new_issues(timestamp):
     try:
         async with db_pool.acquire() as conn:
             query = """
-                SELECT i.id, i.title, i.description, i.created, i.modified, i.workspace_id, i.github_repository_id, i.assignee_id
+                SELECT i.id, i.title, i.description, i.created, i.modified, i.workspace_id, i.github_repository_id, i.assignee_id, i.status
                 FROM issue i
                 WHERE i.modified > $1 OR ($1 IS NULL)
                 ORDER BY i.modified ASC

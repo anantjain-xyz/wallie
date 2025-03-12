@@ -71,7 +71,13 @@ async def check_for_new_issues():
             workspace_id = row['workspace_id']
             github_repository_id = row['github_repository_id']
             assignee_id = row['assignee_id']
+            status = row['status']
             
+            # Check if issue is in 'done' status
+            if status == 'done':
+                logger.info(f"Issue {issue_id} is in 'done' status, skipping")
+                continue
+                
             # Check if assignee is the 'wallie' user
             if assignee_id is None:
                 logger.info(f"Issue {issue_id} has no assignee, skipping")
