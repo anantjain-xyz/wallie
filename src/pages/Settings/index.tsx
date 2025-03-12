@@ -4,7 +4,7 @@ import { useUser } from '@clerk/clerk-react'
 import { useCurrentUser } from '../../utils/userUtils'
 import { useDropzone } from 'react-dropzone'
 import { uploadFileToS3 } from '../../utils/s3Upload'
-import { toast, ToastContainer } from 'react-toastify'
+import { toast } from 'react-toastify'
 import GitHubIntegration from './GitHubIntegration'
 
 const Settings = () => {
@@ -199,7 +199,6 @@ const Settings = () => {
         {/* GitHub Integration */}
         {workspaceId && <GitHubIntegration workspaceId={workspaceId} />}
       </div>
-      <ToastContainer position="bottom-right" />
     </div>
   )
 }

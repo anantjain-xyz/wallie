@@ -11,6 +11,7 @@ import { live } from '@electric-sql/pglite/live'
 import { PGliteWorker } from '@electric-sql/pglite/worker'
 import { PGliteProvider } from '@electric-sql/pglite-react'
 import { useHotkeys } from 'react-hotkeys-hook'
+import { ToastContainer } from 'react-toastify'
 import PGWorker from './pglite-worker.js?worker'
 import List from './pages/List'
 import Root from './pages/root'
@@ -258,9 +259,9 @@ const App = () => {
         },
       ],
     },
-  ]), []);
+  ]), [issueModalContextValue, commandBarContextValue])
 
-  const { isSignedIn, isLoaded } = useAuth()
+  const { isLoaded, isSignedIn } = useAuth()
 
   if (!isLoaded) {
     return <LoadingScreen>Signing in...</LoadingScreen>
@@ -275,21 +276,17 @@ const App = () => {
   }
 
   if (syncStatus === 'initial-sync') {
-    return (
-      <LoadingScreen>
-        <div>Loading workspace...</div>
-        <div className="text-sm text-gray-500">{syncMessage}</div>
-      </LoadingScreen>
-    )
+    return <LoadingScreen>{syncMessage}</LoadingScreen>
   }
 
-return (
+  return (
     <PGliteProvider db={pgForProvider}>
       <MenuContext.Provider value={menuContextValue}>
         <IssueModalContext.Provider value={issueModalContextValue}>
           <CommandBarContext.Provider value={commandBarContextValue}>
-            <RouterProvider router={router} />
             <ClerkEventListener />
+            <RouterProvider router={router} />
+            <ToastContainer position="bottom-right" />
           </CommandBarContext.Provider>
         </IssueModalContext.Provider>
       </MenuContext.Provider>

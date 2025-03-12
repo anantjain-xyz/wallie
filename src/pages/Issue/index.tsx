@@ -5,6 +5,7 @@ import { LiveQuery } from '@electric-sql/pglite/live'
 import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
 import { BsTrash3 as DeleteIcon } from 'react-icons/bs'
 import { BsXLg as CloseIcon } from 'react-icons/bs'
+import { BsClipboard as CopyIcon } from 'react-icons/bs'
 import { FaGithub } from 'react-icons/fa'
 import PriorityMenu from '../../components/contextmenu/PriorityMenu'
 import StatusMenu from '../../components/contextmenu/StatusMenu'
@@ -22,6 +23,9 @@ import Comments from './Comments'
 import debounce from 'lodash.debounce'
 import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 import { formatExternalId } from '../../utils/issueUtils'
+import { useHotkeys } from 'react-hotkeys-hook'
+import Tooltip from '../../components/Tooltip'
+import { showInfo } from '../../utils/notification.tsx'
 const debounceTime = 500
 
 function IssuePage() {
@@ -159,6 +163,23 @@ function IssuePage() {
     [pg]
   )
 
+  // Query for comments associated with this issue
+  const commentsResults = useLiveQuery.sql<{
+    id: string,
+    body: string,
+    creator_id: string,
+    created: Date,
+    author_full_name: string | null,
+    username: string
+  }>`
+    SELECT c.id, c.body, c.creator_id, c.created, u.full_name as author_full_name, u.username
+    FROM comment c
+    LEFT JOIN app_user u ON c.creator_id = u.id
+    WHERE c.issue_id = ${issue?.id || '00000000-0000-0000-0000-000000000000'}
+    ORDER BY c.created ASC
+  `
+  const comments = commentsResults?.rows || []
+
   if (issue === undefined) {
     return <div className="p-8 w-full text-center">Loading...</div>
   } else if (issue === null) {
@@ -258,6 +279,52 @@ function IssuePage() {
     return `${estimate} ${pointText}${sizeLabel}`;
   }
 
+  // Function to copy issue data as markdown
+  const copyIssueAsMarkdown = useCallback(() => {
+    if (!issue) return;
+
+    // Create the issue URL
+    const issueIdentifier = formatExternalId(workspaceName, issue.external_id);
+
+    // Format the markdown
+    let markdown = `# ${issue.title}\n\n`;
+    
+    if (issue.description) {
+      markdown += `${issue.description}\n\n`;
+    }
+    
+    markdown += `## Metadata\n\n`;
+    markdown += `- Identifier: ${issueIdentifier}\n`;
+    
+    markdown += `\n`;
+    
+    // Add comments if there are any
+    if (comments.length > 0) {
+      markdown += `## Comments\n\n`;
+      
+      comments.forEach(comment => {
+        const authorName = comment.author_full_name || comment.username;
+        markdown += `- ${authorName}:\n\n  ${comment.body.replace(/\n/g, '\n  ')}\n\n`;
+      });
+    }
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(markdown)
+      .then(() => {
+        // Show success notification
+        showInfo('Issue copied to clipboard as markdown', 'Copied!');
+      })
+      .catch(err => {
+        console.error('Failed to copy issue to clipboard:', err);
+      });
+  }, [issue, workspaceName, comments, useLiveQuery]);
+
+  // Add keyboard shortcut for copying issue as markdown (Cmd+Option+C)
+  useHotkeys('mod+alt+c', (e) => {
+    e.preventDefault();
+    copyIssueAsMarkdown();
+  }, { enableOnFormTags: true }, [copyIssueAsMarkdown]);
+
   return (
     <>
       <div className="flex flex-col flex-1 overflow-hidden">
@@ -271,9 +338,18 @@ function IssuePage() {
             </div>
 
             <div className="flex items-center">
+              <Tooltip content="Copy as markdown" shortcut="⌘⌥C">
+                <button
+                  type="button"
+                  className="p-2 rounded hover:bg-gray-100"
+                  onClick={copyIssueAsMarkdown}
+                >
+                  <CopyIcon size={14} />
+                </button>
+              </Tooltip>
               <button
                 type="button"
-                className="p-2 rounded hover:bg-gray-100"
+                className="p-2 rounded hover:bg-gray-100 ml-2"
                 onClick={() => setShowDeleteModal(true)}
               >
                 <DeleteIcon size={14} />

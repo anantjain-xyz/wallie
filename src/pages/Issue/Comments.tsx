@@ -58,8 +58,8 @@ function Comments({ issue }: CommentsProps) {
   const pg = usePGlite()
   const { user } = useUser()
   const [newCommentBody, setNewCommentBody] = useState<string>(``)
-  const commentsResults = useLiveQuery.sql<Comment & { author_full_name: string }>`
-    SELECT c.*, u.full_name as author_full_name
+  const commentsResults = useLiveQuery.sql<Comment & { author_full_name: string, profile_picture: string | null }>`
+    SELECT c.*, u.full_name as author_full_name, u.profile_picture
     FROM comment c
     LEFT JOIN app_user u ON c.creator_id = u.id 
     WHERE c.issue_id = ${issue.id}
@@ -93,7 +93,7 @@ function Comments({ issue }: CommentsProps) {
           className="flex flex-col w-full p-3 mb-3 bg-white rounded shadow-sm border"
         >
           <div className="flex items-center mb-2">
-            <Avatar name={comment.author_full_name} />
+            <Avatar name={comment.author_full_name} avatarUrl={comment.profile_picture || undefined} />
             <div className='flex flex-row items-baseline'>
               <span className="ms-2 text-sm text-gray-400">
                 {comment.author_full_name}
