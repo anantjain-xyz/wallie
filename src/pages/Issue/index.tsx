@@ -6,6 +6,7 @@ import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
 import { BsTrash3 as DeleteIcon } from 'react-icons/bs'
 import { BsXLg as CloseIcon } from 'react-icons/bs'
 import { FaGithub } from 'react-icons/fa'
+import GithubPullRequests from '../../components/GithubPullRequests'
 import PriorityMenu from '../../components/contextmenu/PriorityMenu'
 import StatusMenu from '../../components/contextmenu/StatusMenu'
 import GithubRepoMenu from '../../components/contextmenu/GithubRepoMenu'
@@ -277,6 +278,8 @@ function IssuePage() {
               >
                 <CloseIcon size={14} />
               </button>
+              {/* Display GitHub Pull Requests */}
+              <GithubPullRequests issueId={issue.id} />
             </div>
           </div>
         </div>
@@ -457,6 +460,8 @@ function IssuePage() {
             </div>
             <div className="border-t border-gray-200 mt-3 pt-6">
               <Comments issue={issue} />
+              {/* Display GitHub Pull Requests */}
+              <GithubPullRequests issueId={issue.id} />
             </div>
           </div>
         </div>
@@ -467,6 +472,38 @@ function IssuePage() {
         setIsOpen={setShowDeleteModal}
         onDismiss={() => setShowDeleteModal(false)}
         deleteIssue={handleDelete}
+      />
+    </>
+  )
+}
+
+export default IssuePage
+ssue={handleDelete}
+      />
+    </>
+  )
+}
+
+export default IssuePage
+     {/* Display GitHub Pull Requests */}
+              <GithubPullRequests issueId={issue.id} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <DeleteModal
+        isOpen={showDeleteModal}
+        setIsOpen={setShowDeleteModal}
+        onDismiss={() => setShowDeleteModal(false)}
+        deleteIssue={handleDelete}
+      />
+    </>
+  )
+}
+
+export default IssuePage
+ssue={handleDelete}
       />
     </>
   )
