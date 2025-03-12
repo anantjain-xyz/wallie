@@ -6,7 +6,7 @@ from ..db.queries import get_last_modified_issue_timestamp, get_new_issues
 from ..data import Issue
 from .comment_service import add_agent_comment, is_last_comment_from_wallie
 from .issue_service import set_issue_in_progress
-from .pr_service import process_issue
+from .agent_service import process_issue
 import pytz
 from datetime import datetime
 
@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 # Global variable to store the last checked timestamp
 last_checked_timestamp = None
 
-async def monitor_issues():
+async def _monitor_issues_task():
     """Background task to monitor for new issues in the database"""
     global last_checked_timestamp
     
@@ -160,4 +160,4 @@ async def check_for_new_issues():
 
 def start_issue_monitor():
     """Start the issue monitoring task"""
-    asyncio.create_task(monitor_issues()) 
+    asyncio.create_task(_monitor_issues_task()) 

@@ -26,7 +26,7 @@ agent/
 │   ├── __init__.py
 │   ├── issue_monitor.py   # Issue monitoring service
 │   ├── comment_service.py # Comment creation and management
-│   └── pr_service.py      # PR creation service
+│   └── agent_service.py   # Agent that processes issues
 ├── data/                  # Data models
 │   ├── __init__.py
 │   └── models.py

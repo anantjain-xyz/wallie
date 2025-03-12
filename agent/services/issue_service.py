@@ -5,7 +5,7 @@ from uuid import UUID
 # Get logger for this module
 logger = get_logger(__name__)
 
-async def update_issue_status(conn, issue_id: UUID, status: str) -> bool:
+async def _update_issue_status(conn, issue_id: UUID, status: str) -> bool:
     """
     Update the status of an issue
     
@@ -39,7 +39,7 @@ async def set_issue_in_progress(conn, issue_id: UUID) -> bool:
     Returns:
         bool: True if successful, False otherwise
     """
-    return await update_issue_status(conn, issue_id, 'in_progress')
+    return await _update_issue_status(conn, issue_id, 'in_progress')
 
 async def set_issue_in_review(conn, issue_id: UUID) -> bool:
     """
@@ -52,4 +52,4 @@ async def set_issue_in_review(conn, issue_id: UUID) -> bool:
     Returns:
         bool: True if successful, False otherwise
     """
-    return await update_issue_status(conn, issue_id, 'in_review') 
+    return await _update_issue_status(conn, issue_id, 'in_review') 
