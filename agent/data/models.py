@@ -11,6 +11,7 @@ class Issue(BaseModel):
     github_repository_id: Optional[UUID] = None
     assignee_id: Optional[UUID] = None
     estimate: Optional[int] = None
+    external_id: Optional[int] = None
 
 class AgentRunResponse(BaseModel):
     """

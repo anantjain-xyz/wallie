@@ -243,14 +243,6 @@ function IssuePage() {
     navigate(`/`)
   }
 
-  const shortId = () => {
-    if (issue.id.includes(`-`)) {
-      return issue.id.slice(issue.id.length - 8)
-    } else {
-      return issue.id
-    }
-  }
-
   // Helper function to format estimate display
   const formatEstimate = (estimate: number | null): string => {
     if (estimate === null) return 'No estimate';
@@ -271,9 +263,9 @@ function IssuePage() {
           <div className="flex justify-between flex-shrink-0 pr-6 border-b border-gray-200 h-14 pl-3 md:pl-5 lg:pl-9">
             <div className="flex items-center">
               <span className="font-semibold me-2">Issue</span>
-              <span className="text-gray-500" title={issue.id}>
-                {shortId()}
-              </span>
+              {issue.external_id !== null && (
+                <span className="text-gray-500 me-2">#{issue.external_id}</span>
+              )}
             </div>
 
             <div className="flex items-center">

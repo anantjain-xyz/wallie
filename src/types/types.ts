@@ -27,6 +27,7 @@ export type Issue = {
   github_repository_id: string | null
   assignee_id: string | null
   estimate: number | null
+  external_id: number | null
 }
 
 export type Comment = {

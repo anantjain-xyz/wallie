@@ -32,6 +32,7 @@ import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
 import { Issue } from '../types/types'
 import { useCurrentUser } from '../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
+import { getNextExternalId } from '../utils/issueUtils'
 
 interface Props {
   isOpen: boolean
@@ -114,6 +115,9 @@ function IssueModal({ isOpen, onDismiss }: Props) {
       )?.rows[0]
       const kanbanorder = generateKeyBetween(lastIssue?.kanbanorder, null)
 
+      // Get the next external_id for this workspace
+      const externalId = await getNextExternalId(pg, currentUser.workspace_id)
+
       const date = new Date()
       await pg.sql`
         INSERT INTO issue (
@@ -129,7 +133,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           workspace_id,
           github_repository_id,
           assignee_id,
-          estimate
+          estimate,
+          external_id
         )
         VALUES (
           ${crypto.randomUUID()},
@@ -144,7 +149,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           ${currentUser.workspace_id},
           ${githubRepositoryId || null},
           ${assigneeId},
-          ${estimate}
+          ${estimate},
+          ${externalId}
         )
       `
 

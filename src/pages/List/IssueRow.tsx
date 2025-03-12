@@ -154,6 +154,9 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
         />
       </div>
       <div className="flex-wrap flex-shrink ml-3 overflow-hidden font-medium line-clamp-1 overflow-ellipsis">
+        {issue.external_id !== null && (
+          <span className="text-gray-500 mr-2">#{issue.external_id}</span>
+        )}
         {issue.title.slice(0, 3000) || ``}
       </div>
       <div className="flex-shrink-0 hidden w-15 ml-auto font-normal text-gray-500 sm:block whitespace-nowrap">
