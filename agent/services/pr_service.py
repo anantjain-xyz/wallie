@@ -226,7 +226,7 @@ async def run_agent(issue: Issue) -> AgentRunResponse:
     # Format the issue message with comments
     query = format_issue_message(issue.title, issue.description, comments)
     
-    # Create and run the agent
+    # Initialize the agent and potential branch name
     agent = CodeAgent(codebase)
     branch_name = None
     try:

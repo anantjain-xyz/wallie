@@ -369,7 +369,7 @@ function IssuePage() {
         <div className="flex flex-1 p-3 md:p-2 overflow-hidden flex-col md:flex-row">
           <div className="md:block flex md:flex-[1_0_0] min-w-0 md:p-3 md:order-2">
             <div className="max-w-4xl flex flex-row md:flex-col">
-              <div className="flex flex-1 mb-3 mr-5 md-mr-0">
+              <div className="flex flex-1 mb-3 md-mr-0">
                 <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
                   Status
                 </div>
@@ -389,7 +389,7 @@ function IssuePage() {
                   />
                 </div>
               </div>
-              <div className="flex flex-1 mb-3 mr-5 md-mr-0">
+              <div className="flex flex-1 mb-3 md-mr-0">
                 <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
                   Priority
                 </div>
@@ -412,7 +412,7 @@ function IssuePage() {
                   />
                 </div>
               </div>
-              <div className="flex flex-1 mb-3 mr-5 md-mr-0">
+              <div className="flex flex-1 mb-3 md-mr-0">
                 <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
                   Estimate
                 </div>
@@ -432,7 +432,7 @@ function IssuePage() {
                   />
                 </div>
               </div>
-              <div className="flex flex-1 mb-3 mr-5 md-mr-0">
+              <div className="flex flex-1 mb-3 md-mr-0">
                 <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
                   Assignee
                 </div>
@@ -471,7 +471,7 @@ function IssuePage() {
               </div>
               {/* Show GitHub Repo only if assigned to user with username 'wallie' */}
               {assignee?.username === 'wallie' && (
-                <div className="flex flex-1 mb-3 mr-5 md-mr-0">
+                <div className="flex flex-1 mb-3 md-mr-0">
                   <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
                     GitHub repo
                   </div>
@@ -507,7 +507,7 @@ function IssuePage() {
               
               {/* Pull Requests section */}
               {pullRequests.length > 0 && (
-                <div className="flex flex-1 mb-3 mr-5 md-mr-0 items-baseline">
+                <div className="flex flex-1 mb-3 md-mr-0 items-baseline">
                   <div className="flex flex-[2_0_0] mr-2 md-mr-0 items-center">
                     Pull Request{pullRequests.length > 1 ? 's' : ''}
                   </div>
