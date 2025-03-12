@@ -13,6 +13,7 @@ import { Issue } from '../../types/types'
 import React from 'react'
 import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 import EstimateMenu from '../../components/contextmenu/EstimateMenu'
+import { formatExternalId } from '../../utils/issueUtils'
 
 interface Props {
   issue: Issue | undefined
@@ -20,10 +21,11 @@ interface Props {
   isSelected?: boolean
   onSelect?: (issueId: string, selected: boolean) => void
   selectionMode?: boolean
-  workspaceId?: string
+  workspaceId: string
+  workspaceName: string
 }
 
-function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = false, workspaceId = '' }: Props) {
+function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = false, workspaceId, workspaceName }: Props) {
   const pg = usePGlite()
   const navigate = useNavigate()
   const [assigneeName, setAssigneeName] = React.useState<string | undefined>(undefined)
@@ -155,7 +157,7 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
       </div>
       <div className="flex-wrap flex-shrink ml-3 overflow-hidden font-medium line-clamp-1 overflow-ellipsis">
         {issue.external_id !== null && (
-          <span className="text-gray-500 mr-2">#{issue.external_id}</span>
+          <span className="text-gray-400 mr-4 font-mono">{formatExternalId(workspaceName, issue.external_id)}</span>
         )}
         {issue.title.slice(0, 3000) || ``}
       </div>

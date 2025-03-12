@@ -38,6 +38,16 @@ export default {
         'sans-serif',
       ],
       prosto: ['ProstoOne', 'sans-serif'],
+      mono: [
+        'ui-monospace',
+        'SFMono-Regular',
+        'Menlo',
+        'Monaco',
+        'Consolas',
+        'Liberation\\ Mono',
+        'Courier\\ New',
+        'monospace',
+      ],
     },
     borderWidth: {
       DEFAULT: '1px',

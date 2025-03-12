@@ -43,10 +43,11 @@ function List({ showSearch = false }) {
   const pg = usePGlite()
   
   // Get workspace ID for the AssigneeMenu
-  const workspaceResults = useLiveQuery.sql<{ id: string }>`
-    SELECT id FROM workspace LIMIT 1
+  const workspaceResults = useLiveQuery.sql<{ id: string, name: string }>`
+    SELECT id, name FROM workspace LIMIT 1
   `
   const workspaceId = workspaceResults?.rows[0]?.id || ''
+  const workspaceName = workspaceResults?.rows[0]?.name || ''
 
   const issuesRes = useLiveQuery(liveIssues)
   const offset = liveIssues.initialResults.offset ?? issuesRes.offset ?? 0
@@ -200,6 +201,7 @@ function List({ showSearch = false }) {
           onSelectIssue={handleSelectIssue}
           selectionMode={selectionMode}
           workspaceId={workspaceId}
+          workspaceName={workspaceName}
         />
       ) : (
         Object.keys(columnsLiveIssues).length > 0 && (

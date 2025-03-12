@@ -16,6 +16,7 @@ export interface IssueListProps {
   onSelectIssue?: (issueId: string, selected: boolean) => void
   selectionMode?: boolean
   workspaceId?: string
+  workspaceName?: string
 }
 
 // Define constant for default empty set outside the component
@@ -27,7 +28,8 @@ function IssueList({
   selectedIssues = EMPTY_SET,
   onSelectIssue,
   selectionMode = false,
-  workspaceId = ''
+  workspaceId = '',
+  workspaceName = ''
 }: IssueListProps) {
   // Add 1 to itemCount to create space for bottom padding
   const itemCount = issues.length + 1;
@@ -59,7 +61,8 @@ function IssueList({
               selectedIssues,
               onSelectIssue,
               selectionMode,
-              workspaceId
+              workspaceId,
+              workspaceName
             }}
             width={width}
             onItemsRendered={handleItemsRendered}
@@ -84,11 +87,12 @@ const VirtualIssueRow = memo(
       onSelectIssue?: (issueId: string, selected: boolean) => void
       selectionMode: boolean
       workspaceId: string
+      workspaceName: string
     }
     index: number
     style: CSSProperties
   }) => {
-    const { issues, selectedIssues, onSelectIssue, selectionMode, workspaceId } = data
+    const { issues, selectedIssues, onSelectIssue, selectionMode, workspaceId, workspaceName } = data
     
     // If this is our padding item (last item), render an empty div with height of 3 rows
     if (index === issues.length) {
@@ -114,6 +118,7 @@ const VirtualIssueRow = memo(
         onSelect={onSelectIssue}
         selectionMode={selectionMode}
         workspaceId={workspaceId}
+        workspaceName={workspaceName}
       />
     )
   },

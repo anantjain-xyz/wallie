@@ -18,4 +18,22 @@ export async function getNextExternalId(pg: PGliteWithLive, workspaceId: string)
   const maxId = result.rows[0]?.max_id || 0
 
   return maxId + 1
+}
+
+/**
+ * Formats an issue's external ID using the workspace name prefix
+ * Takes the first three letters of the workspace name, capitalizes them,
+ * and combines with the external ID (e.g., "WAL-1" for workspace "Wallie")
+ * 
+ * @param workspaceName The name of the workspace
+ * @param externalId The external ID of the issue
+ * @returns The formatted external ID string
+ */
+export function formatExternalId(workspaceName: string, externalId: number | null): string {
+  if (externalId === null) return '';
+  
+  // Take first 3 letters of workspace name and capitalize them
+  const prefix = workspaceName.slice(0, 3).toUpperCase();
+  
+  return `${prefix}-${externalId}`;
 } 

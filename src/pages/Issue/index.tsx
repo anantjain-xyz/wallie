@@ -21,6 +21,7 @@ import DeleteModal from './DeleteModal'
 import Comments from './Comments'
 import debounce from 'lodash.debounce'
 import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
+import { formatExternalId } from '../../utils/issueUtils'
 const debounceTime = 500
 
 function IssuePage() {
@@ -64,10 +65,11 @@ function IssuePage() {
   const pullRequests = pullRequestsResults?.rows || []
 
   // Query GitHub repositories for the workspace
-  const workspaceResults = useLiveQuery.sql<{ id: string }>`
-    SELECT id FROM workspace LIMIT 1
+  const workspaceResults = useLiveQuery.sql<{ id: string, name: string }>`
+    SELECT id, name FROM workspace LIMIT 1
   `
   const workspaceId = workspaceResults?.rows[0]?.id
+  const workspaceName = workspaceResults?.rows[0]?.name || ''
 
   // Query GitHub repositories - always call this hook regardless of workspaceId
   const repositoryResults = useLiveQuery.sql<{
@@ -264,7 +266,7 @@ function IssuePage() {
             <div className="flex items-center">
               <span className="font-semibold me-2">Issue</span>
               {issue.external_id !== null && (
-                <span className="text-gray-500 me-2">#{issue.external_id}</span>
+                <span className="text-gray-400 me-2 font-mono">{formatExternalId(workspaceName, issue.external_id)}</span>
               )}
             </div>
 
