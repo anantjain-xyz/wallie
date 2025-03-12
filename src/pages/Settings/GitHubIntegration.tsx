@@ -170,7 +170,7 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
                   type="button"
                   onClick={handleRefreshRepositories}
                   disabled={isLoading}
-                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
                   {isLoading ? 'Refreshing...' : 'Refresh Repositories'}
                 </button>
@@ -202,7 +202,7 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
                               href={repo.html_url} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                              className="text-sm font-medium text-red-600 hover:text-red-800"
                             >
                               {repo.full_name}
                             </a>
@@ -249,7 +249,7 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
                 type="button"
                 onClick={handleInstallGitHub}
                 disabled={isLoading}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
                 {isLoading ? 'Connecting...' : 'Connect GitHub'}
               </button>
