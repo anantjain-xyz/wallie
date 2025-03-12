@@ -67,7 +67,31 @@ async function issueListLoader({ request }: { request: Request }) {
   await waitForInitialSyncDone()
   const pg = await pgPromise
   const url = new URL(request.url)
-  const filterState = getFilterStateFromSearchParams(url.searchParams)
+  
+  // Get filter state from URL parameters
+  let filterState = getFilterStateFromSearchParams(url.searchParams)
+  
+  // Try to get user preferences from localStorage if we're in a browser environment
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const storedPreferences = localStorage.getItem('wallie_user_preferences')
+      if (storedPreferences) {
+        const userPreferences = JSON.parse(storedPreferences)
+        
+        // Only apply user preferences for ordering if URL doesn't explicitly specify them
+        if (!url.searchParams.has('orderBy') && userPreferences.order_by) {
+          filterState.orderBy = userPreferences.order_by
+        }
+        
+        if (!url.searchParams.has('orderDirection') && userPreferences.order_direction) {
+          filterState.orderDirection = userPreferences.order_direction as 'asc' | 'desc'
+        }
+      }
+    } catch (error) {
+      console.error('Error reading preferences from localStorage:', error)
+    }
+  }
+  
   const { sql, sqlParams } = filterStateToSql(filterState)
   const liveIssues = await pg.live.query<IssueType>({
     query: sql,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 export interface UserPreferences {
   view_mode: 'list' | 'board'
