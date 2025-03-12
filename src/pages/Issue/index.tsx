@@ -72,6 +72,19 @@ function IssuePage() {
   const [currentRepoId, setCurrentRepoId] = useState<string | null>(null)
   const [currentRepoName, setCurrentRepoName] = useState<string | null>(null)
   
+  // Reference for the textarea
+  const titleTextareaRef = useRef<HTMLTextAreaElement>(null)
+  
+  // Initialize textarea height when component mounts or title changes
+  useEffect(() => {
+    if (titleTextareaRef.current) {
+      const textarea = titleTextareaRef.current
+      // Set height to auto first to get the correct scrollHeight
+      textarea.style.height = 'auto'
+      textarea.style.height = `${textarea.scrollHeight}px`
+    }
+  }, [issue?.title, dirtyTitle])
+  
   // Update repository information when issue.github_repository_id changes
   useEffect(() => {
     const newRepoId = issue?.github_repository_id || null
@@ -410,11 +423,24 @@ function IssuePage() {
             </div>
           </div>
           <div className="flex flex-col md:flex-[3_0_0] md:p-3 border-gray-200 md:border-r min-h-0 min-w-0 overflow-auto">
-            <input
-              className="w-full px-3 py-1 text-2xl font-semibold placeholder-gray-400 border-transparent focus:border-transparent focus:ring-0 rounded "
+            <textarea
+              className="w-full px-3 py-1 text-2xl font-semibold placeholder-gray-400 border-transparent focus:border-transparent focus:ring-0 rounded resize-none overflow-hidden"
               placeholder="Issue title"
               value={titleIsDirty.current ? dirtyTitle! : issue.title}
               onChange={(e) => handleTitleChange(e.target.value)}
+              rows={1}
+              style={{
+                minHeight: '2.5rem',
+                overflowY: 'hidden',
+                wordBreak: 'break-word'
+              }}
+              onInput={(e) => {
+                // Auto-resize the textarea based on content
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = `${target.scrollHeight}px`;
+              }}
+              ref={titleTextareaRef}
             />
 
             <div className="w-full max-w-full mt-2 min-h-fit p-3 ">
