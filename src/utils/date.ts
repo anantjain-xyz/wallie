@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 
-export function bat(date?: Date): string {
+export function bar(date?: Date): string {
   if (!date) return ``
   return dayjs(date).format(`D MMM`)
 }
