@@ -1,5 +1,5 @@
 import { ReactComponent as MenuIcon } from '../assets/icons/menu.svg'
-import { useState, useContext, useEffect } from 'react'
+import { useState, useContext, useEffect, useRef } from 'react'
 import { BsPlus, BsX, BsSearch as SearchIcon } from 'react-icons/bs'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { MenuContext } from '../App'
@@ -32,6 +32,7 @@ export default function({
   const [searchQuery, setSearchQuery] = useState(``)
   const [FTSIndexReady, setFTSIndexReady] = useState(true)
   const pg = usePGlite()
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   filterState ??= usedFilterState
 
@@ -82,6 +83,13 @@ export default function({
     }
     checkFTSIndex()
   }, [showSearch, pg])
+
+  // Auto-focus the search input when showSearch becomes true
+  useEffect(() => {
+    if (showSearch && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [showSearch])
 
   const showFTSIndexProgress = showSearch && !FTSIndexReady
 
@@ -174,11 +182,12 @@ export default function({
       )}
 
       {showSearch && (
-        <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 border-b border-gray-200 lg:pl-9 py-2">
+        <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 lg:pl-9 py-2">
           <SearchIcon className="w-3.5 h-3.5 ms-3 absolute" />
           <input
+            ref={searchInputRef}
             type="search"
-            className="w-full bg-gray-100 border-0 rounded px-2 py-1.5 ps-9"
+            className="w-full border-0 rounded px-2 py-1.5 ps-9 text-sm"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
           />
@@ -186,7 +195,7 @@ export default function({
       )}
 
       {showFTSIndexProgress && (
-        <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 border-b border-gray-200 lg:pl-9 py-2">
+        <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 lg:pl-9 py-2">
           <div className="flex items-center gap-2">
             <div className="animate-spin h-4 w-4 border-2 border-gray-500 rounded-full border-t-transparent"></div>
             <span>Optimizing...</span>
