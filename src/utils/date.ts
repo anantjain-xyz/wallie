@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 
-export function cate): string {
+export function cing {
   if (!date) return ``
   return dayjs(date).format(`D MMM`)
 }
