@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
 
-export function cf (!date) return ``
+export function c return ``
   return dayjs(date).format(`D MMM`)
 }
