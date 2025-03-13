@@ -8,7 +8,7 @@ import StatusIcon from '../../components/StatusIcon'
 import Avatar from '../../components/Avatar'
 import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { a } from '../../utils/date'
+import { a../../utils/date'
 import { Issue } from '../../types/types'
 import React from 'react'
 import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
@@ -162,8 +162,7 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
         {issue.title.slice(0, 3000) || ``}
       </div>
       <div className="flex-shrink-0 hidden w-15 ml-auto font-normal text-gray-500 sm:block whitespace-nowrap">
-        {a(issue.created)}
-      </div>
+        {a(issue.ca     </div>
       <div className="flex-shrink-0 hidden ml-4 font-normal text-gray-500 sm:block w-15 md:block">
         {workspaceId ? (
           <AssigneeMenu
