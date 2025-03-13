@@ -25,3 +25,4 @@ class AgentRunResponse(BaseModel):
     pr_url: Optional[str] = None
     message: Optional[str] = None
     branch_name: Optional[str] = None
+    was_pr_created: bool = False
