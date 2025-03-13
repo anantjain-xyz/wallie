@@ -92,6 +92,20 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
             message="GitHub repository for this issue seems to have been removed. Please select a repository in the issue details whenever you're ready to delegate this to Wallie."
         )
 
+    # Get comments for this issue
+    comments = []
+    if issue.id and db_pool:
+        try:
+            async with db_pool.acquire() as conn:
+                comments = await get_comments_for_issue(conn, issue.id)
+                logger.info(f"Retrieved {len(comments)} comments for issue {issue.id}")
+        except Exception as e:
+            logger.error(f"Error retrieving comments for issue {issue.id}: {str(e)}")
+    
+
+    # Format the issue message with comments
+    prompt = format_issue_message(issue.title, issue.description, comments)
+
     # Get the branch name of the last PR for this issue from the database
     branch_name = None
     pr_url = None
@@ -117,26 +131,11 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
     # Checkout the branch
     codebase.checkout(branch=branch_name, create_if_missing=True, remote = True if pr_url else False)
     
-
-    # Get comments for this issue
-    comments = []
-    if issue.id and db_pool:
-        try:
-            async with db_pool.acquire() as conn:
-                comments = await get_comments_for_issue(conn, issue.id)
-                logger.info(f"Retrieved {len(comments)} comments for issue {issue.id}")
-        except Exception as e:
-            logger.error(f"Error retrieving comments for issue {issue.id}: {str(e)}")
     
-
-    # Format the issue message with comments
-    query = format_issue_message(issue.title, issue.description, comments)
-    
-
     # Initialize the agent
     agent = CodeAgent(codebase)
     try:
-        agent_result = agent.run(query)
+        agent_result = agent.run(prompt)
         logger.info(f"Agent result: {agent_result}")
     except Exception as e:
         logger.error(f"Error running agent: {str(e)}")
