@@ -66,12 +66,13 @@ async def check_for_new_issues():
             issue_id = row['id']
             title = row['title']
             description = row['description'] or ""
-            created = row['created']
             modified = row['modified']
             workspace_id = row['workspace_id']
             github_repository_id = row['github_repository_id']
             assignee_id = row['assignee_id']
             status = row['status']
+            estimate = row['estimate']
+            external_id = row['external_id']
             
             # Check if issue is in 'done' status
             if status == 'done':
@@ -126,12 +127,14 @@ async def check_for_new_issues():
             logger.info(f"Processing new issue {issue_id} modified at {modified}: {title}")
             
             issue = Issue(
+                id=issue_id,
                 title=title,
                 description=description,
-                id=issue_id,
                 workspace_id=workspace_id,
                 github_repository_id=github_repository_id,
                 assignee_id=assignee_id,
+                estimate=estimate,
+                external_id=external_id
             )
             
             try:

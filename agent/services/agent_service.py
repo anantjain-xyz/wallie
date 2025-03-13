@@ -6,10 +6,12 @@ import uuid
 from datetime import datetime
 import pytz
 import re
-from codegen import CodeAgent
-from ..helpers import create_codebase, format_issue_message
+from codegen import CodeAgent, Codebase, ProgrammingLanguage
+from codegen.configs.models.secrets import SecretsConfig
+from codegen.git.schemas.enums import SetupOption
 from ..data import Issue, AgentRunResponse
 from ..config import ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, FRONTEND_URL
+from ..prompts import get_code_mode_prompt, get_project_mode_prompt
 from ..db.connection import db_pool
 from .comment_service import add_agent_comment, get_comments_for_issue
 from .issue_service import set_issue_in_review
@@ -39,27 +41,33 @@ class CodebaseSetupResult:
 
 async def process_issue(issue: Issue):
     """Process an issue"""
-    # Get the current db_pool from the connection module
-    from ..db.connection import db_pool
-    
+
     result = await _run_agent(issue)
     
     # Log the result
     logger.info(f"Successfully processed issue: {issue.title}, Result: {result}")
 
+    # Get the current db_pool from the connection module
+    from ..db.connection import db_pool
+    
     if result.status == "success":
         try:
             async with db_pool.acquire() as conn:
-                # Add PR success comment
-                pr_comment = f"✅ PR {'created' if result.was_pr_created else 'updated'} on your behalf: {result.pr_url}\n\n{result.message}"
+                if result.pr_url is None:
+                    pr_comment = f"{result.message}"
+                else:
+                    # Add PR success comment
+                    pr_comment = f"✅ PR {'created' if result.was_pr_created else 'updated'}: {result.pr_url}"
+                    pr_comment += f"\n\n{result.message}"
                 await add_agent_comment(conn, issue.id, issue.workspace_id, pr_comment)
                 
+                                # Store the PR in the github_branch table
+                if result.pr_url and result.was_pr_created:
+                    await _store_github_branch(conn, issue.id, issue.workspace_id, result.branch_name, result.pr_url)
+
                 # Update issue status to 'in_review'
                 await set_issue_in_review(conn, issue.id)
                 
-                # Store the PR in the github_branch table
-                if result.pr_url and result.was_pr_created:
-                    await _store_github_branch(conn, issue.id, issue.workspace_id, result.branch_name, result.pr_url)
         except Exception as comment_error:
             logger.error(f"Failed to add PR success comment, update status, or store github branch: {str(comment_error)}")
     else:
@@ -80,8 +88,11 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
             message="Anthropic API key not configured"
         )
     
+    is_project_mode = issue.estimate is not None and issue.estimate >= 5
     # Get the issue comments and create the prompt
-    prompt = await _prepare_agent_prompt(issue)
+    prompt = await _prepare_agent_prompt(issue, is_project_mode)
+    model_provider = "anthropic" if is_project_mode else "anthropic"
+    model_name = "claude-3-7-sonnet-latest" if is_project_mode else "claude-3-7-sonnet-latest"
     
     # Setup codebase and branch
     setup_result = await _setup_codebase_and_branch(issue)
@@ -93,7 +104,9 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
     
     # Run the agent
     try:
-        agent = CodeAgent(setup_result.codebase)
+        agent = CodeAgent(setup_result.codebase,
+                          model_provider=model_provider,
+                          model_name=model_name)
         agent_result = agent.run(prompt)
         logger.info(f"Agent result: {agent_result}")
     except Exception as e:
@@ -101,7 +114,13 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
         logger.error(error_msg)
         raise  # Re-raise to allow caller to handle the exception
     
-    # Handle post-agent tasks (commit, push, create/update PR)
+    if is_project_mode:
+        return AgentRunResponse(
+            status="success",
+            message=agent_result
+        )
+    
+    # If not in project mode, handle post-agent tasks (commit, push, create/update PR)
     return await _commit_changes_and_create_pr(
         setup_result.codebase, 
         issue, 
@@ -232,7 +251,7 @@ async def _setup_codebase_and_branch(issue: Issue) -> CodebaseSetupResult:
         logger.error(f"Error retrieving branch name for issue {issue.id}: {str(e)}")
 
     if branch_name is None:
-        branch_name = f"wallie/{re.sub(r'[^a-z0-9-]', '-', issue.title.lower())}"
+        branch_name = f"wallie/{issue.external_id}/{re.sub(r'[^a-z0-9-]', '-', issue.title.lower())}"
 
     # Get the programming language for this repository
     language = await get_repository_language(issue.github_repository_id)
@@ -245,7 +264,12 @@ async def _setup_codebase_and_branch(issue: Issue) -> CodebaseSetupResult:
         )
 
     # Create codebase instance with the workspace token
-    codebase = create_codebase(repo_name, language, token)
+    codebase = Codebase.from_repo(
+        repo_name,
+        language=language,
+        secrets=SecretsConfig(github_token=token),
+        setup_option=SetupOption.CLONE
+    )
 
     # Checkout the branch
     codebase.checkout(branch=branch_name, create_if_missing=True, remote = True if pr_url else False)
@@ -256,7 +280,7 @@ async def _setup_codebase_and_branch(issue: Issue) -> CodebaseSetupResult:
         pr_url=pr_url
     )
 
-async def _prepare_agent_prompt(issue: Issue) -> str:
+async def _prepare_agent_prompt(issue: Issue, is_project_mode: bool) -> str:
     """Prepare the prompt for the agent based on issue and comments"""
     # Get the current db_pool from the connection module
     from ..db.connection import db_pool
@@ -271,8 +295,10 @@ async def _prepare_agent_prompt(issue: Issue) -> str:
         except Exception as e:
             logger.error(f"Error retrieving comments for issue {issue.id}: {str(e)}")
     
-    # Format the issue message with comments
-    return format_issue_message(issue.title, issue.description, comments)
+    if is_project_mode:
+        return get_project_mode_prompt(issue.title, issue.description, comments)
+    else:
+        return get_code_mode_prompt(issue.title, issue.description, comments)
 
 def _create_pr_body(issue: Issue) -> str:
     """Create the body text for a pull request"""
@@ -294,7 +320,18 @@ async def _commit_changes_and_create_pr(
     """Commit changes to the branch and create or update a PR"""
     # Commit and push changes
     try:
-        codebase.git_commit("Vibing...")
+        git_commit_result = codebase.git_commit("Vibing...")
+
+        if git_commit_result is None:
+            logger.info("No changes to commit, returning early")
+            return AgentRunResponse(
+                status="success",
+                pr_url=pr_url,
+                branch_name=branch_name,
+                was_pr_created=False,
+                message=agent_result
+            )
+        
         codebase.git_push()
     except Exception as e:
         error_msg = f"Error committing and pushing to remote: {str(e)}"
