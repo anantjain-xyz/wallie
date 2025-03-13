@@ -27,12 +27,9 @@ agent/
 │   ├── issue_monitor.py   # Issue monitoring service
 │   ├── comment_service.py # Comment creation and management
 │   └── agent_service.py   # Agent that processes issues
-├── data/                  # Data models
-│   ├── __init__.py
-│   └── models.py
-└── helpers/               # Helper functions
+└── data/                  # Data models
     ├── __init__.py
-    └── codebase.py
+    └── models.py
 ```
 
 ## Environment Variables
