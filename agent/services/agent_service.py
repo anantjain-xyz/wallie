@@ -15,12 +15,27 @@ from .comment_service import add_agent_comment, get_comments_for_issue
 from .issue_service import set_issue_in_review
 from .repository_service import get_repository_language
 from ..logging_config import get_logger
+from dataclasses import dataclass
+from typing import Optional
 
 # Get the API server URL from environment variables
 API_SERVER_URL = os.environ.get('VITE_API_SERVER_URL', 'http://localhost:3003')
 
 # Get logger for this module
 logger = get_logger(__name__)
+
+@dataclass
+class CodebaseSetupResult:
+    """Result of setting up a codebase and branch for an agent to work on"""
+    codebase: Optional[object] = None
+    branch_name: Optional[str] = None
+    pr_url: Optional[str] = None
+    error_message: Optional[str] = None
+    
+    @property
+    def is_success(self) -> bool:
+        """Return True if setup was successful (no error message)"""
+        return self.error_message is None
 
 async def process_issue(issue: Issue):
     """Process an issue"""
@@ -58,138 +73,43 @@ async def process_issue(issue: Issue):
 
 async def _run_agent(issue: Issue) -> AgentRunResponse:
     """Create a PR for an issue using the Codebase agent"""
+    # Check for API key
     if not ANTHROPIC_API_KEY:
         return AgentRunResponse(
             status="error",
             message="Anthropic API key not configured"
         )
     
-    # Get GitHub token for this workspace
-    token = await _get_installation_token(issue.workspace_id)
-    if not token:
+    # Get the issue comments and create the prompt
+    prompt = await _prepare_agent_prompt(issue)
+    
+    # Setup codebase and branch
+    setup_result = await _setup_codebase_and_branch(issue)
+    if not setup_result.is_success:
         return AgentRunResponse(
             status="error",
-            message="GitHub integration not configured for this workspace. Please go to [Settings](/settings) and install the GitHub App."
+            message=setup_result.error_message
         )
     
-    # Get the current db_pool from the connection module
-    from ..db.connection import db_pool
-    
-    # Get repository for this issue
-    repo_name = None
-    if issue.github_repository_id:
-        async with db_pool.acquire() as conn:
-            repo = await conn.fetchrow(
-                "SELECT full_name FROM github_repository WHERE id = $1",
-                issue.github_repository_id
-            )
-            if repo:
-                repo_name = repo['full_name']
-    
-    if not repo_name:
-        return AgentRunResponse(
-            status="error",
-            message="GitHub repository for this issue seems to have been removed. Please select a repository in the issue details whenever you're ready to delegate this to Wallie."
-        )
-
-    # Get comments for this issue
-    comments = []
-    if issue.id and db_pool:
-        try:
-            async with db_pool.acquire() as conn:
-                comments = await get_comments_for_issue(conn, issue.id)
-                logger.info(f"Retrieved {len(comments)} comments for issue {issue.id}")
-        except Exception as e:
-            logger.error(f"Error retrieving comments for issue {issue.id}: {str(e)}")
-    
-
-    # Format the issue message with comments
-    prompt = format_issue_message(issue.title, issue.description, comments)
-
-    # Get the branch name of the last PR for this issue from the database
-    branch_name = None
-    pr_url = None
-
-    try: 
-        async with db_pool.acquire() as conn:
-            branch_name, pr_url = await conn.fetchrow(
-                "SELECT name, pull_request_link FROM github_branch WHERE issue_id = $1 ORDER BY modified DESC LIMIT 1",
-                issue.id
-            )
-    except Exception as e:
-        logger.error(f"Error retrieving branch name for issue {issue.id}: {str(e)}")
-
-    if branch_name is None:
-        branch_name = f"wallie/{re.sub(r'[^a-z0-9-]', '-', issue.title.lower())}"
-
-    # Get the programming language for this repository
-    language = await get_repository_language(issue.github_repository_id)
-
-    # Create codebase instance with the workspace token
-    codebase = create_codebase(repo_name, language, token)
-
-    # Checkout the branch
-    codebase.checkout(branch=branch_name, create_if_missing=True, remote = True if pr_url else False)
-    
-    
-    # Initialize the agent
-    agent = CodeAgent(codebase)
+    # Run the agent
     try:
+        agent = CodeAgent(setup_result.codebase)
         agent_result = agent.run(prompt)
         logger.info(f"Agent result: {agent_result}")
     except Exception as e:
-        logger.error(f"Error running agent: {str(e)}")
-        raise
-
-    try:
-        codebase.git_commit(".")
-        codebase.git_push()
-    except Exception as e:
-        logger.error(f"Error committing and pushing to remote: {str(e)}")
-        return AgentRunResponse(
-            status="error",
-            message=str(e)
-        )
+        error_msg = f"Error running agent: {str(e)}"
+        logger.error(error_msg)
+        raise  # Re-raise to allow caller to handle the exception
     
-    if pr_url is not None:
-        logger.info(f"PR updated: {pr_url}")
-        return AgentRunResponse(
-            status="success",
-            pr_url=pr_url,
-            branch_name=branch_name,
-            was_pr_created=False,
-            message=agent_result
-        )
-    
-    # Create the PR since one doesn't exist
-    pr_title = issue.title
-    pr_body = f"This PR was automatically created by Wallie :robot:"
-    pr_body += f"\n\nIssue: [{issue.title}]({FRONTEND_URL}/issue/{issue.id})"
-    if issue.description:
-        pr_body += f"\n\nDescription: {issue.description}"
-    try:
-        create_pr_result = codebase.github.remote_git_repo.create_pull(
-            head_branch_name=codebase.github.git_cli.active_branch.name,
-            base_branch_name=codebase.github.default_branch,
-            title=pr_title,
-            body=pr_body,
-        )
-        logger.info(f"PR created")
-    except Exception as e:
-        logger.error(f"Error creating PR: {str(e)}")
-        return AgentRunResponse(
-            status="error",
-            message=str(e)
-        )
-    
-    return AgentRunResponse(
-        status="success",
-        pr_url=pr_url if pr_url else create_pr_result.html_url,
-        branch_name=branch_name,
-        was_pr_created=True,
-        message=agent_result
+    # Handle post-agent tasks (commit, push, create/update PR)
+    return await _commit_changes_and_create_pr(
+        setup_result.codebase, 
+        issue, 
+        agent_result, 
+        setup_result.branch_name, 
+        setup_result.pr_url
     )
-    
+
 async def _get_installation_token(workspace_id):
     """Get GitHub installation token for a workspace"""
     # Get the current db_pool from the connection module
@@ -274,6 +194,154 @@ async def _get_installation_token(workspace_id):
     except Exception as e:
         logger.error(f"Error getting installation token: {str(e)}")
         return None
+
+async def _setup_codebase_and_branch(issue: Issue) -> CodebaseSetupResult:
+    """Set up codebase and branch for the agent to work on"""
+    # Get the current db_pool from the connection module
+    from ..db.connection import db_pool
+    
+    # Get repository for this issue
+    repo_name = None
+    if issue.github_repository_id:
+        async with db_pool.acquire() as conn:
+            repo = await conn.fetchrow(
+                "SELECT full_name FROM github_repository WHERE id = $1",
+                issue.github_repository_id
+            )
+            if repo:
+                repo_name = repo['full_name']
+    
+    if not repo_name:
+        return CodebaseSetupResult(
+            error_message="GitHub repository for this issue seems to have been removed. Please select a repository in the issue details whenever you're ready to delegate this to Wallie."
+        )
+
+    # Get the branch name of the last PR for this issue from the database
+    branch_name = None
+    pr_url = None
+
+    try: 
+        async with db_pool.acquire() as conn:
+            result = await conn.fetchrow(
+                "SELECT name, pull_request_link FROM github_branch WHERE issue_id = $1 ORDER BY modified DESC LIMIT 1",
+                issue.id
+            )
+            if result:
+                branch_name, pr_url = result
+    except Exception as e:
+        logger.error(f"Error retrieving branch name for issue {issue.id}: {str(e)}")
+
+    if branch_name is None:
+        branch_name = f"wallie/{re.sub(r'[^a-z0-9-]', '-', issue.title.lower())}"
+
+    # Get the programming language for this repository
+    language = await get_repository_language(issue.github_repository_id)
+
+    # Get GitHub token for this workspace
+    token = await _get_installation_token(issue.workspace_id)
+    if not token:
+        return CodebaseSetupResult(
+            error_message="GitHub integration not configured for this workspace. Please go to [Settings](/settings) and install the GitHub App."
+        )
+
+    # Create codebase instance with the workspace token
+    codebase = create_codebase(repo_name, language, token)
+
+    # Checkout the branch
+    codebase.checkout(branch=branch_name, create_if_missing=True, remote = True if pr_url else False)
+    
+    return CodebaseSetupResult(
+        codebase=codebase,
+        branch_name=branch_name,
+        pr_url=pr_url
+    )
+
+async def _prepare_agent_prompt(issue: Issue) -> str:
+    """Prepare the prompt for the agent based on issue and comments"""
+    # Get the current db_pool from the connection module
+    from ..db.connection import db_pool
+    
+    # Get comments for this issue
+    comments = []
+    if issue.id and db_pool:
+        try:
+            async with db_pool.acquire() as conn:
+                comments = await get_comments_for_issue(conn, issue.id)
+                logger.info(f"Retrieved {len(comments)} comments for issue {issue.id}")
+        except Exception as e:
+            logger.error(f"Error retrieving comments for issue {issue.id}: {str(e)}")
+    
+    # Format the issue message with comments
+    return format_issue_message(issue.title, issue.description, comments)
+
+def _create_pr_body(issue: Issue) -> str:
+    """Create the body text for a pull request"""
+    pr_body = f"This PR was automatically created by Wallie :robot:"
+    pr_body += f"\n\nIssue: [{issue.title}]({FRONTEND_URL}/issue/{issue.id})"
+    
+    if issue.description:
+        pr_body += f"\n\nDescription: {issue.description}"
+        
+    return pr_body
+
+async def _commit_changes_and_create_pr(
+    codebase, 
+    issue: Issue, 
+    agent_result: str, 
+    branch_name: str, 
+    pr_url: Optional[str]
+) -> AgentRunResponse:
+    """Commit changes to the branch and create or update a PR"""
+    # Commit and push changes
+    try:
+        codebase.git_commit("Vibing...")
+        codebase.git_push()
+    except Exception as e:
+        error_msg = f"Error committing and pushing to remote: {str(e)}"
+        logger.error(error_msg)
+        return AgentRunResponse(
+            status="error",
+            message=error_msg
+        )
+    
+    # If PR already exists, just update it
+    if pr_url is not None:
+        logger.info(f"PR updated: {pr_url}")
+        return AgentRunResponse(
+            status="success",
+            pr_url=pr_url,
+            branch_name=branch_name,
+            was_pr_created=False,
+            message=agent_result
+        )
+    
+    # Create a new PR
+    try:
+        pr_title = issue.title
+        pr_body = _create_pr_body(issue)
+        
+        create_pr_result = codebase.github.remote_git_repo.create_pull(
+            head_branch_name=codebase.github.git_cli.active_branch.name,
+            base_branch_name=codebase.github.default_branch,
+            title=pr_title,
+            body=pr_body,
+        )
+        logger.info("PR created successfully")
+        
+        return AgentRunResponse(
+            status="success",
+            pr_url=create_pr_result.html_url,
+            branch_name=branch_name,
+            was_pr_created=True,
+            message=agent_result
+        )
+    except Exception as e:
+        error_msg = f"Error creating PR: {str(e)}"
+        logger.error(error_msg)
+        return AgentRunResponse(
+            status="error",
+            message=error_msg
+        )
 
 async def _store_github_branch(conn, issue_id, workspace_id, branch_name, pr_url):
     """Store GitHub branch information in the database"""
