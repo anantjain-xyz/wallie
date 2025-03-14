@@ -48,12 +48,12 @@ Your final output should be structured as follows:
 [List your milestones here, with tasks under each milestone]
 
 #### [Milestone name]
-- [Task description] *([Estimate in story points: 1, 2, or 3 points])*
-- [Task description] *([Estimate in story points: 1, 2, or 3 points])*
+- [Task description] *(Estimate in story points, e.g., 3 points)*
+- [Task description] *(Estimate in story points, e.g., 2 points)*
 - [... more tasks ...]
 
 #### [Milestone name]
-- [Task description] *([Estimate in story points: 1, 2, or 3 points])*
+- [Task description] *(Estimate in story points, e.g., 1 point)*
 - [... more tasks ...]
 
 [... more milestones ...]
