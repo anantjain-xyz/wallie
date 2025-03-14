@@ -10,12 +10,25 @@ import { BsListOl as OrderedListIcon } from 'react-icons/bs'
 import { BsCodeSlash as CodeBlockIcon } from 'react-icons/bs'
 import { BsChatQuote as BlockquoteIcon } from 'react-icons/bs'
 import { BsLink45Deg as LinkIcon } from 'react-icons/bs'
+import { BsListTask as IssueIcon } from 'react-icons/bs'
+import { usePGlite } from '@electric-sql/pglite-react'
+import { generateKeyBetween } from 'fractional-indexing'
+import { Priority, Status, Issue } from '../../types/types'
+import { showInfo, showWarning } from '../../utils/notification'
+import { useCurrentUser } from '../../utils/userUtils'
+import { useUser } from '@clerk/clerk-react'
+import { getNextExternalId } from '../../utils/issueUtils'
 
 export interface EditorMenuProps {
   editor: TipTapEditor
 }
 
 const EditorMenu = ({ editor }: EditorMenuProps) => {
+  const pg = usePGlite()
+  const { user } = useUser()
+  const currentUserResult = useCurrentUser(user)
+  const currentUser = currentUserResult?.rows[0]
+
   const setLink = () => {
     const previousUrl = editor.getAttributes('link').href
     const url = window.prompt('URL', previousUrl)
@@ -33,6 +46,115 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
 
     // update link
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+  }
+
+  const createIssuesFromSelection = async () => {
+    if (!editor.state.selection.content().content) {
+      showWarning('No text selected', 'Please select text to create issues')
+      return
+    }
+
+    if (!currentUser?.id || !currentUser?.workspace_id) {
+      showWarning('Failed to create issues', 'User data not available')
+      return
+    }
+
+    try {
+      // Get the selected text
+      const selectedText = editor.state.doc.textBetween(
+        editor.state.selection.from,
+        editor.state.selection.to,
+        '\n'
+      )
+
+      // Split by newlines to get individual issues
+      const issueTexts = selectedText.split('\n').filter(text => text.trim() !== '')
+      
+      if (issueTexts.length === 0) {
+        showWarning('No valid text selected', 'Please select text to create issues')
+        return
+      }
+
+      // Get the last issue for kanbanorder
+      const lastIssue = (
+        await pg.query<Issue>(`
+          SELECT * FROM issue
+          ORDER BY kanbanorder DESC
+          LIMIT 1
+        `)
+      )?.rows[0]
+
+      let lastKanbanOrder = lastIssue?.kanbanorder
+
+      // Create an issue for each line
+      let createdCount = 0
+      for (const issueText of issueTexts) {
+        if (issueText.trim() === '') continue
+
+        // Parse the issue text to extract title and estimate
+        // Format: "issue description (2 points)" -> title: "issue description", estimate: 2
+        let title = issueText.trim()
+        let estimate: number | null = null
+        
+        // Regular expression to match the pattern: text (number points)
+        const estimateRegex = /^(.*?)\s*\((\d+)\s*points?\)\s*$/i
+        const match = title.match(estimateRegex)
+        
+        if (match) {
+          // Extract the title and estimate
+          title = match[1].trim()
+          estimate = parseInt(match[2], 10)
+        }
+
+        // Generate a new kanbanorder
+        const kanbanorder = generateKeyBetween(lastKanbanOrder, null)
+        lastKanbanOrder = kanbanorder
+
+        // Get the next external_id for this workspace
+        const externalId = await getNextExternalId(pg, currentUser.workspace_id)
+
+        const date = new Date()
+        await pg.sql`
+          INSERT INTO issue (
+            id,
+            title,
+            creator_id,
+            priority,
+            status,
+            description,
+            modified,
+            created,
+            kanbanorder,
+            workspace_id,
+            github_repository_id,
+            assignee_id,
+            estimate,
+            external_id
+          )
+          VALUES (
+            ${crypto.randomUUID()},
+            ${title},
+            ${currentUser.id},
+            ${Priority.NONE},
+            ${Status.BACKLOG},
+            ${''},
+            ${date},
+            ${date},
+            ${kanbanorder},
+            ${currentUser.workspace_id},
+            ${null},
+            ${null},
+            ${estimate},
+            ${externalId}
+          )
+        `
+        createdCount++
+      }
+
+      showInfo(`Created ${createdCount} new issues`, `Issues created`)
+    } catch (error) {
+      showWarning('Failed to create issues', error instanceof Error ? error.message : 'Unknown error')
+    }
   }
 
   return (
@@ -142,7 +264,7 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
         type="button"
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         className={classNames(
-          `px-1 py-1 rounded color text-gray-500 hover:text-black`,
+          `me-1 px-1 py-1 rounded color text-gray-500 hover:text-black`,
           {
             'bg-gray-100': editor.isActive(`blockquote`),
           }
@@ -150,6 +272,19 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
       >
         <BlockquoteIcon className="w-4 h-4" />
       </button>
+      {editor.state.selection.content().content && (
+        <>
+          <div className="border-r me-1 border-gray-200"></div>
+          <button
+            type="button"
+            onClick={createIssuesFromSelection}
+            className="px-1 py-1 rounded color text-gray-500 hover:text-black"
+            title="Create issues from selection (one per line)"
+          >
+            <IssueIcon className="w-4 h-4" />
+          </button>
+        </>
+      )}
     </div>
   )
 }
