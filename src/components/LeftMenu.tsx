@@ -100,7 +100,40 @@ function LeftMenu() {
         </div>
 
         <div className="flex flex-col flex-shrink flex-grow overflow-y-auto mb-0.5 px-2">
-          <ItemGroup title="Your Issues">
+        <ItemGroup title="Projects">
+            <Link
+              to="/?estimate=5,8,13"
+              className="flex items-center pl-6 rounded cursor-pointer group h-7 hover:bg-gray-100"
+            >
+              <IssuesIcon className="w-3.5 h-3.5 mr-2" />
+              <span>All Projects</span>
+            </Link>
+            <div className="border-l border-gray-300 pl-3 ml-[1.9rem]">
+              <Link
+                to="/?status=todo,in_progress,in_review&estimate=5,8,13"
+                className="flex items-center pl-2 rounded cursor-pointer h-7 hover:bg-gray-100"
+              >
+                <TodoIcon className="w-3.5 h-3.5 mr-2" />
+                <span>Active</span>
+              </Link>
+              <Link
+                to="/?status=backlog&estimate=5,8,13"
+                className="flex items-center pl-2 rounded cursor-pointer h-7 hover:bg-gray-100"
+              >
+                <BacklogIcon className="w-3.5 h-3.5 mr-2" />
+                <span>Backlog</span>
+              </Link>
+              <Link
+                to="/?status=done&estimate=5,8,13"
+                className="flex items-center pl-2 rounded cursor-pointer h-7 hover:bg-gray-100"
+              >
+                <DoneIcon className="w-3.5 h-3.5 mr-2" />
+                <span>Done</span>
+              </Link>
+            </div>
+          </ItemGroup>
+
+          <ItemGroup title="Issues">
             <Link
               to="/"
               className="flex items-center pl-6 rounded cursor-pointer group h-7 hover:bg-gray-100"
