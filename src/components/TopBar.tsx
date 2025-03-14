@@ -219,7 +219,7 @@ export default function({
       )}
 
       {showSearch && (
-        <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 lg:pl-9 py-2">
+        <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 py-2">
           <SearchIcon className="w-3.5 h-3.5 ms-3 absolute" />
           <input
             ref={searchInputRef}
@@ -232,7 +232,7 @@ export default function({
       )}
 
       {showFTSIndexProgress && (
-        <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 lg:pl-9 py-2">
+        <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 py-2">
           <div className="flex items-center gap-2">
             <div className="animate-spin h-4 w-4 border-2 border-gray-500 rounded-full border-t-transparent"></div>
             <span>Optimizing...</span>
@@ -241,7 +241,7 @@ export default function({
       )}
       </div>
 
-      <div className='flex items-center justify-between flex-shrink-0 pl-2 pr-6 h-14 lg:pl-9'>
+      <div className='flex items-center justify-between flex-shrink-0 pl-2 pr-6 h-14'>
         {/* right section */}
         <div className="flex-shrink-0">
           <DisplayToggle
