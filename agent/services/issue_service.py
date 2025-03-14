@@ -61,7 +61,7 @@ async def update_issue_description(conn, issue_id: UUID, description: str) -> bo
 
     current_description = await _get_issue_description(conn, issue_id)
     new_description = f"{description}"
-    new_description += f"\n\n<details><summary>Previous version:</summary>\n\n{current_description}\n\n</details>"
+    new_description += f"\n\n## Previous version:\n\n{current_description}\n\n"
 
     try:
         await conn.execute(
