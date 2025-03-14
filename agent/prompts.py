@@ -44,24 +44,21 @@ It's OK for this section to be quite long as you work through these steps thorou
 
 Your final output should be structured as follows:
 
-# Milestones
+### Milestones
 [List your milestones here, with tasks under each milestone]
 
-## [Milestone name]
-- **Task:** [Task description]  
-  **Estimate:** [Estimate in story points: 1, 2, or 3]
-- **Task:** [Task description]  
-  **Estimate:** [Estimate in story points: 1, 2, or 3]
+#### [Milestone name]
+- [Task description] *([Estimate in story points: 1, 2, or 3 points])*
+- [Task description] *([Estimate in story points: 1, 2, or 3 points])*
 - [... more tasks ...]
 
-## [Milestone name]
-- **Task:** [Task description]  
-  **Estimate:** [Estimate in story points: 1, 2, or 3]
+#### [Milestone name]
+- [Task description] *([Estimate in story points: 1, 2, or 3 points])*
 - [... more tasks ...]
 
 [... more milestones ...]
 
-Remember, your final output should only include the Milestones section. Use your project analysis to think through the process, but do not include it in the final output.
+Remember, your final output should ONLY INCLUDE the Milestones section in the format above. Do not include any other introductory text or comments. Use your project analysis to think through the process, but do not include it in the final output.
 
 IMPORTANT: While you have all tools available at your disposal, DO NOT USE ANY CODE EDITING TOOLS. Only use the tools to read and search the codebase to understand it better, but do not make any edits.
 """

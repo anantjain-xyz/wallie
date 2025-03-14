@@ -53,3 +53,29 @@ async def set_issue_in_review(conn, issue_id: UUID) -> bool:
         bool: True if successful, False otherwise
     """
     return await _update_issue_status(conn, issue_id, 'in_review') 
+
+async def update_issue_description(conn, issue_id: UUID, description: str) -> bool:
+    """
+    Update the description of an issue, while preserving the existing description
+    """
+
+    current_description = await _get_issue_description(conn, issue_id)
+    new_description = f"{description}"
+    new_description += f"\n\n<details><summary>Previous version:</summary>\n\n{current_description}\n\n</details>"
+
+    try:
+        await conn.execute(
+            "UPDATE issue SET description = $1, modified = NOW() WHERE id = $2",
+            new_description, issue_id
+        )
+        logger.info(f"Updated issue {issue_id} description")
+        return True
+    except Exception as e:
+        logger.error(f"Error updating issue description: {str(e)}")
+        return False
+    
+async def _get_issue_description(conn, issue_id: UUID) -> str:
+    """
+    Get the description of an issue
+    """
+    return await conn.fetchval("SELECT description FROM issue WHERE id = $1", issue_id)

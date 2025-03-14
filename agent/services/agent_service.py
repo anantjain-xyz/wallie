@@ -14,7 +14,7 @@ from ..config import ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, F
 from ..prompts import get_code_mode_prompt, get_project_mode_prompt
 from ..db.connection import db_pool
 from .comment_service import add_agent_comment, get_comments_for_issue
-from .issue_service import set_issue_in_review
+from .issue_service import set_issue_in_review, update_issue_description
 from .repository_service import get_repository_language
 from ..logging_config import get_logger
 from dataclasses import dataclass
@@ -53,15 +53,21 @@ async def process_issue(issue: Issue):
     if result.status == "success":
         try:
             async with db_pool.acquire() as conn:
-                if result.pr_url is None:
-                    pr_comment = f"{result.message}"
+                if issue.is_project_mode:
+                    await update_issue_description(conn, issue.id, result.message)
+                    pr_comment = f"✅ Project planning complete. I have updated the description with the milestones and tasks. You can now review the description, edit it if needed, and then click 'Approve' to convert tasks into issues."
                 else:
-                    # Add PR success comment
-                    pr_comment = f"✅ PR {'created' if result.was_pr_created else 'updated'}: {result.pr_url}"
-                    pr_comment += f"\n\n{result.message}"
+                    # This is a code task, so we need to add a comment with the result
+                    if result.pr_url is None:
+                        pr_comment = f"{result.message}"
+                    else:
+                        # Add PR success comment
+                        pr_comment = f"✅ PR {'created' if result.was_pr_created else 'updated'}: {result.pr_url}"
+                        pr_comment += f"\n\n{result.message}"
+                
                 await add_agent_comment(conn, issue.id, issue.workspace_id, pr_comment)
                 
-                                # Store the PR in the github_branch table
+                # Store the PR in the github_branch table
                 if result.pr_url and result.was_pr_created:
                     await _store_github_branch(conn, issue.id, issue.workspace_id, result.branch_name, result.pr_url)
 
@@ -88,11 +94,15 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
             message="Anthropic API key not configured"
         )
     
-    is_project_mode = issue.estimate is not None and issue.estimate >= 5
     # Get the issue comments and create the prompt
-    prompt = await _prepare_agent_prompt(issue, is_project_mode)
-    model_provider = "anthropic" if is_project_mode else "anthropic"
-    model_name = "claude-3-7-sonnet-latest" if is_project_mode else "claude-3-7-sonnet-latest"
+    prompt = await _prepare_agent_prompt(issue)
+
+    model_provider = "anthropic"
+    model_name = "claude-3-7-sonnet-latest"
+
+    # if issue.is_project_mode:
+    #     model_provider = "openai"
+    #     model_name = "o1"
     
     # Setup codebase and branch
     setup_result = await _setup_codebase_and_branch(issue)
@@ -114,7 +124,7 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
         logger.error(error_msg)
         raise  # Re-raise to allow caller to handle the exception
     
-    if is_project_mode:
+    if issue.is_project_mode:
         return AgentRunResponse(
             status="success",
             message=agent_result
@@ -280,7 +290,7 @@ async def _setup_codebase_and_branch(issue: Issue) -> CodebaseSetupResult:
         pr_url=pr_url
     )
 
-async def _prepare_agent_prompt(issue: Issue, is_project_mode: bool) -> str:
+async def _prepare_agent_prompt(issue: Issue) -> str:
     """Prepare the prompt for the agent based on issue and comments"""
     # Get the current db_pool from the connection module
     from ..db.connection import db_pool
@@ -295,7 +305,7 @@ async def _prepare_agent_prompt(issue: Issue, is_project_mode: bool) -> str:
         except Exception as e:
             logger.error(f"Error retrieving comments for issue {issue.id}: {str(e)}")
     
-    if is_project_mode:
+    if issue.is_project_mode:
         return get_project_mode_prompt(issue.title, issue.description, comments)
     else:
         return get_code_mode_prompt(issue.title, issue.description, comments)

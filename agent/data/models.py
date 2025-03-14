@@ -12,6 +12,7 @@ class Issue(BaseModel):
     assignee_id: Optional[UUID] = None
     estimate: Optional[int] = None
     external_id: Optional[int] = None
+    is_project_mode: bool = False
 
 class AgentRunResponse(BaseModel):
     """

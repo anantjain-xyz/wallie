@@ -134,7 +134,8 @@ async def check_for_new_issues():
                 github_repository_id=github_repository_id,
                 assignee_id=assignee_id,
                 estimate=estimate,
-                external_id=external_id
+                external_id=external_id,
+                is_project_mode=estimate is not None and estimate >= 5
             )
             
             try:
