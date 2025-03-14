@@ -10,6 +10,18 @@ import debounce from 'lodash.debounce'
 import { createFTSIndex } from '../migrations'
 import DisplayToggle from './DisplayToggle'
 
+// Define a mapping for estimate display values
+const EstimateDisplay: Record<number | string, string> = {
+  0: '0 points',
+  1: '1 point',
+  2: '2 points',
+  3: '3 points',
+  5: '5 points (S)',
+  8: '8 points (M)',
+  13: '13 points (L)',
+  'null': 'No estimate'
+}
+
 interface Props {
   filteredIssuesCount: number
   showSearch?: boolean
@@ -128,7 +140,7 @@ export default function({
             id={`filter-menu`}
           />
         </div>
-      {(!!filterState.status?.length || !!filterState.priority?.length) && (
+      {(!!filterState.status?.length || !!filterState.priority?.length || !!filterState.estimate?.length) && (
         <div className="flex items-center flex-shrink-0 pl-4 pr-6 py-2">
           {!!filterState.priority?.length && (
             <div className="flex pr-4 space-x-[1px]">
@@ -171,6 +183,31 @@ export default function({
                   setFilterState({
                     ...filterState,
                     status: undefined,
+                  })
+                }}
+              >
+                <BsX size={16} />
+              </span>
+            </div>
+          )}
+          {!!filterState.estimate?.length && (
+            <div className="flex pr-4 space-x-[1px]">
+              <span className="px-2 py-1 bg-gray-200 rounded-l">Estimate is</span>
+              <span className="px-2 py-1 bg-gray-200 ">
+                {filterState.estimate
+                  ?.map(
+                    (estimate) => estimate === null 
+                      ? EstimateDisplay['null'] 
+                      : (EstimateDisplay[estimate] || `${estimate} points`)
+                  )
+                  .join(`, `)}
+              </span>
+              <span
+                className="px-2 py-1 bg-gray-200 rounded-r cursor-pointer flex items-center"
+                onClick={() => {
+                  setFilterState({
+                    ...filterState,
+                    estimate: undefined,
                   })
                 }}
               >

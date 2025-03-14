@@ -5,6 +5,7 @@ export interface FilterState {
   orderDirection: `asc` | `desc`
   status?: string[]
   priority?: string[]
+  estimate?: (number | null)[]
   query?: string
 }
 
@@ -22,6 +23,11 @@ export function getFilterStateFromSearchParams(
     .getAll(`priority`)
     .map((status) => status.toLocaleLowerCase().split(`,`))
     .flat()
+  const estimate = searchParams
+    .getAll(`estimate`)
+    .map((est) => est.split(`,`).map(val => val === 'null' ? null : Number(val)))
+    .flat()
+    .filter((est) => est === null || !isNaN(est as number))
   const query = searchParams.get(`query`)
 
   const state = {
@@ -29,6 +35,7 @@ export function getFilterStateFromSearchParams(
     orderDirection,
     status,
     priority,
+    estimate,
     query: query || undefined,
   }
 
@@ -43,7 +50,7 @@ export function useFilterState(): [
   const state = getFilterStateFromSearchParams(searchParams)
 
   const setState = (state: Partial<FilterState>) => {
-    const { orderBy, orderDirection, status, priority, query } = state
+    const { orderBy, orderDirection, status, priority, estimate, query } = state
     setSearchParams((searchParams) => {
       if (orderBy) {
         searchParams.set(`orderBy`, orderBy)
@@ -64,6 +71,11 @@ export function useFilterState(): [
         searchParams.set(`priority`, priority.join(`,`))
       } else {
         searchParams.delete(`priority`)
+      }
+      if (estimate && estimate.length > 0) {
+        searchParams.set(`estimate`, estimate.map(e => e === null ? 'null' : e).join(`,`))
+      } else {
+        searchParams.delete(`estimate`)
       }
       if (query) {
         searchParams.set(`query`, query)
@@ -92,6 +104,28 @@ export function filterStateToSql(filterState: FilterState) {
       `priority IN (${filterState.priority.map(() => `$${i++}`).join(' ,')})`
     )
     sqlParams.push(...filterState.priority)
+  }
+  if (filterState.estimate?.length) {
+    // Handle null values separately
+    const nullFilter = filterState.estimate.includes(null);
+    const numberEstimates = filterState.estimate.filter(e => e !== null) as number[];
+    
+    if (nullFilter && numberEstimates.length > 0) {
+      // Both null and number values
+      sqlWhere.push(
+        `(estimate IS NULL OR estimate IN (${numberEstimates.map(() => `$${i++}`).join(' ,')}))`
+      )
+      sqlParams.push(...numberEstimates)
+    } else if (nullFilter) {
+      // Only null values
+      sqlWhere.push(`estimate IS NULL`)
+    } else if (numberEstimates.length > 0) {
+      // Only number values
+      sqlWhere.push(
+        `estimate IN (${numberEstimates.map(() => `$${i++}`).join(' ,')})`
+      )
+      sqlParams.push(...numberEstimates)
+    }
   }
   if (filterState.query) {
     sqlWhere.push(`

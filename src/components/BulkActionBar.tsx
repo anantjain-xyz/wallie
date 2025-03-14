@@ -8,6 +8,8 @@ import { ReactComponent as CloseIcon } from '../assets/icons/close.svg'
 import PriorityIcon from './PriorityIcon'
 import StatusIcon from './StatusIcon'
 import { Status } from '../types/types'
+import EstimateMenu from './contextmenu/EstimateMenu'
+import { ReactComponent as EstimateIcon } from '../assets/icons/estimate.svg'
 
 interface BulkActionBarProps {
   selectedIssues: Set<string>
@@ -36,13 +38,17 @@ export default function BulkActionBar({
   }
   
   const handleBulkPriorityChange = async (priority: string) => {
-    const issueIds = Array.from(selectedIssues)
-    
-    await pg.sql`
-      UPDATE issue 
-      SET priority = ${priority}, modified = NOW()
-      WHERE id = ANY(${issueIds})
-    `
+    try {
+      const issueIds = Array.from(selectedIssues)
+      
+      await pg.sql`
+        UPDATE issue 
+        SET priority = ${priority}, modified = NOW()
+        WHERE id = ANY(${issueIds})
+      `
+    } catch (error) {
+      console.error('Error updating priorities:', error)
+    }
   }
   
   const handleBulkAssigneeChange = async (userId: string | null) => {
@@ -53,6 +59,20 @@ export default function BulkActionBar({
       SET assignee_id = ${userId}, modified = NOW()
       WHERE id = ANY(${issueIds})
     `
+  }
+
+  const handleBulkEstimateChange = async (estimate: number | null) => {
+    try {
+      const issueIds = Array.from(selectedIssues)
+      
+      await pg.sql`
+        UPDATE issue 
+        SET estimate = ${estimate}, modified = NOW()
+        WHERE id = ANY(${issueIds})
+      `
+    } catch (error) {
+      console.error('Error updating estimates:', error)
+    }
   }
 
   return (
@@ -88,6 +108,20 @@ export default function BulkActionBar({
             </button>
           }
           onSelect={handleBulkPriorityChange}
+        />
+        
+        <EstimateMenu
+          id="bulk-estimate-menu"
+          button={
+            <button
+              type="button"
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <EstimateIcon className='mr-2 w-4 h-4' />
+              Set Estimate
+            </button>
+          }
+          onSelect={handleBulkEstimateChange}
         />
         
         <AssigneeMenu

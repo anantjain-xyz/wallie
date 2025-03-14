@@ -5,12 +5,25 @@ import { BsCheck2 } from 'react-icons/bs'
 import { Menu } from './menu'
 import { useFilterState } from '../../utils/filterState'
 import { PriorityOptions, StatusOptions } from '../../types/types'
+import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 
 interface Props {
   id: string
   button: ReactNode
   className?: string
 }
+
+// Define estimate options with their display labels
+const EstimateOptions = [
+  { value: null, label: 'No estimate' },
+  { value: 0, label: '0 points' },
+  { value: 1, label: '1 point' },
+  { value: 2, label: '2 points' },
+  { value: 3, label: '3 points' },
+  { value: 5, label: '5 points (S)' },
+  { value: 8, label: '8 points (M)' },
+  { value: 13, label: '13 points (L)' },
+]
 
 function FilterMenu({ id, button, className }: Props) {
   const [filterState, setFilterState] = useFilterState()
@@ -31,6 +44,14 @@ function FilterMenu({ id, button, className }: Props) {
     statuses = statuses.filter(
       ([_icon, _status, label]) =>
         label.toLowerCase().indexOf(normalizedKeyword) !== -1
+    )
+  }
+
+  let estimates = EstimateOptions
+  if (keyword !== ``) {
+    const normalizedKeyword = keyword.toLowerCase().trim()
+    estimates = estimates.filter(
+      (option) => option.label.toLowerCase().indexOf(normalizedKeyword) !== -1
     )
   }
 
@@ -58,6 +79,23 @@ function FilterMenu({ id, button, className }: Props) {
         <Icon className="mr-3" />
         <span>{label}</span>
         {filterState.status?.includes(status) && (
+          <BsCheck2 className="ml-auto" />
+        )}
+      </Menu.Item>
+    )
+  })
+
+  const estimateOptions = estimates.map((option) => {
+    return (
+      <Menu.Item
+        key={`estimate-${option.value === null ? 'null' : option.value}`}
+        onClick={() => handleEstimateSelect(option.value)}
+      >
+        <EstimateIcon className="mr-3" />
+        <span>{option.label}</span>
+        {filterState.estimate?.some(e => 
+          (e === null && option.value === null) || e === option.value
+        ) && (
           <BsCheck2 className="ml-auto" />
         )}
       </Menu.Item>
@@ -92,6 +130,33 @@ function FilterMenu({ id, button, className }: Props) {
     })
   }
 
+  const handleEstimateSelect = (estimate: number | null) => {
+    setKeyword(``)
+    const newEstimate = filterState.estimate || []
+    
+    // Special handling for null (No estimate)
+    if (estimate === null) {
+      // Toggle the special "null" filter
+      setFilterState({
+        ...filterState,
+        estimate: filterState.estimate?.includes(null) 
+          ? filterState.estimate.filter(e => e !== null)
+          : [...(filterState.estimate || []), null],
+      })
+      return
+    }
+    
+    if (newEstimate.includes(estimate)) {
+      newEstimate.splice(newEstimate.indexOf(estimate), 1)
+    } else {
+      newEstimate.push(estimate)
+    }
+    setFilterState({
+      ...filterState,
+      estimate: newEstimate,
+    })
+  }
+
   return (
     <>
       <ContextMenuTrigger id={id} holdToDisplay={1}>
@@ -112,6 +177,9 @@ function FilterMenu({ id, button, className }: Props) {
           {priorityOptions && statusOptions && <Menu.Divider />}
           {statusOptions && <Menu.Header>Status</Menu.Header>}
           {statusOptions}
+          {statusOptions && estimateOptions && <Menu.Divider />}
+          {estimateOptions && <Menu.Header>Estimate</Menu.Header>}
+          {estimateOptions}
         </Menu>
       </Portal>
     </>
