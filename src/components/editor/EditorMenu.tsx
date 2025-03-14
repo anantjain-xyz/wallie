@@ -75,6 +75,10 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
         return
       }
 
+      // Store the selection positions for later use
+      const selectionFrom = editor.state.selection.from
+      const selectionTo = editor.state.selection.to
+
       // Get the last issue for kanbanorder
       const lastIssue = (
         await pg.query<Issue>(`
@@ -85,6 +89,9 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
       )?.rows[0]
 
       let lastKanbanOrder = lastIssue?.kanbanorder
+
+      // Store created issues to replace text with links
+      const createdIssues: { id: string; title: string; externalId: number }[] = []
 
       // Create an issue for each line
       let createdCount = 0
@@ -113,6 +120,9 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
         // Get the next external_id for this workspace
         const externalId = await getNextExternalId(pg, currentUser.workspace_id)
 
+        // Generate a unique ID for the issue
+        const issueId = crypto.randomUUID()
+
         const date = new Date()
         await pg.sql`
           INSERT INTO issue (
@@ -132,7 +142,7 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
             external_id
           )
           VALUES (
-            ${crypto.randomUUID()},
+            ${issueId},
             ${title},
             ${currentUser.id},
             ${Priority.NONE},
@@ -149,9 +159,53 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
           )
         `
         createdCount++
+        
+        // Store the created issue information for linking
+        createdIssues.push({
+          id: issueId,
+          title,
+          externalId
+        })
       }
 
-      showInfo(`Created ${createdCount} new issues`, `Issues created`)
+      // Replace the selected text with links to the created issues
+      if (createdIssues.length > 0) {
+        // Create a bullet list content structure
+        const listItems = createdIssues.map(issue => {
+          const issueLink = `/issue/${issue.id}`
+          const displayText = `#${issue.externalId}: ${issue.title}`
+          
+          return {
+            type: 'listItem',
+            content: [{
+              type: 'paragraph',
+              content: [{
+                type: 'text',
+                marks: [{
+                  type: 'link',
+                  attrs: { href: issueLink }
+                }],
+                text: displayText
+              }]
+            }]
+          }
+        })
+        
+        const bulletList = {
+          type: 'bulletList',
+          content: listItems
+        }
+        
+        // Replace the selection with the bullet list
+        editor
+          .chain()
+          .focus()
+          .deleteSelection()
+          .insertContent(bulletList)
+          .run()
+      }
+
+      showInfo(`Created ${createdCount} new issues`, `Issues created and linked in the document`)
     } catch (error) {
       showWarning('Failed to create issues', error instanceof Error ? error.message : 'Unknown error')
     }

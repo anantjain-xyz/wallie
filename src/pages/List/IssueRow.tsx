@@ -155,11 +155,11 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
           onSelect={handleChangeStatus}
         />
       </div>
-      <div className="flex-wrap flex-shrink flex ml-3 overflow-hidden font-medium line-clamp-1 overflow-ellipsis">
+      <div className="flex-shrink flex ml-3 overflow-hidden font-medium">
         {issue.external_id !== null && (
-          <div className="text-gray-400 mr-4 font-mono w-12">{formatExternalId(workspaceName, issue.external_id)}</div>
+          <div className="text-gray-400 mr-4 font-mono w-16">{formatExternalId(workspaceName, issue.external_id)}</div>
         )}
-        {issue.title.slice(0, 3000) || ``}
+        <div className="overflow-hidden line-clamp-1 overflow-ellipsis">{issue.title || ``}</div>
       </div>
       <div className="flex-shrink-0 hidden w-15 ml-auto font-normal text-gray-500 sm:block whitespace-nowrap">
         {formatDate(issue.created)}
