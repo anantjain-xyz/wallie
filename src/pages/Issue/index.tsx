@@ -135,6 +135,14 @@ function IssuePage() {
     }
   }, [issue?.github_repository_id, currentRepoId, pg])
 
+  // Auto-select GitHub repository if there's only one available
+  useEffect(() => {
+    // Only auto-select if there's exactly one repository and no repository is currently selected
+    if (repositories.length === 1 && !issue?.github_repository_id) {
+      handleGithubRepoChange(repositories[0].id);
+    }
+  }, [repositories, issue?.github_repository_id, handleGithubRepoChange]);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleTitleChangeDebounced = useCallback(
     debounce(async (title: string) => {
@@ -571,6 +579,24 @@ function IssuePage() {
               />
             </div>
             <div className="border-t border-gray-200 mt-3 pt-6">
+              <Comments issue={issue} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <DeleteModal
+        isOpen={showDeleteModal}
+        setIsOpen={setShowDeleteModal}
+        onDismiss={() => setShowDeleteModal(false)}
+        deleteIssue={handleDelete}
+      />
+    </>
+  )
+}
+
+export default IssuePage
+order-gray-200 mt-3 pt-6">
               <Comments issue={issue} />
             </div>
           </div>
