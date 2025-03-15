@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
-import { toast } from 'react-toastify'
 import { useAuth } from '@clerk/clerk-react'
 import LanguageMenu, { getLanguageIcon } from '../../components/contextmenu/LanguageMenu'
+import { showError, showInfo, showSuccess } from '../../utils/notification'
 
 // Get the API server URL from environment variables
 const API_SERVER_URL = import.meta.env.VITE_API_SERVER_URL
@@ -56,7 +56,7 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
     try {
       const token = await getToken()
       if (!token) {
-        toast.error('Authentication error')
+        showError('Authentication error', 'Auth Failed')
         return
       }
 
@@ -75,7 +75,7 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
       window.location.href = redirectUrl
     } catch (error) {
       console.error('Error preparing GitHub installation:', error)
-      toast.error('Failed to prepare GitHub installation')
+      showError('Failed to prepare GitHub installation', 'Error')
     }
   }
   
@@ -95,10 +95,10 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
         WHERE id = ${installation.id}
       `
       
-      toast.success('GitHub integration removed successfully')
+      showSuccess('GitHub integration removed successfully', 'Success')
     } catch (error) {
       console.error('Error removing GitHub integration:', error)
-      toast.error('Failed to remove GitHub integration')
+      showError('Failed to remove GitHub integration', 'Error')
     } finally {
       setIsLoading(false)
     }
@@ -120,10 +120,10 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
         throw new Error('Failed to refresh repositories')
       }
       
-      toast.success('Repositories refreshed successfully')
+      showSuccess('Repositories refreshed successfully', 'Success')
     } catch (error) {
       console.error('Error refreshing repositories:', error)
-      toast.error('Failed to refresh repositories')
+      showError('Failed to refresh repositories', 'Error')
     } finally {
       setIsLoading(false)
     }
@@ -138,10 +138,10 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
             modified = NOW()
         WHERE id = ${repoId}
       `
-      toast.success('Repository language updated successfully')
+      showSuccess('Repository language updated successfully', 'Success')
     } catch (error) {
       console.error('Error updating repository language:', error)
-      toast.error('Failed to update repository language')
+      showError('Failed to update repository language', 'Error')
     }
   }
   

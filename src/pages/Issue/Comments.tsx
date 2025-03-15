@@ -5,7 +5,7 @@ import Editor from '../../components/editor/Editor'
 import Avatar from '../../components/Avatar'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import { showWarning, showInfo } from '../../utils/notification'
+import { showWarning, showInfo, showError } from '../../utils/notification'
 import { ReactComponent as DeleteIcon } from '../../assets/icons/delete.svg'
 import { Comment, Issue } from '../../types/types'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
@@ -81,7 +81,7 @@ function Comments({ issue }: CommentsProps) {
       `
       showInfo('Comment deleted successfully', 'Success')
     } catch (error) {
-      showWarning('Failed to delete comment', error instanceof Error ? error.message : 'Unknown error')
+      showError(error instanceof Error ? error.message : 'Unknown error', 'Failed to delete comment')
     }
   }, [pg])
 
@@ -134,7 +134,7 @@ function Comments({ issue }: CommentsProps) {
     }
 
     if (!currentUser?.id || !currentUser?.workspace_id) {
-      showWarning('Failed to post comment', 'User data not available')
+      showError('User data not available', 'Failed to post comment')
       return
     }
 
@@ -174,7 +174,7 @@ function Comments({ issue }: CommentsProps) {
         throw innerError
       }
     } catch (error) {
-      showWarning('Failed to post comment', error instanceof Error ? error.message : 'Unknown error')
+      showError(error instanceof Error ? error.message : 'Unknown error', 'Failed to post comment')
     }
   }, [newCommentBody, issue.id, currentUser, pg])
 

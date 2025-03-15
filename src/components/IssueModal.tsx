@@ -27,7 +27,7 @@ import {
   StatusValue,
   PriorityValue,
 } from '../types/types'
-import { showInfo, showWarning } from '../utils/notification'
+import { showInfo, showWarning, showError } from '../utils/notification'
 import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
 import { Issue } from '../types/types'
 import { useCurrentUser } from '../utils/userUtils'
@@ -101,7 +101,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     }
 
     if (!currentUser?.id || !currentUser?.workspace_id) {
-      showWarning('Failed to create issue', 'User data not available')
+      showError('User data not available', 'Failed to create issue')
       return
     }
 
@@ -156,9 +156,9 @@ function IssueModal({ isOpen, onDismiss }: Props) {
 
       if (onDismiss) onDismiss()
       reset()
-      showInfo(`You created new issue.`, `Issue created`)
+      showInfo(`Issue created successfully`, `Issue created`)
     } catch (error) {
-      showWarning('Failed to create issue', error instanceof Error ? error.message : 'Unknown error')
+      showError(error instanceof Error ? error.message : 'Unknown error', 'Failed to create issue')
     }
   }, [title, description, priority, status, githubRepositoryId, assigneeId, estimate, currentUser, pg, onDismiss])
 

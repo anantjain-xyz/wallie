@@ -14,7 +14,7 @@ import { BsListTask as IssueIcon } from 'react-icons/bs'
 import { usePGlite } from '@electric-sql/pglite-react'
 import { generateKeyBetween } from 'fractional-indexing'
 import { Priority, Status, Issue } from '../../types/types'
-import { showInfo, showWarning } from '../../utils/notification'
+import { showInfo, showWarning, showError } from '../../utils/notification'
 import { useCurrentUser } from '../../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
 import { getNextExternalId } from '../../utils/issueUtils'
@@ -55,7 +55,7 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
     }
 
     if (!currentUser?.id || !currentUser?.workspace_id) {
-      showWarning('Failed to create issues', 'User data not available')
+      showError('User data not available', 'Failed to create issues')
       return
     }
 
@@ -205,9 +205,9 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
           .run()
       }
 
-      showInfo(`Created ${createdCount} new issues`, `Issues created and linked in the document`)
+      showInfo(`Issues created and linked in the document`, `Created ${createdCount} new issues`)
     } catch (error) {
-      showWarning('Failed to create issues', error instanceof Error ? error.message : 'Unknown error')
+      showError(error instanceof Error ? error.message : 'Unknown error', 'Failed to create issues')
     }
   }
 

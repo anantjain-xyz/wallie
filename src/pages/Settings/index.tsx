@@ -4,7 +4,7 @@ import { useUser } from '@clerk/clerk-react'
 import { useCurrentUser } from '../../utils/userUtils'
 import { useDropzone } from 'react-dropzone'
 import { uploadFileToS3 } from '../../utils/s3Upload'
-import { toast } from 'react-toastify'
+import { showError, showInfo, showSuccess } from '../../utils/notification'
 import GitHubIntegration from './GitHubIntegration'
 
 const Settings = () => {
@@ -47,10 +47,10 @@ const Settings = () => {
         SET name = ${workspaceName}, url = ${workspaceUrl}, modified = NOW()
         WHERE id = ${workspaceId}
       `
-      toast.success('Workspace settings saved successfully')
+      showSuccess('Workspace settings saved successfully', 'Success')
     } catch (error) {
       console.error('Error updating workspace:', error)
-      toast.error('Failed to save workspace settings')
+      showError('Failed to save workspace settings', 'Error')
     }
   }
 
@@ -61,13 +61,13 @@ const Settings = () => {
     
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file')
+      showError('Please upload an image file', 'Invalid File')
       return
     }
     
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size should be less than 5MB')
+      showError('File size should be less than 5MB', 'File Too Large')
       return
     }
 
@@ -85,10 +85,10 @@ const Settings = () => {
       `
       
       setWorkspaceAvatarUrl(uploadedUrl)
-      toast.success('Logo uploaded successfully')
+      showSuccess('Logo uploaded successfully', 'Success')
     } catch (error) {
       console.error('Error uploading logo:', error)
-      toast.error('Failed to upload logo')
+      showError('Failed to upload logo', 'Error')
     } finally {
       setIsUploading(false)
     }

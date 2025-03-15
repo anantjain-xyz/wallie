@@ -286,7 +286,12 @@ const App = () => {
           <CommandBarContext.Provider value={commandBarContextValue}>
             <ClerkEventListener />
             <RouterProvider router={router} />
-            <ToastContainer position="bottom-right" />
+            <ToastContainer
+              position="bottom-right"
+              autoClose={2000}
+              hideProgressBar={false}
+              closeOnClick
+              pauseOnHover />
           </CommandBarContext.Provider>
         </IssueModalContext.Provider>
       </MenuContext.Provider>
