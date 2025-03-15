@@ -68,6 +68,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
   let githubInstallationShapeInitialSyncDone = false
   let githubRepositoryShapeInitialSyncDone = false
   let githubBranchShapeInitialSyncDone = false
+  
   let postInitialSyncDone = false
 
   if (!hasIssuesAtStart && !postInitialSyncDone) {
@@ -420,7 +421,7 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
       ) {
         await syncMutex.acquire()
         try {
-          doSyncToServer(pg, getAuthHeaders)
+          await doSyncToServer(pg, getAuthHeaders)
         } finally {
           syncMutex.release()
         }
