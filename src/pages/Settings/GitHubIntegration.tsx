@@ -109,10 +109,13 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
     setIsLoading(true)
     
     try {
+      const token = await getToken()
+
       const response = await fetch(`${API_SERVER_URL}/refresh-repos`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
       })
       
