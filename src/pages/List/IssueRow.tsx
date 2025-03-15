@@ -19,7 +19,7 @@ interface Props {
   issue: Issue | undefined
   style: CSSProperties
   isSelected?: boolean
-  onSelect?: (issueId: string, selected: boolean) => void
+  onSelect?: (issueId: string, selected: boolean, event?: React.MouseEvent) => void
   selectionMode?: boolean
   workspaceId: string
   workspaceName: string
@@ -100,7 +100,7 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
 
   const handleRowClick = (e: React.MouseEvent) => {
     if (selectionMode && onSelect && issue?.id) {
-      onSelect(issue.id, !isSelected);
+      onSelect(issue.id, !isSelected, e);
       e.preventDefault();
       e.stopPropagation();
     } else if (issue?.id) {
@@ -110,7 +110,7 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
 
   const handleCheckboxClick = (e: React.MouseEvent) => {
     if (onSelect && issue?.id) {
-      onSelect(issue.id, !isSelected);
+      onSelect(issue.id, !isSelected, e);
       e.stopPropagation();
     }
   }

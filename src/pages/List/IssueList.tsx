@@ -13,7 +13,7 @@ export interface IssueListProps {
   issues: (Issue | undefined)[]
   onItemsRendered?: (props: ListOnItemsRenderedProps) => void
   selectedIssues?: Set<string>
-  onSelectIssue?: (issueId: string, selected: boolean) => void
+  onSelectIssue?: (issueId: string, selected: boolean, event?: React.MouseEvent) => void
   selectionMode?: boolean
   workspaceId?: string
   workspaceName?: string
@@ -84,7 +84,7 @@ const VirtualIssueRow = memo(
     data: {
       issues: (Issue | undefined)[]
       selectedIssues: Set<string>
-      onSelectIssue?: (issueId: string, selected: boolean) => void
+      onSelectIssue?: (issueId: string, selected: boolean, event?: React.MouseEvent) => void
       selectionMode: boolean
       workspaceId: string
       workspaceName: string

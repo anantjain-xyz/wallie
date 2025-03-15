@@ -37,6 +37,7 @@ function List({ showSearch = false }) {
   // State for selected issues and selection mode
   const [selectedIssues, setSelectedIssues] = useState<Set<string>>(() => new Set())
   const [selectionMode, setSelectionMode] = useState(false)
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null)
   
   // State for board view
   const [columnsLiveIssues, setColumnsLiveIssues] = useState<Record<StatusValue, LiveQuery<Issue>>>({} as Record<StatusValue, LiveQuery<Issue>>)
@@ -130,29 +131,54 @@ function List({ showSearch = false }) {
     }
   }
 
-  const handleSelectIssue = useCallback((issueId: string, selected: boolean) => {
+  const handleSelectIssue = useCallback((issueId: string, selected: boolean, event?: React.MouseEvent) => {
     setSelectedIssues(prevSelected => {
       const newSelected = new Set(prevSelected)
-      if (selected) {
-        newSelected.add(issueId)
-        // Enable selection mode when first issue is selected
-        if (newSelected.size === 1) {
-          setSelectionMode(true)
+      
+      // Handle Shift+click selection
+      if (event?.shiftKey && lastSelectedIndex !== null) {
+        const currentIndex = filledItems.findIndex(issue => issue?.id === issueId)
+        if (currentIndex !== -1) {
+          const start = Math.min(lastSelectedIndex, currentIndex)
+          const end = Math.max(lastSelectedIndex, currentIndex)
+          
+          // Select all issues between the last selected and current
+          for (let i = start; i <= end; i++) {
+            const issue = filledItems[i]
+            if (issue?.id) {
+              newSelected.add(issue.id)
+            }
+          }
         }
       } else {
-        newSelected.delete(issueId)
-        // Disable selection mode when no issues are selected
-        if (newSelected.size === 0) {
-          setSelectionMode(false)
+        // Regular click behavior
+        if (selected) {
+          newSelected.add(issueId)
+          // Update last selected index
+          const currentIndex = filledItems.findIndex(issue => issue?.id === issueId)
+          setLastSelectedIndex(currentIndex !== -1 ? currentIndex : null)
+        } else {
+          newSelected.delete(issueId)
         }
       }
+      
+      // Enable selection mode when first issue is selected
+      if (newSelected.size === 1 && !selectionMode) {
+        setSelectionMode(true)
+      } else if (newSelected.size === 0) {
+        // Disable selection mode when no issues are selected
+        setSelectionMode(false)
+        setLastSelectedIndex(null)
+      }
+      
       return newSelected
     })
-  }, [])
+  }, [filledItems, lastSelectedIndex, selectionMode])
 
   const handleClearSelection = useCallback(() => {
     setSelectedIssues(new Set())
     setSelectionMode(false)
+    setLastSelectedIndex(null)
   }, [])
 
   // Select all visible issues
