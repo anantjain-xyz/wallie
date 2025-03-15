@@ -69,6 +69,11 @@ function List({ showSearch = false }) {
     }
   }, [showSearch])
 
+  // Refresh the issues query when the component mounts
+  useEffect(() => {
+    liveIssues.refresh({ offset: 0, limit: CHUNK_SIZE })
+  }, [liveIssues])
+
   // Load board data when view mode is 'board'
   useEffect(() => {
     if (viewMode === 'board' && pg) {
