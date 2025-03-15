@@ -135,7 +135,7 @@ function LeftMenu() {
 
           <ItemGroup title="Issues">
             <Link
-              to="/"
+              to="/?estimate=null,0,1,2,3"
               className="flex items-center pl-6 rounded cursor-pointer group h-7 hover:bg-gray-100"
             >
               <IssuesIcon className="w-3.5 h-3.5 mr-2" />
@@ -143,21 +143,21 @@ function LeftMenu() {
             </Link>
             <div className="border-l border-gray-300 pl-3 ml-[1.9rem]">
               <Link
-                to="/?status=todo,in_progress,in_review"
+                to="/?status=todo,in_progress,in_review&estimate=null,0,1,2,3"
                 className="flex items-center pl-2 rounded cursor-pointer h-7 hover:bg-gray-100"
               >
                 <TodoIcon className="w-3.5 h-3.5 mr-2" />
                 <span>Active</span>
               </Link>
               <Link
-                to="/?status=backlog"
+                to="/?status=backlog&estimate=null,0,1,2,3"
                 className="flex items-center pl-2 rounded cursor-pointer h-7 hover:bg-gray-100"
               >
                 <BacklogIcon className="w-3.5 h-3.5 mr-2" />
                 <span>Backlog</span>
               </Link>
               <Link
-                to="/?status=done"
+                to="/?status=done&estimate=null,0,1,2,3"
                 className="flex items-center pl-2 rounded cursor-pointer h-7 hover:bg-gray-100"
               >
                 <DoneIcon className="w-3.5 h-3.5 mr-2" />
