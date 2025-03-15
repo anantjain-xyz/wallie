@@ -624,7 +624,10 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
               ? workspace.modified 
               : typeof workspace.modified === 'string'
                 ? new Date(workspace.modified)
-                : new Date()
+                : (() => {
+                    console.error(`Invalid modified date for workspace ${workspace.id}:`, workspace.modified)
+                    return workspace.modified || new Date() // Fallback only if modified is null/undefined
+                  })()
           ]
         )
       }
@@ -642,7 +645,10 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
               ? user.modified 
               : typeof user.modified === 'string'
                 ? new Date(user.modified)
-                : new Date()
+                : (() => {
+                    console.error(`Invalid modified date for user ${user.id}:`, user.modified)
+                    return user.modified || new Date() // Fallback only if modified is null/undefined
+                  })()
           ]
         )
       }
@@ -660,7 +666,10 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
               ? issue.modified 
               : typeof issue.modified === 'string'
                 ? new Date(issue.modified)
-                : new Date()
+                : (() => {
+                    console.error(`Invalid modified date for issue ${issue.id}:`, issue.modified)
+                    return issue.modified || new Date() // Fallback only if modified is null/undefined
+                  })()
           ]
         )
       }
@@ -678,7 +687,10 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
               ? comment.modified
               : typeof comment.modified === 'string'
                 ? new Date(comment.modified)
-                : new Date()
+                : (() => {
+                    console.error(`Invalid modified date for comment ${comment.id}:`, comment.modified)
+                    return comment.modified || new Date() // Fallback only if modified is null/undefined
+                  })()
           ]
         )
       }
@@ -696,7 +708,10 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
               ? installation.modified
               : typeof installation.modified === 'string'
                 ? new Date(installation.modified)
-                : new Date()
+                : (() => {
+                    console.error(`Invalid modified date for github installation ${installation.id}:`, installation.modified)
+                    return installation.modified || new Date() // Fallback only if modified is null/undefined
+                  })()
           ]
         )
       }
@@ -714,7 +729,10 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
               ? repository.modified
               : typeof repository.modified === 'string'
                 ? new Date(repository.modified)
-                : new Date()
+                : (() => {
+                    console.error(`Invalid modified date for github repository ${repository.id}:`, repository.modified)
+                    return repository.modified || new Date() // Fallback only if modified is null/undefined
+                  })()
           ]
         )
       }
@@ -732,7 +750,10 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
               ? branch.modified
               : typeof branch.modified === 'string'
                 ? new Date(branch.modified)
-                : new Date()
+                : (() => {
+                    console.error(`Invalid modified date for github branch ${branch.id}:`, branch.modified)
+                    return branch.modified || new Date() // Fallback only if modified is null/undefined
+                  })()
           ]
         )
       }
