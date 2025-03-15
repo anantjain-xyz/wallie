@@ -422,6 +422,13 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         await syncMutex.acquire()
         try {
           await doSyncToServer(pg, getAuthHeaders)
+        } catch (error) {
+          console.error('Failed to sync changes to server:', error)
+          // Store sync error in localStorage to display to user
+          localStorage.setItem('syncError', JSON.stringify({
+            message: error instanceof Error ? error.message : 'Unknown error during sync',
+            timestamp: new Date().toISOString()
+          }))
         } finally {
           syncMutex.release()
         }
@@ -432,304 +439,312 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
 
 // Call wrapped in mutex to prevent multiple syncs from happening at the same time
 async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Promise<{ Authorization?: string }>) {
-  let issueChanges: IssueChange[]
-  let commentChanges: CommentChange[]
-  let workspaceChanges: WorkspaceChange[]
-  let appUserChanges: AppUserChange[]
-  let githubInstallationChanges: GithubInstallationChange[]
-  let githubRepositoryChanges: GithubRepositoryChange[]
-  let githubBranchChanges: GithubBranchChange[]
-  await pg.transaction(async (tx) => {
-    const workspaceRes = await tx.query<WorkspaceChange>(`
-      SELECT
-        id,
-        name,
-        url,
-        avatar_url,
-        allowlisted_domains,
-        modified,
-        created,
-        modified_columns,
-        deleted,
-        new
-      FROM workspace
-      WHERE synced = false AND sent_to_server = false
-    `)
-    const appUserRes = await tx.query<AppUserChange>(`
-      SELECT
-        id,
-        email,
-        username,
-        full_name,
-        profile_picture,
-        workspace_id,
-        modified,
-        created,
-        modified_columns,
-        deleted,
-        new
-      FROM app_user
-      WHERE synced = false AND sent_to_server = false
-    `)
-    const issueRes = await tx.query<IssueChange>(`
-      SELECT
-        id,
-        title,
-        description,
-        priority,
-        status,
-        workspace_id,
-        github_repository_id,
-        assignee_id,
-        estimate,
-        external_id,
-        modified,
-        created,
-        kanbanorder,
-        creator_id,
-        modified_columns,
-        deleted,
-        new
-      FROM issue
-      WHERE synced = false AND sent_to_server = false
-    `)
-    const commentRes = await tx.query<CommentChange>(`
-      SELECT
-        id,
-        body,
-        creator_id,
-        issue_id,
-        workspace_id,
-        modified,
-        created,
-        modified_columns,
-        deleted,
-        new
-      FROM comment
-      WHERE synced = false AND sent_to_server = false
-    `)
-    const githubInstallationRes = await tx.query<GithubInstallationChange>(`
-      SELECT
-        id,
-        workspace_id,
-        installation_id,
-        installation_url,
-        app_id,
-        target_type,
-        target_name,
-        permissions,
-        access_token,
-        token_expires_at,
-        suspended,
-        modified,
-        created,
-        modified_columns,
-        deleted,
-        new
-      FROM github_installation
-      WHERE synced = false AND sent_to_server = false
-    `)
-    const githubRepositoryRes = await tx.query<GithubRepositoryChange>(`
-      SELECT
-        id,
-        workspace_id,
-        installation_id,
-        repo_id,
-        name,
-        full_name,
-        private,
-        html_url,
-        description,
-        default_programming_language,
-        modified,
-        created,
-        modified_columns,
-        deleted,
-        new
-      FROM github_repository
-      WHERE synced = false AND sent_to_server = false
-    `)
-    const githubBranchRes = await tx.query<GithubBranchChange>(`
-      SELECT
-        id,
-        issue_id,
-        workspace_id,
-        name,
-        pull_request_link,
-        modified,
-        created,
-        modified_columns,
-        deleted,
-        new
-      FROM github_branch
-      WHERE synced = false AND sent_to_server = false
-    `)
-    issueChanges = issueRes.rows
-    commentChanges = commentRes.rows
-    workspaceChanges = workspaceRes.rows
-    appUserChanges = appUserRes.rows
-    githubInstallationChanges = githubInstallationRes.rows
-    githubRepositoryChanges = githubRepositoryRes.rows
-    githubBranchChanges = githubBranchRes.rows
-  })
-  const changeSet: ChangeSet = {
-    issues: issueChanges!,
-    comments: commentChanges!,
-    workspaces: workspaceChanges!,
-    users: appUserChanges!,
-    githubInstallations: githubInstallationChanges!,
-    githubRepositories: githubRepositoryChanges!,
-    githubBranches: githubBranchChanges!,
+  try {
+    let issueChanges: IssueChange[]
+    let commentChanges: CommentChange[]
+    let workspaceChanges: WorkspaceChange[]
+    let appUserChanges: AppUserChange[]
+    let githubInstallationChanges: GithubInstallationChange[]
+    let githubRepositoryChanges: GithubRepositoryChange[]
+    let githubBranchChanges: GithubBranchChange[]
+    await pg.transaction(async (tx) => {
+      const workspaceRes = await tx.query<WorkspaceChange>(`
+        SELECT
+          id,
+          name,
+          url,
+          avatar_url,
+          allowlisted_domains,
+          modified,
+          created,
+          modified_columns,
+          deleted,
+          new
+        FROM workspace
+        WHERE synced = false AND sent_to_server = false
+      `)
+      const appUserRes = await tx.query<AppUserChange>(`
+        SELECT
+          id,
+          email,
+          username,
+          full_name,
+          profile_picture,
+          workspace_id,
+          modified,
+          created,
+          modified_columns,
+          deleted,
+          new
+        FROM app_user
+        WHERE synced = false AND sent_to_server = false
+      `)
+      const issueRes = await tx.query<IssueChange>(`
+        SELECT
+          id,
+          title,
+          description,
+          priority,
+          status,
+          workspace_id,
+          github_repository_id,
+          assignee_id,
+          estimate,
+          external_id,
+          modified,
+          created,
+          kanbanorder,
+          creator_id,
+          modified_columns,
+          deleted,
+          new
+        FROM issue
+        WHERE synced = false AND sent_to_server = false
+      `)
+      const commentRes = await tx.query<CommentChange>(`
+        SELECT
+          id,
+          body,
+          creator_id,
+          issue_id,
+          workspace_id,
+          modified,
+          created,
+          modified_columns,
+          deleted,
+          new
+        FROM comment
+        WHERE synced = false AND sent_to_server = false
+      `)
+      const githubInstallationRes = await tx.query<GithubInstallationChange>(`
+        SELECT
+          id,
+          workspace_id,
+          installation_id,
+          installation_url,
+          app_id,
+          target_type,
+          target_name,
+          permissions,
+          access_token,
+          token_expires_at,
+          suspended,
+          modified,
+          created,
+          modified_columns,
+          deleted,
+          new
+        FROM github_installation
+        WHERE synced = false AND sent_to_server = false
+      `)
+      const githubRepositoryRes = await tx.query<GithubRepositoryChange>(`
+        SELECT
+          id,
+          workspace_id,
+          installation_id,
+          repo_id,
+          name,
+          full_name,
+          private,
+          html_url,
+          description,
+          default_programming_language,
+          modified,
+          created,
+          modified_columns,
+          deleted,
+          new
+        FROM github_repository
+        WHERE synced = false AND sent_to_server = false
+      `)
+      const githubBranchRes = await tx.query<GithubBranchChange>(`
+        SELECT
+          id,
+          issue_id,
+          workspace_id,
+          name,
+          pull_request_link,
+          modified,
+          created,
+          modified_columns,
+          deleted,
+          new
+        FROM github_branch
+        WHERE synced = false AND sent_to_server = false
+      `)
+      issueChanges = issueRes.rows
+      commentChanges = commentRes.rows
+      workspaceChanges = workspaceRes.rows
+      appUserChanges = appUserRes.rows
+      githubInstallationChanges = githubInstallationRes.rows
+      githubRepositoryChanges = githubRepositoryRes.rows
+      githubBranchChanges = githubBranchRes.rows
+    })
+    const changeSet: ChangeSet = {
+      issues: issueChanges!,
+      comments: commentChanges!,
+      workspaces: workspaceChanges!,
+      users: appUserChanges!,
+      githubInstallations: githubInstallationChanges!,
+      githubRepositories: githubRepositoryChanges!,
+      githubBranches: githubBranchChanges!,
+    }
+    const authHeaders = await getAuthHeaders()
+    const headers = new Headers({
+      'Content-Type': 'application/json'
+    })
+    if (authHeaders.Authorization) {
+      headers.set('Authorization', authHeaders.Authorization)
+    }
+    const response = await fetch(APPLY_CHANGES_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(changeSet),
+    })
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Failed to apply changes: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    }
+    await pg.transaction(async (tx) => {
+      // Mark all changes as sent to server, but check that the modified timestamp
+      // has not changed in the meantime
+
+      tx.exec('SET LOCAL electric.bypass_triggers = true')
+
+      for (const workspace of workspaceChanges!) {
+        await tx.query(
+          `
+          UPDATE workspace
+          SET sent_to_server = true
+          WHERE id = $1 AND modified = $2
+        `,
+          [
+            workspace.id, 
+            workspace.modified instanceof Date 
+              ? workspace.modified 
+              : typeof workspace.modified === 'string'
+                ? new Date(workspace.modified)
+                : new Date()
+          ]
+        )
+      }
+
+      for (const user of appUserChanges!) {
+        await tx.query(
+          `
+          UPDATE app_user
+          SET sent_to_server = true
+          WHERE id = $1 AND modified = $2
+        `,
+          [
+            user.id, 
+            user.modified instanceof Date 
+              ? user.modified 
+              : typeof user.modified === 'string'
+                ? new Date(user.modified)
+                : new Date()
+          ]
+        )
+      }
+
+      for (const issue of issueChanges!) {
+        await tx.query(
+          `
+          UPDATE issue
+          SET sent_to_server = true
+          WHERE id = $1 AND modified = $2
+        `,
+          [
+            issue.id, 
+            issue.modified instanceof Date 
+              ? issue.modified 
+              : typeof issue.modified === 'string'
+                ? new Date(issue.modified)
+                : new Date()
+          ]
+        )
+      }
+
+      for (const comment of commentChanges!) {
+        await tx.query(
+          `
+          UPDATE comment
+          SET sent_to_server = true
+          WHERE id = $1 AND modified = $2
+        `,
+          [
+            comment.id,
+            comment.modified instanceof Date
+              ? comment.modified
+              : typeof comment.modified === 'string'
+                ? new Date(comment.modified)
+                : new Date()
+          ]
+        )
+      }
+
+      for (const installation of githubInstallationChanges!) {
+        await tx.query(
+          `
+          UPDATE github_installation
+          SET sent_to_server = true
+          WHERE id = $1 AND modified = $2
+        `,
+          [
+            installation.id,
+            installation.modified instanceof Date
+              ? installation.modified
+              : typeof installation.modified === 'string'
+                ? new Date(installation.modified)
+                : new Date()
+          ]
+        )
+      }
+
+      for (const repository of githubRepositoryChanges!) {
+        await tx.query(
+          `
+          UPDATE github_repository
+          SET sent_to_server = true
+          WHERE id = $1 AND modified = $2
+        `,
+          [
+            repository.id,
+            repository.modified instanceof Date
+              ? repository.modified
+              : typeof repository.modified === 'string'
+                ? new Date(repository.modified)
+                : new Date()
+          ]
+        )
+      }
+
+      for (const branch of githubBranchChanges!) {
+        await tx.query(
+          `
+          UPDATE github_branch
+          SET sent_to_server = true
+          WHERE id = $1 AND modified = $2
+        `,
+          [
+            branch.id,
+            branch.modified instanceof Date
+              ? branch.modified
+              : typeof branch.modified === 'string'
+                ? new Date(branch.modified)
+                : new Date()
+          ]
+        )
+      }
+    })
+  } catch (error) {
+    console.error('Failed to sync changes to server:', error)
+    // Store sync error in localStorage to display to user
+    localStorage.setItem('syncError', JSON.stringify({
+      message: error instanceof Error ? error.message : 'Unknown error during sync',
+      timestamp: new Date().toISOString()
+    }))
   }
-  const authHeaders = await getAuthHeaders()
-  const headers = new Headers({
-    'Content-Type': 'application/json'
-  })
-  if (authHeaders.Authorization) {
-    headers.set('Authorization', authHeaders.Authorization)
-  }
-  const response = await fetch(APPLY_CHANGES_URL, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(changeSet),
-  })
-  if (!response.ok) {
-    // In a real app you would want to check which changes have failed and save that
-    // information to the database, maybe in a `sync_errors` column on the row effected.
-    throw new Error('Failed to apply changes')
-  }
-  await pg.transaction(async (tx) => {
-    // Mark all changes as sent to server, but check that the modified timestamp
-    // has not changed in the meantime
-
-    tx.exec('SET LOCAL electric.bypass_triggers = true')
-
-    for (const workspace of workspaceChanges!) {
-      await tx.query(
-        `
-        UPDATE workspace
-        SET sent_to_server = true
-        WHERE id = $1 AND modified = $2
-      `,
-        [
-          workspace.id, 
-          workspace.modified instanceof Date 
-            ? workspace.modified 
-            : typeof workspace.modified === 'string'
-              ? new Date(workspace.modified)
-              : new Date()
-        ]
-      )
-    }
-
-    for (const user of appUserChanges!) {
-      await tx.query(
-        `
-        UPDATE app_user
-        SET sent_to_server = true
-        WHERE id = $1 AND modified = $2
-      `,
-        [
-          user.id, 
-          user.modified instanceof Date 
-            ? user.modified 
-            : typeof user.modified === 'string'
-              ? new Date(user.modified)
-              : new Date()
-        ]
-      )
-    }
-
-    for (const issue of issueChanges!) {
-      await tx.query(
-        `
-        UPDATE issue
-        SET sent_to_server = true
-        WHERE id = $1 AND modified = $2
-      `,
-        [
-          issue.id, 
-          issue.modified instanceof Date 
-            ? issue.modified 
-            : typeof issue.modified === 'string'
-              ? new Date(issue.modified)
-              : new Date()
-        ]
-      )
-    }
-
-    for (const comment of commentChanges!) {
-      await tx.query(
-        `
-        UPDATE comment
-        SET sent_to_server = true
-        WHERE id = $1 AND modified = $2
-      `,
-        [
-          comment.id,
-          comment.modified instanceof Date
-            ? comment.modified
-            : typeof comment.modified === 'string'
-              ? new Date(comment.modified)
-              : new Date()
-        ]
-      )
-    }
-
-    for (const installation of githubInstallationChanges!) {
-      await tx.query(
-        `
-        UPDATE github_installation
-        SET sent_to_server = true
-        WHERE id = $1 AND modified = $2
-      `,
-        [
-          installation.id,
-          installation.modified instanceof Date
-            ? installation.modified
-            : typeof installation.modified === 'string'
-              ? new Date(installation.modified)
-              : new Date()
-        ]
-      )
-    }
-
-    for (const repository of githubRepositoryChanges!) {
-      await tx.query(
-        `
-        UPDATE github_repository
-        SET sent_to_server = true
-        WHERE id = $1 AND modified = $2
-      `,
-        [
-          repository.id,
-          repository.modified instanceof Date
-            ? repository.modified
-            : typeof repository.modified === 'string'
-              ? new Date(repository.modified)
-              : new Date()
-        ]
-      )
-    }
-
-    for (const branch of githubBranchChanges!) {
-      await tx.query(
-        `
-        UPDATE github_branch
-        SET sent_to_server = true
-        WHERE id = $1 AND modified = $2
-      `,
-        [
-          branch.id,
-          branch.modified instanceof Date
-            ? branch.modified
-            : typeof branch.modified === 'string'
-              ? new Date(branch.modified)
-              : new Date()
-        ]
-      )
-    }
-  })
 }
 
 export function updateSyncStatus(newStatus: SyncStatus, message?: string) {
