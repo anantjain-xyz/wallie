@@ -7,12 +7,14 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { showWarning, showInfo, showError } from '../../utils/notification'
 import { ReactComponent as DeleteIcon } from '../../assets/icons/delete.svg'
+import { ReactComponent as RetryIcon } from '../../assets/icons/refresh.svg'
 import { Comment, Issue } from '../../types/types'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useCurrentUser } from '../../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
 import Tooltip from '../../components/Tooltip'
+import { detectRetryIntent, extractRetryDetails } from '../../utils/commentUtils'
 
 // Initialize dayjs relative time plugin
 dayjs.extend(relativeTime)
