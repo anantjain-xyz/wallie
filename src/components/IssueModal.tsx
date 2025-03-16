@@ -93,6 +93,15 @@ function IssueModal({ isOpen, onDismiss }: Props) {
   // Find the current assignee if set
   const currentAssignee = assigneeId ? users.find(u => u.id === assigneeId) : null
 
+  // Auto-select GitHub repository if there's only one available
+  useEffect(() => {
+    // Only auto-select if there's exactly one repository, no repository is currently selected,
+    // and the assignee is the user with username 'wallie'
+    if (repositories.length === 1 && !githubRepositoryId && currentAssignee?.username === 'wallie') {
+      setGithubRepositoryId(repositories[0].id);
+    }
+  }, [repositories, githubRepositoryId, currentAssignee?.username]);
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     if (title === '') {
@@ -344,20 +353,29 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         {/* Show GitHub Repo only if assigned to user with username 'wallie' */}
         {currentAssignee?.username === 'wallie' && (
           repositories.length > 0 ? (
-            <GithubRepoMenu
-              id="github-repo-menu"
-              repositories={repositories}
-              button={
-                <button
-                  type="button"
-                  className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700 appearance-none relative"
-                >
-                  <FaGithub className="mr-2 h-4 w-4" />
-                  <span>{githubRepositoryId ? repositories.find(r => r.id === githubRepositoryId)?.full_name : "Select GitHub repo"}</span>
-                </button>
-              }
-              onSelect={(repoId) => setGithubRepositoryId(repoId)}
-            />
+            repositories.length === 1 && githubRepositoryId === repositories[0].id ? (
+              // If there's only one repo and it's selected, just show it without dropdown
+              <div className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 rounded">
+                <FaGithub className="mr-2 h-4 w-4" />
+                <span>{repositories[0].full_name}</span>
+              </div>
+            ) : (
+              // Otherwise show the dropdown menu
+              <GithubRepoMenu
+                id="github-repo-menu"
+                repositories={repositories}
+                button={
+                  <button
+                    type="button"
+                    className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700 appearance-none relative"
+                  >
+                    <FaGithub className="mr-2 h-4 w-4" />
+                    <span>{githubRepositoryId ? repositories.find(r => r.id === githubRepositoryId)?.full_name : "Select GitHub repo"}</span>
+                  </button>
+                }
+                onSelect={(repoId) => setGithubRepositoryId(repoId)}
+              />
+            )
           ) : (
             <button
               type="button"
