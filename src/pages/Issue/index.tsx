@@ -135,6 +135,23 @@ function IssuePage() {
     }
   }, [issue?.github_repository_id, currentRepoId, pg])
 
+  // Define handleGithubRepoChange with useCallback to prevent recreation on each render
+  const handleGithubRepoChange = useCallback((repoId: string | null) => {
+    pg.sql`
+      UPDATE issue
+      SET github_repository_id = ${repoId || null}, modified = NOW()
+      WHERE id = ${issue?.id}
+    `
+  }, [pg, issue?.id])
+
+  // Auto-select GitHub repository if there's only one available
+  useEffect(() => {
+    // Only auto-select if there's exactly one repository and no repository is currently selected
+    if (repositories.length === 1 && !issue?.github_repository_id && assignee?.username === 'wallie') {
+      handleGithubRepoChange(repositories[0].id)
+    }
+  }, [repositories, issue?.github_repository_id, handleGithubRepoChange, assignee?.username])
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleTitleChangeDebounced = useCallback(
     debounce(async (title: string) => {
@@ -209,14 +226,6 @@ function IssuePage() {
     pg.sql`
       UPDATE issue 
       SET priority = ${priority}, modified = NOW() 
-      WHERE id = ${issue.id}
-    `
-  }
-
-  const handleGithubRepoChange = (repoId: string | null) => {
-    pg.sql`
-      UPDATE issue
-      SET github_repository_id = ${repoId || null}, modified = NOW()
       WHERE id = ${issue.id}
     `
   }
@@ -477,20 +486,29 @@ function IssuePage() {
                   </div>
                   <div className="flex flex-[3_0_0]">
                     {repositories.length > 0 ? (
-                      <GithubRepoMenu
-                        id={`issue-github-repo-` + issue.id}
-                        repositories={repositories}
-                        button={
-                          <button
-                            type="button"
-                            className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
-                          >
-                            <FaGithub className="mr-2 h-4 w-4" />
-                            <span>{currentRepoName || "No repository"}</span>
-                          </button>
-                        }
-                        onSelect={handleGithubRepoChange}
-                      />
+                      repositories.length === 1 && issue.github_repository_id === repositories[0].id ? (
+                        // If there's only one repo and it's selected, just show it without dropdown
+                        <div className="inline-flex items-center h-6 px-2 text-gray-500">
+                          <FaGithub className="mr-2 h-4 w-4" />
+                          <span>{currentRepoName || repositories[0].full_name}</span>
+                        </div>
+                      ) : (
+                        // Otherwise show the dropdown menu
+                        <GithubRepoMenu
+                          id={`issue-github-repo-` + issue.id}
+                          repositories={repositories}
+                          button={
+                            <button
+                              type="button"
+                              className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                            >
+                              <FaGithub className="mr-2 h-4 w-4" />
+                              <span>{currentRepoName || "No repository"}</span>
+                            </button>
+                          }
+                          onSelect={handleGithubRepoChange}
+                        />
+                      )
                     ) : (
                       <button
                         type="button"
