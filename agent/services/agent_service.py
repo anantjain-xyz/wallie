@@ -373,7 +373,18 @@ async def _commit_changes_and_create_pr(
             title=pr_title,
             body=pr_body,
         )
-        logger.info("PR created successfully")
+
+        # Check if create_pr_result is None before accessing html_url
+        if create_pr_result is None:
+            logger.error("PR creation returned None instead of a PR object")
+            return AgentRunResponse(
+                status="error",
+                message="Error creating PR: GitHub API returned None",
+                branch_name=branch_name,
+                was_pr_created=False
+            )
+        
+        logger.info(f"PR created: {create_pr_result.html_url}")
         
         return AgentRunResponse(
             status="success",
