@@ -38,4 +38,23 @@ async def is_last_comment_from_wallie(conn, issue_id: UUID):
         return last_comment_username == 'wallie'
     except Exception as e:
         logger.error(f"Error checking last comment for issue {issue_id}: {str(e)}")
+        return False
+        
+async def is_last_comment_retry_request(conn, issue_id: UUID):
+    """Check if the last comment contains a retry request"""
+    try:
+        query = """
+            SELECT c.body
+            FROM comment c
+            WHERE c.issue_id = $1
+            ORDER BY c.created DESC
+            LIMIT 1
+        """
+        last_comment_body = await conn.fetchval(query, issue_id)
+        if last_comment_body:
+            retry_keywords = ["retry", "try again", "reprocess", "redo", "re-do", "re-process"]
+            return any(keyword.lower() in last_comment_body.lower() for keyword in retry_keywords)
+        return False
+    except Exception as e:
+        logger.error(f"Error checking retry request in last comment for issue {issue_id}: {str(e)}")
         return False 

@@ -4,7 +4,7 @@ from ..logging_config import get_logger
 from ..db.connection import db_pool, get_db
 from ..db.queries import get_last_modified_issue_timestamp, get_new_issues
 from ..data import Issue
-from .comment_service import add_agent_comment, is_last_comment_from_wallie
+from .comment_service import add_agent_comment, is_last_comment_from_wallie, is_last_comment_retry_request
 from .issue_service import set_issue_in_progress
 from .agent_service import process_issue
 import pytz
@@ -78,14 +78,24 @@ async def check_for_new_issues():
             if status == 'done':
                 logger.info(f"Issue {issue_id} is in 'done' status, skipping")
                 continue
+
+
+            # Check if GitHub repository is set
+            if github_repository_id is None:
+                logger.info(f"Issue {issue_id} has no GitHub repository ID, skipping")
+                continue
                 
-            # Check if assignee is the 'wallie' user
+            # Check if there is an assignee
             if assignee_id is None:
                 logger.info(f"Issue {issue_id} has no assignee, skipping")
                 continue
                 
-            # Verify the assignee is 'wallie'
+            # Verify the assignee is 'wallie', last comment is from 'wallie', and last comment is not a retry request
             is_wallie_assignee = False
+            is_last_comment_from_wallie_check = False
+            is_retry_requested = False
+
+            # DB operations
             try:
                 async with db_pool.acquire() as conn:
                     wallie_check = await conn.fetchval(
@@ -96,9 +106,10 @@ async def check_for_new_issues():
                     
                     # Check if the last comment is from 'wallie'
                     is_last_comment_from_wallie_check = await is_last_comment_from_wallie(conn, issue_id)
-                    if is_last_comment_from_wallie_check:
-                        logger.info(f"Issue {issue_id} last comment is from 'wallie', skipping processing")
-                        continue
+                    
+                    # Check if the last comment requests a retry
+                    is_retry_requested = await is_last_comment_retry_request(conn, issue_id) 
+
             except Exception as e:
                 logger.error(f"Error checking assignee or comments for issue {issue_id}: {str(e)}")
                 continue
@@ -107,9 +118,12 @@ async def check_for_new_issues():
                 logger.info(f"Issue {issue_id} is not assigned to 'wallie', skipping")
                 continue
 
-            # Check if GitHub repository is set
-            if github_repository_id is None:
-                logger.info(f"Issue {issue_id} has no GitHub repository ID, skipping")
+            if is_last_comment_from_wallie_check:
+                logger.info(f"Issue {issue_id}: Last comment is from 'wallie', skipping")
+                continue
+
+            if not is_retry_requested:
+                logger.info(f"Issue {issue_id}: Retry not requested in last comment, skipping")
                 continue
 
             # Ensure modified timestamp has timezone info
