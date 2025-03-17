@@ -19,15 +19,15 @@ app.post('/', async (c) => {
     // Get the raw body for verification
     const rawBody = await c.req.text();
     
+    // Parse the payload
+    const payload = JSON.parse(rawBody);
+    
     // Verify webhook signature
     const isValid = await verify(
       process.env.GITHUB_APP_WEBHOOK_SECRET!,
       rawBody,
       signature
     );
-    
-    // Parse the payload after verification
-    const payload = JSON.parse(rawBody);
     
     if (!isValid) {
       return c.json({ error: 'Invalid signature' }, 401);
@@ -43,6 +43,9 @@ app.post('/', async (c) => {
         break;
       case 'installation_repositories':
         await handleRepositoryEvent(payload);
+        break;
+      case 'pull_request':
+        await handlePullRequestEvent(payload);
         break;
       // Add more event handlers as needed
     }
@@ -155,6 +158,47 @@ async function handleRepositoryEvent(payload: any) {
     }
   } catch (error) {
     console.error('Error handling repository event:', error);
+  }
+}
+
+async function handlePullRequestEvent(payload: any) {
+  try {
+    const action = payload.action;
+    const pullRequest = payload.pull_request;
+    
+    // Only process merged PRs
+    if (action === 'closed' && pullRequest.merged === true) {
+      console.log('Processing merged PR:', pullRequest.number);
+      
+      // Get the branch name from the PR
+      const branchName = pullRequest.head.ref;
+      
+      // Look up the issue ID from the github_branch table
+      const branches = await sql`
+        SELECT issue_id FROM github_branch 
+        WHERE name = ${branchName}
+        ORDER BY modified DESC
+        LIMIT 1
+      `;
+      
+      if (branches.length > 0 && branches[0].issue_id) {
+        const issueId = branches[0].issue_id;
+        console.log('Found issue ID from branch:', issueId);
+        
+        // Update issue status to done
+        await sql`
+          UPDATE issue
+          SET status = 'done', modified = NOW()
+          WHERE id = ${issueId}
+        `;
+        
+        console.log('Updated issue status to done for issue:', issueId);
+      } else {
+        console.log('Could not find issue ID for branch:', branchName);
+      }
+    }
+  } catch (error) {
+    console.error('Error handling pull request event:', error);
   }
 }
 
