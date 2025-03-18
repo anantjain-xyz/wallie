@@ -2,6 +2,7 @@ import { ReactComponent as MenuIcon } from '../assets/icons/menu.svg'
 import { ReactComponent as BacklogIcon } from '../assets/icons/circle-dot.svg'
 import { ReactComponent as DoneIcon } from '../assets/icons/done.svg'
 import { ReactComponent as TodoIcon } from '../assets/icons/circle.svg'
+import { ReactComponent as ProjectsIcon } from '../assets/icons/project.svg'
 import { MenuContext, IssueModalContext } from '../App'
 import classnames from 'classnames'
 import { memo, RefObject, useRef, useState, useContext } from 'react'
@@ -100,37 +101,14 @@ function LeftMenu() {
         </div>
 
         <div className="flex flex-col flex-shrink flex-grow overflow-y-auto mb-0.5 px-2">
-        <ItemGroup title="Projects">
+        <ItemGroup title="Workspace">
             <Link
               to="/?estimate=5,8,13"
               className="flex items-center pl-6 rounded cursor-pointer group h-7 hover:bg-gray-100"
             >
-              <IssuesIcon className="w-3.5 h-3.5 mr-2" />
-              <span>All Projects</span>
+              <ProjectsIcon className="w-3.5 h-3.5 mr-2" />
+              <span>Projects</span>
             </Link>
-            <div className="border-l border-gray-300 pl-3 ml-[1.9rem]">
-              <Link
-                to="/?status=todo,in_progress,in_review&estimate=5,8,13"
-                className="flex items-center pl-2 rounded cursor-pointer h-7 hover:bg-gray-100"
-              >
-                <TodoIcon className="w-3.5 h-3.5 mr-2" />
-                <span>Active</span>
-              </Link>
-              <Link
-                to="/?status=backlog&estimate=5,8,13"
-                className="flex items-center pl-2 rounded cursor-pointer h-7 hover:bg-gray-100"
-              >
-                <BacklogIcon className="w-3.5 h-3.5 mr-2" />
-                <span>Backlog</span>
-              </Link>
-              <Link
-                to="/?status=done&estimate=5,8,13"
-                className="flex items-center pl-2 rounded cursor-pointer h-7 hover:bg-gray-100"
-              >
-                <DoneIcon className="w-3.5 h-3.5 mr-2" />
-                <span>Done</span>
-              </Link>
-            </div>
           </ItemGroup>
 
           <ItemGroup title="Issues">
@@ -171,14 +149,16 @@ function LeftMenu() {
 
           {/* bottom group */}
           <div className="flex flex-row justify-between px-2 pb-2 text-gray-500 mt-7">
-            <button
-              type="button"
-              className="inline-flex mt-1"
-              onClick={() => setShowPGliteConsoleModal(true)}
-            >
-              <ConsoleIcon className="w-3 mr-2 mt-1" />
-            </button>
             <div className="flex flex-row justify-between space-x-1">
+              {window.location.hostname === 'localhost' && (
+                <button
+                  type="button"
+                  className="inline-flex mt-1"
+                  onClick={() => setShowPGliteConsoleModal(true)}
+                >
+                  <ConsoleIcon className="w-3 mr-2 mt-1" />
+                </button>
+              )}
               <Tooltip content="Settings" shortcut="g then s" placement="top">
                 <Link
                   to="/settings"
@@ -187,8 +167,8 @@ function LeftMenu() {
                   <SettingsIcon className="w-3.5 h-3.5 m-2" />
                 </Link>
               </Tooltip>
-              <UserButton />
             </div>
+            <UserButton />
           </div>
         </div>
       </div>
