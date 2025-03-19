@@ -28,6 +28,12 @@ async function proxyMiddleware(c: any) {
   url.searchParams.forEach((value, key) => {
     originUrl.searchParams.set(key, value)
   })
+  if (process.env.ELECTRIC_SECRET) {
+    originUrl.searchParams.set(
+      `api_secret`,
+      process.env.ELECTRIC_SECRET
+    )
+  }
   
   try {
     const response = await fetch(originUrl, {

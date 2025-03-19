@@ -22,6 +22,7 @@ services:
     image: electricsql/electric
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/wallie?sslmode=disable
+      ELECTRIC_SECRET: development-electric-secret
     ports:
       - 3000:3000
     depends_on:
