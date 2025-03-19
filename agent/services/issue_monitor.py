@@ -103,26 +103,33 @@ async def check_for_new_issues():
                         assignee_id
                     )
                     is_wallie_assignee = wallie_check > 0
+
+                    comments_count = await conn.fetchval(
+                        "SELECT COUNT(*) FROM comment WHERE issue_id = $1",
+                        issue_id
+                    )
+                    has_comments = comments_count > 0
                     
-                    # Check if the last comment is from 'wallie'
-                    is_last_comment_from_wallie_check = await is_last_comment_from_wallie(conn, issue_id)
+                    if has_comments:
+                        # Check if the last comment is from 'wallie'
+                        is_last_comment_from_wallie_check = await is_last_comment_from_wallie(conn, issue_id)
                     
-                    # Check if the last comment requests a retry
-                    is_retry_requested = await is_last_comment_retry_request(conn, issue_id) 
+                        # Check if the last comment requests a retry
+                        is_retry_requested = await is_last_comment_retry_request(conn, issue_id) 
 
             except Exception as e:
                 logger.error(f"Error checking assignee or comments for issue {issue_id}: {str(e)}")
                 continue
-                
+            
             if not is_wallie_assignee:
                 logger.info(f"Issue {issue_id} is not assigned to 'wallie', skipping")
                 continue
 
-            if is_last_comment_from_wallie_check:
+            if has_comments and is_last_comment_from_wallie_check:
                 logger.info(f"Issue {issue_id}: Last comment is from 'wallie', skipping")
                 continue
 
-            if not is_retry_requested:
+            if has_comments and not is_retry_requested:
                 logger.info(f"Issue {issue_id}: Retry not requested in last comment, skipping")
                 continue
 
