@@ -145,7 +145,7 @@ export default function({
           {!!filterState.priority?.length && (
             <div className="flex pr-4 space-x-[1px]">
               <span className="px-2 py-1 bg-gray-200 rounded-l">Priority is</span>
-              <span className="px-2 py-1 bg-gray-200 ">
+              <span className="px-2 py-1 bg-gray-200 max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap">
                 {filterState.priority
                   ?.map(
                     (priority) =>
@@ -169,7 +169,7 @@ export default function({
           {!!filterState.status?.length && (
             <div className="flex pr-4 space-x-[1px]">
               <span className="px-2 py-1 bg-gray-200 rounded-l">Status is</span>
-              <span className="px-2 py-1 bg-gray-200 ">
+              <span className="px-2 py-1 bg-gray-200 max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap">
                 {filterState.status
                   ?.map(
                     (status) =>
@@ -193,7 +193,7 @@ export default function({
           {!!filterState.estimate?.length && (
             <div className="flex pr-4 space-x-[1px]">
               <span className="px-2 py-1 bg-gray-200 rounded-l">Estimate is</span>
-              <span className="px-2 py-1 bg-gray-200 ">
+              <span className="px-2 py-1 bg-gray-200 max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap">
                 {filterState.estimate
                   ?.map(
                     (estimate) => estimate === null 

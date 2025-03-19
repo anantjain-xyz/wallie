@@ -50,7 +50,7 @@ export const Priority = {
 export type PriorityValue = (typeof Priority)[keyof typeof Priority]
 
 export const PriorityDisplay = {
-  [Priority.NONE]: `Priority`,
+  [Priority.NONE]: `No Priority`,
   [Priority.URGENT]: `Urgent`,
   [Priority.HIGH]: `High`,
   [Priority.LOW]: `Low`,
