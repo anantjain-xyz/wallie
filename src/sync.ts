@@ -439,7 +439,7 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
 }
 
 // Call wrapped in mutex to prevent multiple syncs from happening at the same time
-async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Promise<{ Authorization?: string }>) {
+async function doSyncToServer(pg: PGliteWithLive & PGliteWithSync, getAuthHeaders: () => Promise<{ Authorization?: string }>) {
   try {
     // Get all changes that need to be synced
     const changeSet: ChangeSet = await withTransaction(pg, async (tx) => {

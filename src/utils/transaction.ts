@@ -1,4 +1,4 @@
-import type { PGliteWithExtensions } from '../sync'
+import { type PGliteWithLive } from '@electric-sql/pglite/live'
 
 /**
  * A utility function to handle database transactions with proper cleanup
@@ -7,7 +7,7 @@ import type { PGliteWithExtensions } from '../sync'
  * @returns The result of the operation
  */
 export async function withTransaction<T>(
-  pg: PGliteWithExtensions, 
+  pg: PGliteWithLive, 
   operation: (tx: typeof pg) => Promise<T>
 ): Promise<T> {
   try {
