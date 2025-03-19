@@ -13,6 +13,7 @@ import { useHotkeys } from 'react-hotkeys-hook'
 import { useCurrentUser } from '../../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
 import Tooltip from '../../components/Tooltip'
+import { withTransaction } from '../../utils/transaction'
 
 // Initialize dayjs relative time plugin
 dayjs.extend(relativeTime)
@@ -139,12 +140,9 @@ function Comments({ issue }: CommentsProps) {
     }
 
     try {
-      // Begin a transaction to ensure both operations are atomic
-      await pg.exec('BEGIN')
-      
-      try {
+      await withTransaction(pg, async (tx) => {
         // Insert the comment
-        await pg.sql`
+        await tx.sql`
           INSERT INTO comment (id, issue_id, body, created, modified, creator_id, workspace_id)
           VALUES (
             ${crypto.randomUUID()},
@@ -158,21 +156,14 @@ function Comments({ issue }: CommentsProps) {
         `
         
         // Update the issue's modified timestamp
-        await pg.sql`
+        await tx.sql`
           UPDATE issue
           SET modified = ${new Date()}
           WHERE id = ${issue.id}
         `
-        
-        // Commit the transaction
-        await pg.exec('COMMIT')
-        
-        setNewCommentBody(``)
-      } catch (innerError) {
-        // Rollback the transaction if any operation fails
-        await pg.exec('ROLLBACK')
-        throw innerError
-      }
+      })
+      
+      setNewCommentBody(``)
     } catch (error) {
       showError(error instanceof Error ? error.message : 'Unknown error', 'Failed to post comment')
     }

@@ -13,6 +13,7 @@ import type {
 } from './utils/changes'
 import { postInitialSync } from './migrations'
 import { useEffect, useState } from 'react'
+import { withTransaction } from './utils/transaction'
 
 const WRITE_SERVER_URL = import.meta.env.VITE_WRITE_SERVER_URL
   ? import.meta.env.VITE_WRITE_SERVER_URL
@@ -440,14 +441,8 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
 // Call wrapped in mutex to prevent multiple syncs from happening at the same time
 async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Promise<{ Authorization?: string }>) {
   try {
-    let issueChanges: IssueChange[]
-    let commentChanges: CommentChange[]
-    let workspaceChanges: WorkspaceChange[]
-    let appUserChanges: AppUserChange[]
-    let githubInstallationChanges: GithubInstallationChange[]
-    let githubRepositoryChanges: GithubRepositoryChange[]
-    let githubBranchChanges: GithubBranchChange[]
-    await pg.transaction(async (tx) => {
+    // Get all changes that need to be synced
+    const changeSet: ChangeSet = await withTransaction(pg, async (tx) => {
       const workspaceRes = await tx.query<WorkspaceChange>(`
         SELECT
           id,
@@ -572,23 +567,18 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         FROM github_branch
         WHERE synced = false AND sent_to_server = false
       `)
-      issueChanges = issueRes.rows
-      commentChanges = commentRes.rows
-      workspaceChanges = workspaceRes.rows
-      appUserChanges = appUserRes.rows
-      githubInstallationChanges = githubInstallationRes.rows
-      githubRepositoryChanges = githubRepositoryRes.rows
-      githubBranchChanges = githubBranchRes.rows
+      return {
+        issues: issueRes.rows,
+        comments: commentRes.rows,
+        workspaces: workspaceRes.rows,
+        users: appUserRes.rows,
+        githubInstallations: githubInstallationRes.rows,
+        githubRepositories: githubRepositoryRes.rows,
+        githubBranches: githubBranchRes.rows,
+      }
     })
-    const changeSet: ChangeSet = {
-      issues: issueChanges!,
-      comments: commentChanges!,
-      workspaces: workspaceChanges!,
-      users: appUserChanges!,
-      githubInstallations: githubInstallationChanges!,
-      githubRepositories: githubRepositoryChanges!,
-      githubBranches: githubBranchChanges!,
-    }
+
+    // Send changes to server
     const authHeaders = await getAuthHeaders()
     const headers = new Headers({
       'Content-Type': 'application/json'
@@ -605,13 +595,12 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
       const errorText = await response.text()
       throw new Error(`Failed to apply changes: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
     }
-    await pg.transaction(async (tx) => {
-      // Mark all changes as sent to server, but check that the modified timestamp
-      // has not changed in the meantime
 
+    // Mark changes as sent to server
+    await withTransaction(pg, async (tx) => {
       tx.exec('SET LOCAL electric.bypass_triggers = true')
 
-      for (const workspace of workspaceChanges!) {
+      for (const workspace of changeSet.workspaces) {
         await tx.query(
           `
           UPDATE workspace
@@ -632,7 +621,7 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         )
       }
 
-      for (const user of appUserChanges!) {
+      for (const user of changeSet.users) {
         await tx.query(
           `
           UPDATE app_user
@@ -653,7 +642,7 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         )
       }
 
-      for (const issue of issueChanges!) {
+      for (const issue of changeSet.issues) {
         await tx.query(
           `
           UPDATE issue
@@ -674,7 +663,7 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         )
       }
 
-      for (const comment of commentChanges!) {
+      for (const comment of changeSet.comments) {
         await tx.query(
           `
           UPDATE comment
@@ -695,7 +684,7 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         )
       }
 
-      for (const installation of githubInstallationChanges!) {
+      for (const installation of changeSet.githubInstallations) {
         await tx.query(
           `
           UPDATE github_installation
@@ -716,7 +705,7 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         )
       }
 
-      for (const repository of githubRepositoryChanges!) {
+      for (const repository of changeSet.githubRepositories) {
         await tx.query(
           `
           UPDATE github_repository
@@ -737,7 +726,7 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         )
       }
 
-      for (const branch of githubBranchChanges!) {
+      for (const branch of changeSet.githubBranches) {
         await tx.query(
           `
           UPDATE github_branch
@@ -760,7 +749,6 @@ async function doSyncToServer(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
     })
   } catch (error) {
     console.error('Failed to sync changes to server:', error)
-    // Store sync error in localStorage to display to user
     localStorage.setItem('syncError', JSON.stringify({
       message: error instanceof Error ? error.message : 'Unknown error during sync',
       timestamp: new Date().toISOString()
