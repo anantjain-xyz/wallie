@@ -84,8 +84,7 @@ export default function BulkActionBar({
       const issueIds = Array.from(selectedIssues)
       
       await pg.sql`
-        UPDATE issue 
-        SET deleted = true, modified = NOW()
+        DELETE FROM issue 
         WHERE id = ANY(${issueIds})
       `
       onClearSelection()
