@@ -30,8 +30,8 @@ importers:
         specifier: ^0.2.17
         version: 0.2.17(@babel/runtime@7.26.9)(@codemirror/lint@6.8.4)(@codemirror/search@6.5.9)(@codemirror/state@6.5.2)(@codemirror/theme-one-dark@6.1.2)(@electric-sql/pglite@0.2.17)(codemirror@6.0.1)
       '@electric-sql/pglite-sync':
-        specifier: ^0.2.20
-        version: 0.2.20(@electric-sql/pglite@0.2.17)
+        specifier: ^0.3.0
+        version: 0.3.0(@electric-sql/pglite@0.2.17)
       '@firefox-devtools/react-contextmenu':
         specifier: ^5.1.1
         version: 5.2.0(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -684,8 +684,13 @@ packages:
   '@databases/validate-unicode@1.0.0':
     resolution: {integrity: sha512-dLKqxGcymeVwEb/6c44KjOnzaAafFf0Wxa8xcfEjx/qOl3rdijsKYBAtIGhtVtOlpPf/PFKfgTuFurSPn/3B/g==}
 
-  '@electric-sql/client@1.0.0-beta.3':
-    resolution: {integrity: sha512-x3bzYlX+IRwBAILPxzu3ARkXzmrAQtVOuJCKCxlSqENuJa4zvLPF4f8vC6HMOiiJiHPAntJjfI3Hb0lrt2PTxA==}
+  '@electric-sql/client@1.0.0':
+    resolution: {integrity: sha512-kGiVbBIlMqc/CeJpWZuLjxNkm0836NWxeMtIWH2w5IUK8pUL13hyxg3ZkR7+FlTGhpKuZRiCP5nPOH9D6wbhPw==}
+
+  '@electric-sql/experimental@1.0.0':
+    resolution: {integrity: sha512-wOKZyph3cvJ4J5fDwqDpR7nilPOHEFwAtbAM5X/PhV3JZCSzmkbosaQRWsxbHQ80MJv7gNFP960+TyqGAjqouQ==}
+    peerDependencies:
+      '@electric-sql/client': 1.0.0
 
   '@electric-sql/pglite-react@0.2.17':
     resolution: {integrity: sha512-TEdV1UAUO50gb/okYcVaiG2dQdox53K2E8jSEl0Wa/97x3Xi238ls7ZB7wgmoqNgy45f/tgYxyztml03EFClng==}
@@ -701,8 +706,8 @@ packages:
       '@electric-sql/pglite':
         optional: true
 
-  '@electric-sql/pglite-sync@0.2.20':
-    resolution: {integrity: sha512-FTIe3ux0PFt1ab/FFvABp2nJiab9nQF3Mav3H6PWFu8my/FLEzRmQafHi8t4AlxT/KcQyz+Z7bppgoJeVbfeoQ==}
+  '@electric-sql/pglite-sync@0.3.0':
+    resolution: {integrity: sha512-2zkW5N65qoe1xKwkJhlXgbyVGrF86EGlPBe6y3f2FGxUud4SnUi1kPJ7JMMl4laA3FxRd6bBn6PnMsjvqM31vw==}
     peerDependencies:
       '@electric-sql/pglite': ^0.2.17
 
@@ -5660,7 +5665,13 @@ snapshots:
 
   '@databases/validate-unicode@1.0.0': {}
 
-  '@electric-sql/client@1.0.0-beta.3':
+  '@electric-sql/client@1.0.0':
+    optionalDependencies:
+      '@rollup/rollup-darwin-arm64': 4.35.0
+
+  '@electric-sql/experimental@1.0.0(@electric-sql/client@1.0.0)':
+    dependencies:
+      '@electric-sql/client': 1.0.0
     optionalDependencies:
       '@rollup/rollup-darwin-arm64': 4.35.0
 
@@ -5699,9 +5710,10 @@ snapshots:
       - '@codemirror/theme-one-dark'
       - codemirror
 
-  '@electric-sql/pglite-sync@0.2.20(@electric-sql/pglite@0.2.17)':
+  '@electric-sql/pglite-sync@0.3.0(@electric-sql/pglite@0.2.17)':
     dependencies:
-      '@electric-sql/client': 1.0.0-beta.3
+      '@electric-sql/client': 1.0.0
+      '@electric-sql/experimental': 1.0.0(@electric-sql/client@1.0.0)
       '@electric-sql/pglite': 0.2.17
 
   '@electric-sql/pglite@0.2.17': {}

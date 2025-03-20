@@ -103,7 +103,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
   const workspaceUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
 
   // Workspaces Sync
-  const workspacesSync = await pg.sync.syncShapeToTable({
+  await pg.sync.syncShapeToTable({
     shape: {
       url: workspaceUrl.toString(),
       params: {
@@ -118,7 +118,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
     table: 'workspace',
     primaryKey: ['id'],
     shapeKey: null,
-    commitGranularity: 'up-to-date',
     useCopy: true,
     onInitialSync: async () => {
       workspaceShapeInitialSyncDone = true
@@ -126,21 +125,11 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       doPostInitialSync()
     },
   })
-  workspacesSync.subscribe(
-    () => {
-      if (!hasIssuesAtStart && !postInitialSyncDone) {
-        updateSyncStatus('initial-sync', 'Inserting workspaces...')
-      }
-    },
-    (error) => {
-      console.error('workspacesSync error', error)
-    }
-  )
 
   const userUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
 
   // Users Sync
-  const usersSync = await pg.sync.syncShapeToTable({
+  await pg.sync.syncShapeToTable({
     shape: {
       url: userUrl.toString(),
       params: {
@@ -155,7 +144,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
     table: 'app_user',
     primaryKey: ['id'],
     shapeKey: null,
-    commitGranularity: 'up-to-date',
     useCopy: true,
     onInitialSync: async () => {
       appUserShapeInitialSyncDone = true
@@ -163,21 +151,11 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       doPostInitialSync()
     },
   })
-  usersSync.subscribe(
-    () => {
-      if (!hasIssuesAtStart && !postInitialSyncDone) {
-        updateSyncStatus('initial-sync', 'Inserting users...')
-      }
-    },
-    (error) => {
-      console.error('usersSync error', error)
-    }
-  )
 
   const issueUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
   
   // Issues Sync
-  const issuesSync = await pg.sync.syncShapeToTable({
+  await pg.sync.syncShapeToTable({
     shape: {
       url: issueUrl.toString(),
       params: {
@@ -192,7 +170,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
     table: 'issue',
     primaryKey: ['id'],
     shapeKey: 'issues',
-    commitGranularity: 'up-to-date',
     useCopy: true,
     onInitialSync: async () => {
       issueShapeInitialSyncDone = true
@@ -200,21 +177,11 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       doPostInitialSync()
     },
   })
-  issuesSync.subscribe(
-    () => {
-      if (!hasIssuesAtStart && !postInitialSyncDone) {
-        updateSyncStatus('initial-sync', 'Inserting issues...')
-      }
-    },
-    (error) => {
-      console.error('issuesSync error', error)
-    }
-  )
 
   const commentUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
 
   // Comments Sync
-  const commentsSync = await pg.sync.syncShapeToTable({
+  await pg.sync.syncShapeToTable({
     shape: {
       url: commentUrl.toString(),
       params: {
@@ -229,7 +196,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
     table: 'comment',
     primaryKey: ['id'],
     shapeKey: 'comments',
-    commitGranularity: 'up-to-date',
     useCopy: true,
     onInitialSync: async () => {
       commentShapeInitialSyncDone = true
@@ -237,21 +203,11 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       doPostInitialSync()
     },
   })
-  commentsSync.subscribe(
-    () => {
-      if (!hasIssuesAtStart && !postInitialSyncDone) {
-        updateSyncStatus('initial-sync', 'Inserting comments...')
-      }
-    },
-    (error) => {
-      console.error('commentsSync error', error)
-    }
-  )
 
   const githubInstallationUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
 
   // GitHub Installation Sync
-  const githubInstallationSync = await pg.sync.syncShapeToTable({
+  await pg.sync.syncShapeToTable({
     shape: {
       url: githubInstallationUrl.toString(),
       params: {
@@ -266,7 +222,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
     table: 'github_installation',
     primaryKey: ['id'],
     shapeKey: 'github_installations',
-    commitGranularity: 'up-to-date',
     useCopy: true,
     onInitialSync: async () => {
       githubInstallationShapeInitialSyncDone = true
@@ -274,21 +229,11 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       doPostInitialSync()
     },
   })
-  githubInstallationSync.subscribe(
-    () => {
-      if (!hasIssuesAtStart && !postInitialSyncDone) {
-        updateSyncStatus('initial-sync', 'Inserting GitHub installations...')
-      }
-    },
-    (error) => {
-      console.error('githubInstallationSync error', error)
-    }
-  )
 
   const githubRepositoryUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
 
   // GitHub Repository Sync
-  const githubRepositorySync = await pg.sync.syncShapeToTable({
+  await pg.sync.syncShapeToTable({
     shape: {
       url: githubRepositoryUrl.toString(),
       params: {
@@ -303,7 +248,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
     table: 'github_repository',
     primaryKey: ['id'],
     shapeKey: 'github_repositories',
-    commitGranularity: 'up-to-date',
     useCopy: true,
     onInitialSync: async () => {
       githubRepositoryShapeInitialSyncDone = true
@@ -311,20 +255,10 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       doPostInitialSync()
     },
   })
-  githubRepositorySync.subscribe(
-    () => {
-      if (!hasIssuesAtStart && !postInitialSyncDone) {
-        updateSyncStatus('initial-sync', 'Inserting GitHub repositories...')
-      }
-    },
-    (error) => {
-      console.error('githubRepositorySync error', error)
-    }
-  )
 
   // GitHub Branches Sync
   const githubBranchUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
-  const githubBranchSync = await pg.sync.syncShapeToTable({
+  await pg.sync.syncShapeToTable({
     shape: {
       url: githubBranchUrl.toString(),
       params: {
@@ -339,7 +273,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
     table: 'github_branch',
     primaryKey: ['id'],
     shapeKey: 'github_branches',
-    commitGranularity: 'up-to-date',
     useCopy: true,
     onInitialSync: async () => {
       githubBranchShapeInitialSyncDone = true
@@ -347,16 +280,6 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       doPostInitialSync()
     },
   })
-  githubBranchSync.subscribe(
-    () => {
-      if (!hasIssuesAtStart && !postInitialSyncDone) {
-        updateSyncStatus('initial-sync', 'Inserting GitHub branches...')
-      }
-    },
-    (error) => {
-      console.error('githubBranchSync error', error)
-    }
-  )
 
   if (!hasIssuesAtStart) {
     await postInitialSyncDonePromise
