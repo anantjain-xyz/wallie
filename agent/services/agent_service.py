@@ -6,9 +6,12 @@ import uuid
 from datetime import datetime
 import pytz
 import re
-from codegen import CodeAgent, Codebase, ProgrammingLanguage
+from codegen import CodeAgent, Codebase
+from codegen.agents.data import BaseMessage
+from codegen.agents.loggers import ExternalLogger
 from codegen.configs.models.secrets import SecretsConfig
 from codegen.git.schemas.enums import SetupOption
+from typing import Any, Dict, Union
 from ..data import Issue, AgentRunResponse
 from ..config import ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, FRONTEND_URL
 from ..prompts import get_code_mode_prompt, get_project_mode_prompt
@@ -38,6 +41,10 @@ class CodebaseSetupResult:
     def is_success(self) -> bool:
         """Return True if setup was successful (no error message)"""
         return self.error_message is None
+
+class ConsoleLogger(ExternalLogger):
+    def log(self, data: Union[Dict[str, Any], BaseMessage]) -> None:
+        print("Via ConsoleLogger: ", data.content)
 
 async def process_issue(issue: Issue):
     """Process an issue"""
@@ -116,7 +123,8 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
     try:
         agent = CodeAgent(setup_result.codebase,
                           model_provider=model_provider,
-                          model_name=model_name)
+                          model_name=model_name,
+                          logger=ConsoleLogger())
         agent_result = agent.run(prompt)
         logger.info(f"Agent result: {agent_result}")
     except Exception as e:
