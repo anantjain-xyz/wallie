@@ -38,7 +38,7 @@ const Settings = () => {
     }
   }, [workspace])
 
-  const handleSaveWorkspace = async () => {
+  const saveWorkspace = async () => {
     if (!workspaceId) return
 
     try {
@@ -159,6 +159,7 @@ const Settings = () => {
                   id="name"
                   value={workspaceName}
                   onChange={(e) => setWorkspaceName(e.target.value)}
+                  onBlur={saveWorkspace}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
@@ -178,21 +179,14 @@ const Settings = () => {
                     id="url"
                     value={workspaceUrl}
                     onChange={(e) => setWorkspaceUrl(e.target.value)}
+                    onBlur={saveWorkspace}
                     className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
               </div>
             </div>
             
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={handleSaveWorkspace}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Save changes
-              </button>
-            </div>
+
           </div>
         </div>
         
