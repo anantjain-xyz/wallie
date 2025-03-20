@@ -311,7 +311,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "asyncpg", specifier = ">=0.29.0" },
-    { name = "codegen", specifier = "==0.48.4" },
+    { name = "codegen", specifier = "==0.52.8" },
     { name = "fastapi", specifier = ">=0.115.8" },
     { name = "pydantic", specifier = ">=2.10.6" },
     { name = "pyjwt", specifier = ">=2.10.1" },
@@ -322,11 +322,13 @@ requires-dist = [
 
 [[package]]
 name = "codegen"
-version = "0.48.4"
+version = "0.52.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "anthropic" },
     { name = "astor" },
     { name = "click" },
+    { name = "codegen-sdk-pink" },
     { name = "codeowners" },
     { name = "colorlog" },
     { name = "dataclasses-json" },
@@ -400,14 +402,29 @@ dependencies = [
     { name = "xmltodict" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/05/e8dfa144eae48a6742b4ddb9bbff9d3e83ae7880a67fdfdc00e2c3cb5b40/codegen-0.48.4-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:30d672b86896bf5e088203b9bb9c44ff7069fe4569ef98edf10b75fb86987c33", size = 1155481 },
-    { url = "https://files.pythonhosted.org/packages/cd/6a/c71c4ae1f8c18551dbde371fa4bc587616a580fa33e2a8cd1b0e5cfe6e11/codegen-0.48.4-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:524e19fa35fea7b650fde8312e45ca1f383d77fd17883fa580e88357f97a55f4", size = 1146622 },
-    { url = "https://files.pythonhosted.org/packages/bb/dc/e26026bc85b18afbca24ce319e12a4abe0d278a4217c16351116ab9260f2/codegen-0.48.4-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:79caee76f19764e7cdfe9956478f70c286ae6b5b74ea1e914b7294cb810bee93", size = 2150913 },
-    { url = "https://files.pythonhosted.org/packages/fe/0a/2a3e2a7367938ff818fd43d92722a5e50b1aad9e911c1d9bc6550c5ae19f/codegen-0.48.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_34_x86_64.whl", hash = "sha256:9ddc73740a1c2e532e2ec028d03c6ab163a87a891f403a3d312214c0f411e05e", size = 2200188 },
-    { url = "https://files.pythonhosted.org/packages/7f/05/125e99a3f8779fd7f88efac92f13fca1531f90d905cb1ab8bf3bc960894d/codegen-0.48.4-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:0abbfa9d35041b2e5c37b24d897d5bdbe684629656fbadbcede21558d06deb9e", size = 1150900 },
-    { url = "https://files.pythonhosted.org/packages/26/7f/6e0d1b1f582dee829eeacfce8b8d2ce5be22a9485c6880d676d6a4562b4f/codegen-0.48.4-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:4a788164abe05ceeebddc45b3b12e2d8143c9610622f64cb59a53e232d76fee4", size = 1142789 },
-    { url = "https://files.pythonhosted.org/packages/d1/8b/9b4c7ca931c81a620e32d327ecc495a186382ba5f7404b0c9a62712a692d/codegen-0.48.4-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:e0f5a2b74c8519e9242bb57dfa6c597df23ea73709e03d2dc0eb4c9263b04977", size = 2143658 },
-    { url = "https://files.pythonhosted.org/packages/ed/e3/cbcd8d16450aa42a82059b2d35e706016acae6c74d2aac927bc60c487e1e/codegen-0.48.4-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_34_x86_64.whl", hash = "sha256:5e6490cf30ae019734ce0d879c1e1f0d01f58aa03f0f5c649ee2332d02d0db4b", size = 2190036 },
+    { url = "https://files.pythonhosted.org/packages/b9/45/fd7e370bdda26aff8a754c7bebe01016c4328f3eb97e8f4e8d5df430e48d/codegen-0.52.8-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:1043248296fd3d348cb5493695b85244b518f052a4c70e307eacd020cc66d206", size = 1202367 },
+    { url = "https://files.pythonhosted.org/packages/ea/46/ed224aefdff37a95a8cdae4cfb512e74dbd883a3a3db76338df384dc27a7/codegen-0.52.8-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:15f1005826b46323f1cc5e57b83a138c5cc4cac374f7540a45172d387d726e27", size = 1193508 },
+    { url = "https://files.pythonhosted.org/packages/55/38/c3e15fc645eab05b4872165bda7185fbf5f6078b31dd0bf3497a41a0d954/codegen-0.52.8-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:71583aa3872143a5d8eee573001e66a6849c46e692170ed44ff0400c72515585", size = 2197801 },
+    { url = "https://files.pythonhosted.org/packages/45/36/bbdc6eedb94cdb29ae295253acc6ac33d2d42d5b083aae967e0121ab01f1/codegen-0.52.8-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_34_x86_64.whl", hash = "sha256:69069cc498622ce02369c3ab95a678780f04a6f18ffcbf4a45678f7c55fdb438", size = 2247078 },
+    { url = "https://files.pythonhosted.org/packages/0a/d8/cfcb6adbc9ce2b4e6b3d5fa216fc9140342d90771304f8005639f6884075/codegen-0.52.8-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:c8805a5a77839b4f06dd752430395b1ce0ec322fdf2a0c2834b116cf6cdab736", size = 1197783 },
+    { url = "https://files.pythonhosted.org/packages/8f/7f/1cf94f59268910f40b8b4938f638cdb6b7a4ab0b087c8e4a1cfe5dcb5a9f/codegen-0.52.8-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:f01a87b855fcc37aa19c238ff19637a4ab33b207eee8a1923b91754fef48ba22", size = 1189671 },
+    { url = "https://files.pythonhosted.org/packages/99/1c/4be8fa4290a832adda52ee59f2f93a56687bcec0b9247c52b16d2c0e06c1/codegen-0.52.8-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:167167fa3980a8d940d2b22a29ddce7a7bee5851b67ae1294af65445caaaf64f", size = 2190547 },
+    { url = "https://files.pythonhosted.org/packages/06/1b/e5cc25568174a79cf664a74922e88b95d0e2a4d6b7bed6a6c464f7754436/codegen-0.52.8-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_34_x86_64.whl", hash = "sha256:823c36c3020894f78ddb29e84e18d5110eb81b9e4787009af840ab7021fce4d9", size = 2236924 },
+]
+
+[[package]]
+name = "codegen-sdk-pink"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1d/da/0e968f5bd8d839ec30b58b681ba30781d5eb1b33a95d771e4b31f3a7cf08/codegen_sdk_pink-0.1.0.tar.gz", hash = "sha256:3be5c2caf47f40ec541cdd04558d8ddfb816ede7d7334e4a62ab3f6130f86afb", size = 322299 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/98/4c/6321af0699207ab63b750e82589f2c4d8726956da9413e30a42c7ea59641/codegen_sdk_pink-0.1.0-cp311-abi3-macosx_10_12_x86_64.whl", hash = "sha256:03f71cd48cd7547faf8233b90f01f4c41b750b4195a83a6a1b6427bee24a45a4", size = 5749136 },
+    { url = "https://files.pythonhosted.org/packages/c2/d0/39b35e45ce5683dace3e4b8c44e51a6471177708e5b3285fc1d764270ba1/codegen_sdk_pink-0.1.0-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:c4872286a1328ec546798268ab9ff3bf368c223178fecf45903cf0c667290471", size = 5807261 },
+    { url = "https://files.pythonhosted.org/packages/db/19/5aff61ba06d877f385b206a8da88c87c77f6b7cd68f0aec7b8b16813e1a9/codegen_sdk_pink-0.1.0-cp311-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:64943be3bed917d506ece1e0b5492effaa500712c5109a3937266d440ee8bb53", size = 6387801 },
+    { url = "https://files.pythonhosted.org/packages/5e/e4/6a8f7b12b20ab4cd61b833f32bbc1f7c8c86ca7332364f01f08881a4a5e2/codegen_sdk_pink-0.1.0-cp311-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:345deecefa2de455dcf1fb2bdf5ad2e71e74476b4212b1bd51f57e6904c1d7e9", size = 6231083 },
+    { url = "https://files.pythonhosted.org/packages/0d/c3/b0f7106308e278b6774275c891bb82c08e04c41f1e9abf6bdf56757cc123/codegen_sdk_pink-0.1.0-cp311-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:7c5bcf0ad41644ac980590a37178f231ba275a75ce946dcfc31fa39330c098da", size = 6543302 },
+    { url = "https://files.pythonhosted.org/packages/e0/42/fedf5eec26a06d83de5cfb39fc7072261b72311b70d5fbbd4a75deec2457/codegen_sdk_pink-0.1.0-cp311-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:b3ee15469ad58d0222dfa0ba5950cd0eb7b8b7c607912d1845950096ddcb7aad", size = 6682410 },
+    { url = "https://files.pythonhosted.org/packages/38/fc/b1479140f579bcd6bdc090e71033484fcfd3bbc76aa779906a322cb33834/codegen_sdk_pink-0.1.0-cp311-abi3-win_amd64.whl", hash = "sha256:10b9b00070b5561df80dd269524f106e44e222d1ab9a93f6cf6ca3565c0aa0f9", size = 4305666 },
 ]
 
 [[package]]
@@ -1632,7 +1649,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "1.65.4"
+version = "1.66.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1644,9 +1661,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fa/8d/1f7aace801afbbe4d6b8c7fa89b76eb9a3a8eeff38b84d4005d47b226b30/openai-1.65.4.tar.gz", hash = "sha256:0b08c58625d556f5c6654701af1023689c173eb0989ce8f73c7fd0eb22203c76", size = 359365 }
+sdist = { url = "https://files.pythonhosted.org/packages/bb/10/b19dc682c806e6735a8387f2003afe2abada9f9e5227318de642c6949524/openai-1.66.5.tar.gz", hash = "sha256:f61b8fac29490ca8fdc6d996aa6926c18dbe5639536f8c40219c40db05511b11", size = 398595 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ba/db/7bab832be24631a793492c1c61ecbf029018b99696f435db3b63d690bf1c/openai-1.65.4-py3-none-any.whl", hash = "sha256:15566d46574b94eae3d18efc2f9a4ebd1366d1d44bfc1bdafeea7a5cf8271bcb", size = 473523 },
+    { url = "https://files.pythonhosted.org/packages/c7/3b/1ba418920ecd1eae7cc4d4ac8a01711ee0879b1a57dd81d10551e5b9a2ea/openai-1.66.5-py3-none-any.whl", hash = "sha256:74be528175f8389f67675830c51a15bd51e874425c86d3de6153bf70ed6c2884", size = 571144 },
 ]
 
 [[package]]
@@ -2488,15 +2505,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.22.0"
+version = "2.23.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/81/b6/662988ecd2345bf6c3a5c306a9a3590852742eff91d0a78a143398b816f3/sentry_sdk-2.22.0.tar.gz", hash = "sha256:b4bf43bb38f547c84b2eadcefbe389b36ef75f3f38253d7a74d6b928c07ae944", size = 303539 }
+sdist = { url = "https://files.pythonhosted.org/packages/60/fd/2c5f7161dbea1fa03381f139c443b4524f3a15d58e50c96a65d19f454ba2/sentry_sdk-2.23.1.tar.gz", hash = "sha256:2288320465065f3f056630ce55936426204f96f63f1208edb79e033ed03774db", size = 316248 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/12/7f/0e4459173e9671ba5f75a48dda2442bcc48a12c79e54e5789381c8c6a9bc/sentry_sdk-2.22.0-py2.py3-none-any.whl", hash = "sha256:3d791d631a6c97aad4da7074081a57073126c69487560c6f8bffcf586461de66", size = 325815 },
+    { url = "https://files.pythonhosted.org/packages/4e/00/9a9a2ab9020ee824d787f7e82a539305bf926393fe139baedbcf34356770/sentry_sdk-2.23.1-py2.py3-none-any.whl", hash = "sha256:42ef3a6cc1db3d22cb2ab24163d75b23f291ad9892b1a8c44075ce809a32b191", size = 336327 },
 ]
 
 [[package]]
