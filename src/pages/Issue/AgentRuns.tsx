@@ -164,6 +164,16 @@ function AgentRunDetails({ runId }: { runId: string }) {
     }
     setExpandedMessageIds(newExpandedIds)
   }
+
+  // Helper to check if a string is valid JSON
+  const isJsonString = (str: string): boolean => {
+    try {
+      JSON.parse(str);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
   
   return (
     <div className="p-4 border-t border-gray-200">
@@ -174,6 +184,8 @@ function AgentRunDetails({ runId }: { runId: string }) {
           )
           .map(message => {
             const isExpanded = expandedMessageIds.has(message.id)
+            const isJson = isJsonString(message.message)
+            
             return (
               <div 
                 key={message.id} 
@@ -185,9 +197,11 @@ function AgentRunDetails({ runId }: { runId: string }) {
                   className="flex justify-between p-3 items-center cursor-pointer hover:bg-opacity-80"
                   onClick={() => toggleMessage(message.id)}
                 >
-                  <span className="font-medium capitalize">
-                    {message.type.toLowerCase() === 'agent_log' ? 'Agent' : message.type}
-                  </span>
+                  <div className="flex items-center">
+                    <span className="font-medium capitalize">
+                      {message.type.toLowerCase() === 'agent_log' ? 'Agent' : message.type}
+                    </span>
+                  </div>
                   <div className="flex items-center space-x-3">
                     <span className="text-xs text-gray-500">{dayjs(message.created).format('MMM D, YYYY h:mm A')}</span>
                     <span className="text-xs ml-2">
@@ -196,8 +210,40 @@ function AgentRunDetails({ runId }: { runId: string }) {
                   </div>
                 </div>
                 {isExpanded && (
-                  <div className="p-3 pt-0 border-t border-gray-200 whitespace-pre-wrap font-mono text-xs">
-                    {message.message}
+                  <div className="p-3 pt-0 border-t border-gray-200 font-mono text-xs">
+                    {isJson ? (
+                      <div className="space-y-1">
+                        {(() => {
+                          const jsonData = JSON.parse(message.message);
+                          const entries = Object.entries(jsonData);
+                          
+                          // Calculate the maximum key length to make columns consistent
+                          const maxKeyLength = entries.reduce(
+                            (max, [key]) => Math.max(max, key.length), 0
+                          );
+                          
+                          return entries.map(([key, value], idx) => (
+                            <div key={idx} className="flex">
+                              <span 
+                                className="font-semibold text-blue-600 text-right min-w-[100px] mr-2"
+                                style={{ width: `${maxKeyLength * 0.6 + 1}rem` }}
+                              >
+                                {key}:
+                              </span>
+                              <span className="whitespace-pre-wrap break-words flex-1">
+                                {typeof value === 'object' 
+                                  ? JSON.stringify(value, null, 2) 
+                                  : typeof value === 'string'
+                                    ? value.replace(/\\n/g, '\n')
+                                    : String(value)}
+                              </span>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    ) : (
+                      <div className="whitespace-pre-wrap">{message.message}</div>
+                    )}
                   </div>
                 )}
               </div>
