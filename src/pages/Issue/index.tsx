@@ -20,6 +20,7 @@ import { Issue, PriorityDisplay, StatusDisplay } from '../../types/types'
 import Editor from '../../components/editor/Editor'
 import DeleteModal from './DeleteModal'
 import Comments from './Comments'
+import AgentRuns from './AgentRuns'
 import debounce from 'lodash.debounce'
 import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 import { formatExternalId } from '../../utils/issueUtils'
@@ -589,7 +590,10 @@ function IssuePage() {
               />
             </div>
             <div className="border-t border-gray-200 mt-3 pt-6">
-              <Comments issue={issue} />
+              <AgentRuns issue={issue} />
+              <div className="mt-6 pt-3">
+                <Comments issue={issue} />
+              </div>
             </div>
           </div>
         </div>

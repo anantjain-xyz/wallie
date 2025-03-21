@@ -138,3 +138,27 @@ export const StatusOptions: [
     StatusDisplay[Status.CANCELED],
   ],
 ]
+
+export type AgentRun = {
+  id: string
+  issue_id: string
+  app_user_id: string
+  workspace_id: string
+  start_time: Date
+  end_time: Date | null
+  model_provider: string
+  model_name: string
+  status: string | null
+  created: Date
+  modified: Date
+}
+
+export type AgentRunMessage = {
+  id: string
+  agent_run_id: string
+  workspace_id: string
+  message: string
+  type: string
+  created: Date
+  modified: Date
+}

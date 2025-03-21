@@ -9,7 +9,9 @@ import type {
   AppUserChange,
   GithubInstallationChange,
   GithubRepositoryChange,
-  GithubBranchChange
+  GithubBranchChange,
+  AgentRunChange,
+  AgentRunMessageChange
 } from './utils/changes'
 import { postInitialSync } from './migrations'
 import { useEffect, useState } from 'react'
@@ -69,6 +71,8 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
   let githubInstallationShapeInitialSyncDone = false
   let githubRepositoryShapeInitialSyncDone = false
   let githubBranchShapeInitialSyncDone = false
+  let agentRunShapeInitialSyncDone = false
+  let agentRunMessageShapeInitialSyncDone = false
   
   let postInitialSyncDone = false
 
@@ -91,6 +95,8 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       githubInstallationShapeInitialSyncDone &&
       githubRepositoryShapeInitialSyncDone &&
       githubBranchShapeInitialSyncDone &&
+      agentRunShapeInitialSyncDone &&
+      agentRunMessageShapeInitialSyncDone &&
       !postInitialSyncDone
     ) {
       postInitialSyncDone = true
@@ -281,6 +287,56 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
     },
   })
 
+  // Agent Runs Sync
+  const agentRunUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
+  await pg.sync.syncShapeToTable({
+    shape: {
+      url: agentRunUrl.toString(),
+      params: {
+        table: 'agent_run',
+      },
+      headers: {
+        ...await getAuthHeaders(),
+        'Cache-Control': 'no-cache'
+      },
+      onError: createShapeErrorHandler(getAuthHeaders)
+    },
+    table: 'agent_run',
+    primaryKey: ['id'],
+    shapeKey: 'agent_runs',
+    useCopy: true,
+    onInitialSync: async () => {
+      agentRunShapeInitialSyncDone = true
+      await pg.exec(`ALTER TABLE agent_run ENABLE TRIGGER ALL`)
+      doPostInitialSync()
+    },
+  })
+
+  // Agent Run Messages Sync
+  const agentRunMessageUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
+  await pg.sync.syncShapeToTable({
+    shape: {
+      url: agentRunMessageUrl.toString(),
+      params: {
+        table: 'agent_run_message',
+      },
+      headers: {
+        ...await getAuthHeaders(),
+        'Cache-Control': 'no-cache'
+      },
+      onError: createShapeErrorHandler(getAuthHeaders)
+    },
+    table: 'agent_run_message',
+    primaryKey: ['id'],
+    shapeKey: 'agent_run_messages',
+    useCopy: true,
+    onInitialSync: async () => {
+      agentRunMessageShapeInitialSyncDone = true
+      await pg.exec(`ALTER TABLE agent_run_message ENABLE TRIGGER ALL`)
+      doPostInitialSync()
+    },
+  })
+
   if (!hasIssuesAtStart) {
     await postInitialSyncDonePromise
     await pg.query(`SELECT 1;`) // Do a query to ensure PGlite is idle
@@ -302,6 +358,8 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
   await pg.exec(`ALTER TABLE github_installation ENABLE TRIGGER ALL`)
   await pg.exec(`ALTER TABLE github_repository ENABLE TRIGGER ALL`)
   await pg.exec(`ALTER TABLE github_branch ENABLE TRIGGER ALL`)
+  await pg.exec(`ALTER TABLE agent_run ENABLE TRIGGER ALL`)
+  await pg.exec(`ALTER TABLE agent_run_message ENABLE TRIGGER ALL`)
 
   // Use a live query to watch for changes to the local tables that need to be synced
   pg.live.query<{
@@ -312,6 +370,8 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
     github_installation_count: number
     github_repository_count: number
     github_branch_count: number
+    agent_run_count: number
+    agent_run_message_count: number
   }>(
     `
       SELECT * FROM
@@ -321,7 +381,9 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         (SELECT count(id) as user_count FROM app_user WHERE synced = false),
         (SELECT count(id) as github_installation_count FROM github_installation WHERE synced = false),
         (SELECT count(id) as github_repository_count FROM github_repository WHERE synced = false),
-        (SELECT count(id) as github_branch_count FROM github_branch WHERE synced = false)
+        (SELECT count(id) as github_branch_count FROM github_branch WHERE synced = false),
+        (SELECT count(id) as agent_run_count FROM agent_run WHERE synced = false),
+        (SELECT count(id) as agent_run_message_count FROM agent_run_message WHERE synced = false)
     `,
     [],
     async (results) => {
@@ -332,7 +394,9 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         user_count,
         github_installation_count,
         github_repository_count,
-        github_branch_count
+        github_branch_count,
+        agent_run_count,
+        agent_run_message_count
       } = results.rows[0]
       if (
         issue_count > 0 ||
@@ -341,7 +405,9 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         user_count > 0 ||
         github_installation_count > 0 ||
         github_repository_count > 0 ||
-        github_branch_count > 0
+        github_branch_count > 0 ||
+        agent_run_count > 0 ||
+        agent_run_message_count > 0
       ) {
         await syncMutex.acquire()
         try {
@@ -490,6 +556,40 @@ async function doSyncToServer(pg: PGliteWithLive & PGliteWithSync, getAuthHeader
         FROM github_branch
         WHERE synced = false AND sent_to_server = false
       `)
+      const agentRunRes = await tx.query<AgentRunChange>(`
+        SELECT
+          id,
+          issue_id,
+          app_user_id,
+          workspace_id,
+          start_time,
+          end_time,
+          model_provider,
+          model_name,
+          status,
+          modified,
+          created,
+          modified_columns,
+          deleted,
+          new
+        FROM agent_run
+        WHERE synced = false AND sent_to_server = false
+      `)
+      const agentRunMessageRes = await tx.query<AgentRunMessageChange>(`
+        SELECT
+          id,
+          agent_run_id,
+          workspace_id,
+          message,
+          type,
+          modified,
+          created,
+          modified_columns,
+          deleted,
+          new
+        FROM agent_run_message
+        WHERE synced = false AND sent_to_server = false
+      `)
       return {
         issues: issueRes.rows,
         comments: commentRes.rows,
@@ -498,6 +598,8 @@ async function doSyncToServer(pg: PGliteWithLive & PGliteWithSync, getAuthHeader
         githubInstallations: githubInstallationRes.rows,
         githubRepositories: githubRepositoryRes.rows,
         githubBranches: githubBranchRes.rows,
+        agentRuns: agentRunRes.rows,
+        agentRunMessages: agentRunMessageRes.rows,
       }
     })
 
@@ -665,6 +767,48 @@ async function doSyncToServer(pg: PGliteWithLive & PGliteWithSync, getAuthHeader
                 : (() => {
                     console.error(`Invalid modified date for github branch ${branch.id}:`, branch.modified)
                     return branch.modified || new Date() // Fallback only if modified is null/undefined
+                  })()
+          ]
+        )
+      }
+
+      for (const agentRun of changeSet.agentRuns) {
+        await tx.query(
+          `
+          UPDATE agent_run
+          SET sent_to_server = true
+          WHERE id = $1 AND modified = $2
+        `,
+          [
+            agentRun.id,
+            agentRun.modified instanceof Date
+              ? agentRun.modified
+              : typeof agentRun.modified === 'string'
+                ? new Date(agentRun.modified)
+                : (() => {
+                    console.error(`Invalid modified date for agent run ${agentRun.id}:`, agentRun.modified)
+                    return agentRun.modified || new Date() // Fallback only if modified is null/undefined
+                  })()
+          ]
+        )
+      }
+
+      for (const agentRunMessage of changeSet.agentRunMessages) {
+        await tx.query(
+          `
+          UPDATE agent_run_message
+          SET sent_to_server = true
+          WHERE id = $1 AND modified = $2
+        `,
+          [
+            agentRunMessage.id,
+            agentRunMessage.modified instanceof Date
+              ? agentRunMessage.modified
+              : typeof agentRunMessage.modified === 'string'
+                ? new Date(agentRunMessage.modified)
+                : (() => {
+                    console.error(`Invalid modified date for agent run message ${agentRunMessage.id}:`, agentRunMessage.modified)
+                    return agentRunMessage.modified || new Date() // Fallback only if modified is null/undefined
                   })()
           ]
         )
