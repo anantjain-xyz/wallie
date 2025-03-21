@@ -59,6 +59,15 @@ export default {
       8: '8px',
     },
     extend: {
+      keyframes: {
+        'spin-fast': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+      },
+      animation: {
+        'spin-fast': 'spin-fast 0.4s linear infinite',
+      },
       boxShadow: {
         modal: 'rgb(0 0 0 / 9%) 0px 3px 12px',
         'large-modal': 'rgb(0 0 0 / 50%) 0px 16px 70px',

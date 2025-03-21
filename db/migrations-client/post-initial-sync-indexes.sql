@@ -9,3 +9,16 @@ CREATE INDEX IF NOT EXISTS "comment_issue_id_idxx" ON "comment" ("issue_id");
 CREATE INDEX IF NOT EXISTS "comment_created_idx" ON "comment" ("created");
 CREATE INDEX IF NOT EXISTS "comment_deleted_idx" ON "comment" ("deleted");
 CREATE INDEX IF NOT EXISTS "comment_synced_idx" ON "comment" ("synced");
+
+-- Indexes for agent_run table
+CREATE INDEX IF NOT EXISTS "agent_run_issue_id_idx" ON "agent_run" ("issue_id");
+CREATE INDEX IF NOT EXISTS "agent_run_workspace_id_idx" ON "agent_run" ("workspace_id");
+CREATE INDEX IF NOT EXISTS "agent_run_app_user_id_idx" ON "agent_run" ("app_user_id");
+CREATE INDEX IF NOT EXISTS "agent_run_deleted_idx" ON "agent_run" ("deleted");
+CREATE INDEX IF NOT EXISTS "agent_run_synced_idx" ON "agent_run" ("synced");
+
+-- Indexes for agent_run_message table
+CREATE INDEX IF NOT EXISTS "agent_run_message_agent_run_id_idx" ON "agent_run_message" ("agent_run_id");
+CREATE INDEX IF NOT EXISTS "agent_run_message_workspace_id_idx" ON "agent_run_message" ("workspace_id");
+CREATE INDEX IF NOT EXISTS "agent_run_message_deleted_idx" ON "agent_run_message" ("deleted");
+CREATE INDEX IF NOT EXISTS "agent_run_message_synced_idx" ON "agent_run_message" ("synced");
