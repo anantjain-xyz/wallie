@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLiveQuery } from '@electric-sql/pglite-react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -30,6 +30,16 @@ function AgentRuns({ issue }: AgentRunsProps) {
     ORDER BY ar.start_time DESC
   `
   const agentRuns = agentRunsResults?.rows || []
+
+  // Auto-expand the first run with "Started" status
+  useEffect(() => {
+    if (agentRuns.length > 0) {
+      const startedRun = agentRuns.find(run => run.status?.toLowerCase() === 'started')
+      if (startedRun) {
+        setExpandedRunId(startedRun.id)
+      }
+    }
+  }, [agentRuns])
 
   // Handle toggling the expanded state for a run
   const toggleExpandRun = (runId: string) => {
