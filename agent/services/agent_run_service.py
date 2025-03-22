@@ -1,4 +1,5 @@
 import uuid
+import json
 from typing import Optional
 from ..logging_config import get_logger
 
@@ -42,6 +43,18 @@ async def set_agent_run_status(conn, agent_run_id, status):
 
 async def store_agent_run_message(conn, agent_run_id, workspace_id, message, message_type):
     """Store an agent run message in the database"""
+
+    # Sometimes, an individual message can come as a list.
+    # If so, we want to store each item in the list as a separate message.
+    if isinstance(message, list):
+        for item in message:
+            await store_agent_run_message(conn, agent_run_id, workspace_id, item, message_type)
+        return
+    
+    # Check if message is already a dict
+    if isinstance(message, dict):
+       message = json.dumps(message)
+    
     message_id = str(uuid.uuid4())
     
     await conn.execute(
