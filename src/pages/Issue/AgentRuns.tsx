@@ -128,7 +128,7 @@ function AgentRuns({ issue }: AgentRunsProps) {
               </div>
               
               {isExpanded && (
-                <AgentRunDetails runId={run.id} />
+                <AgentRunDetails runId={run.id} runStatus={run.status} />
               )}
             </div>
           )
@@ -139,7 +139,7 @@ function AgentRuns({ issue }: AgentRunsProps) {
 }
 
 // Component to display the details of an agent run when expanded
-function AgentRunDetails({ runId }: { runId: string }) {
+function AgentRunDetails({ runId, runStatus }: { runId: string, runStatus: string }) {
   const [expandedMessageIds, setExpandedMessageIds] = useState<Set<string>>(new Set())
   
   // Query for messages associated with this agent run
@@ -154,9 +154,19 @@ function AgentRunDetails({ runId }: { runId: string }) {
     WHERE agent_run_id = ${runId}
     ORDER BY created ASC
   `
-  const messages = messagesResults?.rows || []
+  const unfilteredMessages = messagesResults?.rows || []
+  const messages = unfilteredMessages.filter(message => 
+    !['prompt', 'pr_info', 'response'].includes(message.type.toLowerCase())
+  )
   
   if (messages.length === 0) {
+    if (runStatus === 'started') {
+      return (
+        <div className="p-4 text-sm text-gray-500">
+          Setting up...
+        </div>
+      )
+    }
     return (
       <div className="p-4 text-sm text-gray-500">
         No details available for this run.
@@ -189,9 +199,6 @@ function AgentRunDetails({ runId }: { runId: string }) {
     <div className="p-4 border-t border-gray-200">
       <div className="space-y-3">
         {messages
-          .filter(message => 
-            !['prompt', 'pr_info', 'response'].includes(message.type.toLowerCase())
-          )
           .map(message => {
             const isExpanded = expandedMessageIds.has(message.id)
             const isJson = isJsonString(message.message)
