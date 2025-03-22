@@ -5,7 +5,9 @@ from typing import Any, Dict, Union
 from codegen.agents.data import BaseMessage
 from codegen.agents.loggers import ExternalLogger
 from .agent_run_service import store_agent_run_message
+from ..config import DATABASE_URL
 from ..logging_config import get_logger
+import asyncpg
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -56,6 +58,7 @@ class AgentRunMessageRecorder(ExternalLogger):
             
             # Check if we have messages to flush
             messages_to_flush = []
+            logger.info(f"Checking for messages to flush: {len(self.messages)}")
             with self.message_lock:
                 if self.messages:
                     # Take all current messages
@@ -63,6 +66,7 @@ class AgentRunMessageRecorder(ExternalLogger):
                     self.messages = []
             
             if messages_to_flush:
+                logger.info(f"Messages to flush: {len(messages_to_flush)}")
                 # Create a new event loop for this thread
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
@@ -72,31 +76,56 @@ class AgentRunMessageRecorder(ExternalLogger):
                     loop.run_until_complete(self._flush_messages(messages_to_flush))
                 except Exception as e:
                     logger.error(f"Background flush error: {str(e)}")
+                    # Put messages back in queue if flush failed
+                    with self.message_lock:
+                        self.messages = messages_to_flush + self.messages
                 finally:
                     loop.close()
     
     async def _flush_messages(self, messages):
         """Flush a batch of messages to the database"""
+        logger.info(f"Flushing messages: {len(messages)}")
         if not messages:
             return
             
+        # Create a dedicated connection for this thread
+        conn = None
         try:
-            # Get a new DB connection for this flush
-            from ..db.connection import db_pool
-            async with db_pool.acquire() as conn:
-                for message in messages:
-                    try:
-                        await store_agent_run_message(
-                            conn, 
-                            self.agent_run_id, 
-                            self.workspace_id, 
-                            message, 
-                            "agent_log"
-                        )
-                    except Exception as e:
-                        logger.error(f"Failed to store agent message: {str(e)}")
+            # Check if DATABASE_URL is configured
+            if not DATABASE_URL:
+                logger.error("DATABASE_URL not configured. Cannot connect to database.")
+                raise Exception("DATABASE_URL not configured")
+                
+            # Create a new connection directly, not using the shared pool
+            # This is because we're in a different thread than the main one
+            # and we don't want to use the shared pool.
+            logger.info(f"Creating new database connection for thread...")
+            conn = await asyncpg.connect(DATABASE_URL)
+            logger.info(f"Successfully created database connection")
+            
+            # Process each message
+            for message in messages:
+                logger.info(f"Storing message: {message[:50]}...")
+                try:
+                    await store_agent_run_message(
+                        conn, 
+                        self.agent_run_id, 
+                        self.workspace_id, 
+                        message, 
+                        "agent_log"
+                    )
+                    logger.info(f"Stored message in database: {message[:50]}...")
+                except Exception as e:
+                    logger.error(f"Failed to store agent message: {str(e)}")
         except Exception as e:
-            logger.error(f"Error acquiring database connection: {str(e)}")
+            logger.error(f"Error connecting to database: {str(e)}")
+            # Re-raise to be caught by the calling function
+            raise
+        finally:
+            # Close connection when done
+            if conn:
+                logger.info("Closing thread database connection")
+                await conn.close()
     
     async def save_remaining_messages(self, conn):
         """Save any remaining messages that haven't been flushed yet"""
@@ -118,6 +147,7 @@ class AgentRunMessageRecorder(ExternalLogger):
                     message, 
                     "agent_log"
                 )
+                logger.info(f"Stored remaining message in database: {message[:50]}...")
             except Exception as e:
                 logger.error(f"Failed to store agent message: {str(e)}")
                 
