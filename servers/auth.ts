@@ -101,6 +101,9 @@ export async function getWorkspaceIdFromUser(userId: string): Promise<string | n
           NOW(),
           NOW()
         )
+        ON CONFLICT (url) DO UPDATE SET
+          allowlisted_domains = array_cat(workspace.allowlisted_domains, ${[domain]}),
+          modified = NOW()
         RETURNING *
       `;
       
@@ -130,6 +133,8 @@ export async function getWorkspaceIdFromUser(userId: string): Promise<string | n
           NOW(),
           NOW()
         )
+        ON CONFLICT (email, workspace_id) DO UPDATE SET
+          modified = NOW()
       `;
       
       workspace = newWorkspaces[0];
@@ -148,14 +153,18 @@ export async function getWorkspaceIdFromUser(userId: string): Promise<string | n
         username,
         full_name,
         profile_picture,
-        workspace_id
+        workspace_id,
+        created,
+        modified
       ) VALUES (
         ${uuidv4()},
         ${email},
         ${null},
         ${user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || null},
         ${user.imageUrl || null},
-        ${workspace.id}
+        ${workspace.id},
+        NOW(),
+        NOW()
       )
       ON CONFLICT (email, workspace_id) DO UPDATE SET
         full_name = COALESCE(app_user.full_name, EXCLUDED.full_name),
