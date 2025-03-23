@@ -2,19 +2,65 @@ import asyncio
 from ..config import POLLING_INTERVAL_SECONDS, ERROR_RETRY_SECONDS
 from ..logging_config import get_logger
 from ..db.connection import db_pool, get_db
-from ..db.queries import get_last_modified_issue_timestamp, get_new_issues
 from ..data import Issue
 from .comment_service import add_agent_comment, is_last_comment_from_wallie, is_last_comment_retry_request
 from .issue_service import set_issue_in_progress
 from .agent_service import process_issue
 import pytz
 from datetime import datetime
+from typing import Optional, List, Dict, Any
 
 # Get logger for this module
 logger = get_logger(__name__)
 
 # Global variable to store the last checked timestamp
 last_checked_timestamp = None
+
+async def get_last_modified_issue_timestamp():
+    """Get the timestamp of the most recent issue modification"""
+    # Get the current db_pool from the connection module
+    from ..db.connection import db_pool
+    
+    if not db_pool:
+        logger.error("Database connection pool not available. Cannot get latest issue timestamp.")
+        return None
+        
+    try:
+        async with db_pool.acquire() as conn:
+            result = await conn.fetchval("SELECT MAX(modified) FROM issue")
+            # If no result, use current time with UTC timezone
+            if not result:
+                result = datetime.now(pytz.UTC)
+            # If result is naive (no timezone), assume it's in UTC
+            elif result.tzinfo is None:
+                result = pytz.UTC.localize(result)
+            return result
+    except Exception as e:
+        logger.error(f"Error getting latest issue timestamp: {str(e)}")
+        return None
+
+async def get_new_issues(timestamp):
+    """Get all issues modified after the given timestamp"""
+    # Get the current db_pool from the connection module
+    from ..db.connection import db_pool
+    
+    if not db_pool:
+        logger.error("Database connection pool not available. Cannot get new issues.")
+        return []
+        
+    try:
+        async with db_pool.acquire() as conn:
+            query = """
+                SELECT i.id, i.title, i.description, i.modified, i.workspace_id, i.github_repository_id, i.assignee_id, i.status, i.estimate, i.external_id
+                FROM issue i
+                WHERE i.modified > $1 OR ($1 IS NULL)
+                ORDER BY i.modified ASC
+            """
+            rows = await conn.fetch(query, timestamp)
+            return rows
+    except Exception as e:
+        logger.error(f"Error getting new issues: {str(e)}")
+        return []
 
 async def _monitor_issues_task():
     """Background task to monitor for new issues in the database"""

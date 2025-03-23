@@ -20,8 +20,7 @@ agent/
 ├── config.py              # Configuration and environment variables
 ├── db/                    # Database-related code
 │   ├── __init__.py
-│   ├── connection.py      # Database connection management
-│   └── queries.py         # SQL queries and database operations
+│   └── connection.py      # Database connection management
 ├── services/              # Business logic services
 │   ├── __init__.py
 │   ├── issue_monitor.py   # Issue monitoring service

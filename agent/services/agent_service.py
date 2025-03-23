@@ -26,12 +26,33 @@ from .agent_message_recorder import AgentRunMessageRecorder
 from ..logging_config import get_logger
 from dataclasses import dataclass
 from typing import Optional
+from uuid import UUID
 
 # Get the API server URL from environment variables
 API_SERVER_URL = os.environ.get('VITE_API_SERVER_URL', 'http://localhost:3003')
 
 # Get logger for this module
 logger = get_logger(__name__)
+
+async def get_agent_user_id(conn, workspace_id: UUID):
+    """Get the agent user ID for the given workspace"""
+    try:
+        agent_user_query = """
+            SELECT id FROM app_user 
+            WHERE username = 'wallie'
+            AND workspace_id = $1
+            LIMIT 1
+        """
+        agent_user_id = await conn.fetchval(agent_user_query, workspace_id)
+        
+        if not agent_user_id:
+            logger.error(f"Agent user not found in workspace {workspace_id}")
+            raise Exception(f"Agent user not found in workspace {workspace_id}")
+        
+        return agent_user_id
+    except Exception as e:
+        logger.error(f"Error getting agent user ID: {str(e)}")
+        raise
 
 @dataclass
 class CodebaseSetupResult:
@@ -109,7 +130,6 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
 
     # Create agent run record
     from ..db.connection import db_pool
-    from ..db.queries import get_agent_user_id
     
     async with db_pool.acquire() as conn:
         # Get the agent user ID
