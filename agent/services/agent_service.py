@@ -21,8 +21,8 @@ from ..db.connection import db_pool
 from .comment_service import add_agent_comment, get_comments_for_issue
 from .issue_service import set_issue_in_review, update_issue_description
 from .repository_service import get_repository_language
-from .agent_run_service import create_agent_run, set_agent_run_status, store_agent_run_message
-from .agent_message_recorder import AgentRunMessageRecorder
+from .agent_run_service import create_agent_run, set_agent_run_status
+from .agent_run_message_service import store_agent_run_message, AgentRunMessageRecorder
 from ..logging_config import get_logger
 from dataclasses import dataclass
 from typing import Optional

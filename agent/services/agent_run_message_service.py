@@ -2,15 +2,45 @@ import asyncio
 import threading
 import time
 from typing import Any, Dict, Union
+import uuid
+import json
 from codegen.agents.data import BaseMessage
 from codegen.agents.loggers import ExternalLogger
-from .agent_run_service import store_agent_run_message
 from ..config import DATABASE_URL
 from ..logging_config import get_logger
 import asyncpg
 
 # Get logger for this module
 logger = get_logger(__name__)
+
+async def store_agent_run_message(conn, agent_run_id, workspace_id, message, message_type):
+    """Store an agent run message in the database"""
+
+    # Sometimes, an individual message can come as a list.
+    # If so, we want to store each item in the list as a separate message.
+    if isinstance(message, list):
+        for item in message:
+            await store_agent_run_message(conn, agent_run_id, workspace_id, item, message_type)
+        return
+    
+    # Check if message is already a dict
+    if isinstance(message, dict):
+       message = json.dumps(message)
+    
+    message_id = str(uuid.uuid4())
+    
+    await conn.execute(
+        """
+        INSERT INTO agent_run_message (
+            id, agent_run_id, workspace_id, message, type, 
+            created, modified
+        ) VALUES (
+            $1, $2, $3, $4, $5, NOW(), NOW()
+        )
+        """,
+        message_id, agent_run_id, workspace_id, message, message_type
+    )
+    return message_id
 
 class AgentRunMessageRecorder(ExternalLogger):
     """Logger that records agent messages to the database"""
@@ -153,4 +183,4 @@ class AgentRunMessageRecorder(ExternalLogger):
                 
         # Wait for background thread to finish
         if self.flush_thread.is_alive():
-            self.flush_thread.join(timeout=2) 
+            self.flush_thread.join(timeout=2)
