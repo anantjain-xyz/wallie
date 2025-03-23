@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { validateAuth } from './auth';
+import { validateProxyAuth } from './auth';
 import { createClerkClient } from '@clerk/backend';
 import postgres from 'postgres';
 import type { Context } from 'hono';
@@ -30,7 +30,7 @@ vi.mock('@hono/clerk-auth', () => ({
   clerkMiddleware: vi.fn(() => vi.fn()),
 }));
 
-describe('validateAuth', () => {
+describe('validateProxyAuth', () => {
   let mockContext: Context;
 
   beforeEach(() => {
@@ -51,7 +51,7 @@ describe('validateAuth', () => {
     const { getAuth } = await import('@hono/clerk-auth');
     (getAuth as any).mockReturnValue({ userId: null });
 
-    const response = await validateAuth(mockContext);
+    const response = await validateProxyAuth(mockContext);
     expect(response).toBeInstanceOf(Response);
     if (!(response instanceof Response)) throw new Error('Expected Response');
     expect(response.status).toBe(401);
@@ -70,11 +70,11 @@ describe('validateAuth', () => {
       lastName: 'User'
     });
 
-    const response = await validateAuth(mockContext);
+    const response = await validateProxyAuth(mockContext);
     expect(response).toBeInstanceOf(Response);
     if (!(response instanceof Response)) throw new Error('Expected Response');
     expect(response.status).toBe(401);
-    expect(await response.text()).toBe('Unauthorized - Invalid workspace access');
+    expect(await response.text()).toBe('Unauthorized - User not found');
   });
 
   it('should return 401 when user not found in database', async () => {
@@ -95,14 +95,14 @@ describe('validateAuth', () => {
 
     mockSql.mockResolvedValue([]);
 
-    const response = await validateAuth(mockContext);
+    const response = await validateProxyAuth(mockContext);
     expect(response).toBeInstanceOf(Response);
     if (!(response instanceof Response)) throw new Error('Expected Response');
     expect(response.status).toBe(401);
-    expect(await response.text()).toBe('Unauthorized - Invalid workspace access');
+    expect(await response.text()).toBe('Unauthorized - User not found');
   });
 
-  it('should return 401 when workspace access is invalid', async () => {
+  it('should return null even when workspace ID in DB differs from URL (validateProxyAuth handles this)', async () => {
     const { getAuth } = await import('@hono/clerk-auth');
     (getAuth as any).mockReturnValue({ userId: 'user_123' });
 
@@ -120,11 +120,8 @@ describe('validateAuth', () => {
 
     mockSql.mockResolvedValue([{ workspace_id: '456' }]); // Different workspace_id than requested
 
-    const response = await validateAuth(mockContext);
-    expect(response).toBeInstanceOf(Response);
-    if (!(response instanceof Response)) throw new Error('Expected Response');
-    expect(response.status).toBe(401);
-    expect(await response.text()).toBe('Unauthorized - Invalid workspace access');
+    const response = await validateProxyAuth(mockContext);
+    expect(response).toBeNull();
   });
 
   it('should return null when authentication and workspace access are valid', async () => {
@@ -145,7 +142,7 @@ describe('validateAuth', () => {
 
     mockSql.mockResolvedValue([{ workspace_id: '123' }]);
 
-    const response = await validateAuth(mockContext);
+    const response = await validateProxyAuth(mockContext);
     expect(response).toBeNull();
   });
 
@@ -155,10 +152,10 @@ describe('validateAuth', () => {
 
     mockGetUser.mockRejectedValue(new Error('Clerk API error'));
 
-    const response = await validateAuth(mockContext);
+    const response = await validateProxyAuth(mockContext);
     expect(response).toBeInstanceOf(Response);
     if (!(response instanceof Response)) throw new Error('Expected Response');
     expect(response.status).toBe(401);
-    expect(await response.text()).toBe('Unauthorized - Invalid workspace access');
+    expect(await response.text()).toBe('Unauthorized - User not found');
   });
-}); 
+});
