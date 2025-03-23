@@ -273,6 +273,14 @@ function AgentRunDetails({ runId, runStatus }: { runId: string, runStatus: strin
             )
           })
         }
+        {runStatus?.toLowerCase() === 'started' && (
+          <div className="rounded-md text-sm bg-gray-50">
+            <div className="p-3 flex items-center">
+              <ImSpinner2 className="mr-2 animate-spin-fast text-blue-500" />
+              <span className="font-medium text-gray-700">Vibing...</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
