@@ -475,6 +475,8 @@ async function doSyncToServer(pg: PGliteWithLive & PGliteWithSync, getAuthHeader
           assignee_id,
           estimate,
           external_id,
+          plan,
+          design,
           modified,
           created,
           kanbanorder,

@@ -27,6 +27,7 @@ import { formatExternalId } from '../../utils/issueUtils'
 import { useHotkeys } from 'react-hotkeys-hook'
 import Tooltip from '../../components/Tooltip'
 import { showInfo } from '../../utils/notification.tsx'
+import CollapsibleSection from '../../components/CollapsibleSection'
 const debounceTime = 500
 
 function IssuePage() {
@@ -41,6 +42,10 @@ function IssuePage() {
   const titleIsDirty = useRef(false)
   const [dirtyDescription, setDirtyDescription] = useState<string | null>(null)
   const descriptionIsDirty = useRef(false)
+  const [dirtyPlan, setDirtyPlan] = useState<string | null>(null)
+  const planIsDirty = useRef(false)
+  const [dirtyDesign, setDirtyDesign] = useState<string | null>(null)
+  const designIsDirty = useRef(false)
 
   // Query for assignee information - always call this hook
   const assigneeResults = useLiveQuery.sql<{
@@ -180,6 +185,34 @@ function IssuePage() {
     }, debounceTime),
     [pg]
   )
+  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handlePlanChangeDebounced = useCallback(
+    debounce(async (plan: string) => {
+      pg.sql`
+        UPDATE issue 
+        SET plan = ${plan}, modified = NOW()
+        WHERE id = ${issue.id}
+      `
+      // We can't set planIsDirty.current = false here because we haven't yet received
+      // the updated issue from the db
+    }, debounceTime),
+    [pg]
+  )
+  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleDesignChangeDebounced = useCallback(
+    debounce(async (design: string) => {
+      pg.sql`
+        UPDATE issue 
+        SET design = ${design}, modified = NOW()
+        WHERE id = ${issue.id}
+      `
+      // We can't set designIsDirty.current = false here because we haven't yet received
+      // the updated issue from the db
+    }, debounceTime),
+    [pg]
+  )
 
   // Query for comments associated with this issue
   const commentsResults = useLiveQuery.sql<{
@@ -198,21 +231,32 @@ function IssuePage() {
   `
   const comments = commentsResults?.rows || []
 
+  // Check if dirty fields match actual fields and reset if they do
+  useEffect(() => {
+    if (issue) {
+      if (dirtyTitle === issue.title) {
+        setDirtyTitle(null)
+        titleIsDirty.current = false
+      }
+      if (dirtyDescription === issue.description) {
+        setDirtyDescription(null)
+        descriptionIsDirty.current = false
+      }
+      if (dirtyPlan === issue.plan) {
+        setDirtyPlan(null)
+        planIsDirty.current = false
+      }
+      if (dirtyDesign === issue.design) {
+        setDirtyDesign(null)
+        designIsDirty.current = false
+      }
+    }
+  }, [issue, dirtyTitle, dirtyDescription, dirtyPlan, dirtyDesign])
+
   if (issue === undefined) {
     return <div className="p-8 w-full text-center">Loading...</div>
   } else if (issue === null) {
     return <div className="p-8 w-full text-center">Issue not found</div>
-  }
-
-  // We check if the dirty title or description is the same as the actual title or
-  // description, and if so, we can switch back to the non-dirty version
-  if (dirtyTitle === issue.title) {
-    setDirtyTitle(null)
-    titleIsDirty.current = false
-  }
-  if (dirtyDescription === issue.description) {
-    setDirtyDescription(null)
-    descriptionIsDirty.current = false
   }
 
   const handleStatusChange = (status: string) => {
@@ -259,6 +303,20 @@ function IssuePage() {
     descriptionIsDirty.current = true
     // We debounce the description change so that we don't spam the db with updates
     handleDescriptionChangeDebounced(description)
+  }
+  
+  const handlePlanChange = (plan: string) => {
+    setDirtyPlan(plan)
+    planIsDirty.current = true
+    // We debounce the plan change so that we don't spam the db with updates
+    handlePlanChangeDebounced(plan)
+  }
+  
+  const handleDesignChange = (design: string) => {
+    setDirtyDesign(design)
+    designIsDirty.current = true
+    // We debounce the design change so that we don't spam the db with updates
+    handleDesignChangeDebounced(design)
   }
 
   const handleDelete = () => {
@@ -577,19 +635,74 @@ function IssuePage() {
               ref={titleTextareaRef}
             />
 
-            <div className="w-full max-w-full mt-2 min-h-fit p-3 ">
-              <Editor
-                className="prose font-normal appearance-none text-md rounded editor focus:outline-none"
-                value={
-                  descriptionIsDirty.current
-                    ? dirtyDescription || ``
-                    : issue.description || ``
-                }
-                onChange={(val) => handleDescriptionChange(val)}
-                placeholder="Add description..."
-              />
+            {/* Description section */}
+            <div className="w-full max-w-full mt-4 min-h-fit p-3 ">
+              <CollapsibleSection 
+                title="Description" 
+                defaultExpanded={true} 
+                previewLines={3} 
+                isEmpty={!issue.description || issue.description.trim() === ''}
+              >
+                <Editor
+                  className="prose font-normal appearance-none text-md rounded editor focus:outline-none"
+                  value={
+                    descriptionIsDirty.current
+                      ? dirtyDescription || ``
+                      : issue.description || ``
+                  }
+                  onChange={(val) => handleDescriptionChange(val)}
+                  placeholder="Add description..."
+                />
+              </CollapsibleSection>
             </div>
-            <div className="border-t border-gray-200 mt-3 pt-6">
+
+            {/* Design section - only show if it has content */}
+            {(issue.design && issue.design.trim() !== '') || designIsDirty.current ? (
+              <div className="w-full max-w-full mt-2 min-h-fit p-3 ">
+                <CollapsibleSection 
+                  title="Design" 
+                  defaultExpanded={false} 
+                  previewLines={3}
+                  isEmpty={!issue.design || issue.design.trim() === ''}
+                >
+                  <Editor
+                    className="prose font-normal appearance-none text-md rounded editor focus:outline-none"
+                    value={
+                      designIsDirty.current
+                        ? dirtyDesign || ``
+                        : issue.design || ``
+                    }
+                    onChange={(val) => handleDesignChange(val)}
+                    placeholder="Add design..."
+                  />
+                </CollapsibleSection>
+              </div>
+            ) : null}
+
+            {/* Plan section - only show if it has content */}
+            {(issue.plan && issue.plan.trim() !== '') || planIsDirty.current ? (
+              <div className="w-full max-w-full mt-2 min-h-fit p-3 ">
+                <CollapsibleSection 
+                  title="Plan" 
+                  defaultExpanded={false} 
+                  previewLines={3}
+                  isEmpty={!issue.plan || issue.plan.trim() === ''}
+                >
+                  <Editor
+                    className="prose font-normal appearance-none text-md rounded editor focus:outline-none"
+                    value={
+                      planIsDirty.current
+                        ? dirtyPlan || ``
+                        : issue.plan || ``
+                    }
+                    onChange={(val) => handlePlanChange(val)}
+                    placeholder="Add plan..."
+                  />
+                </CollapsibleSection>
+              </div>
+            ) : null}
+
+            <div className="mt-3">
               <AgentRuns issue={issue} />
               <div className="mt-6 pt-3">
                 <Comments issue={issue} />

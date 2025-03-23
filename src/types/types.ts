@@ -28,6 +28,8 @@ export type Issue = {
   assignee_id: string | null
   estimate: number | null
   external_id: number | null
+  plan: string | null
+  design: string | null
 }
 
 export type Comment = {

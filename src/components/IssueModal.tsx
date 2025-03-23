@@ -49,6 +49,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
   const [githubRepositoryId, setGithubRepositoryId] = useState<string | null>(null)
   const [assigneeId, setAssigneeId] = useState<string | null>(null)
   const [estimate, setEstimate] = useState<number | null>(null)
+  const [plan, setPlan] = useState<string | null>(null)
+  const [design, setDesign] = useState<string | null>(null)
   const { user } = useUser()
   const pg = usePGlite()
   const currentUserResult = useCurrentUser(user)
@@ -143,7 +145,9 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           github_repository_id,
           assignee_id,
           estimate,
-          external_id
+          external_id,
+          plan,
+          design
         )
         VALUES (
           ${crypto.randomUUID()},
@@ -159,7 +163,9 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           ${githubRepositoryId || null},
           ${assigneeId},
           ${estimate},
-          ${externalId}
+          ${externalId},
+          ${plan},
+          ${design}
         )
       `
 
@@ -185,6 +191,8 @@ function IssueModal({ isOpen, onDismiss }: Props) {
       setGithubRepositoryId(null)
       setAssigneeId(null)
       setEstimate(null)
+      setPlan(null)
+      setDesign(null)
     }, 250)
   }
 

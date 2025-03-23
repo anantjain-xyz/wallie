@@ -11,6 +11,8 @@ export const issueChangeSchema = z.object({
   assignee_id: z.string().nullable().optional(),
   estimate: z.number().nullable().optional(),
   external_id: z.number().nullable().optional(),
+  plan: z.string().nullable().optional(),
+  design: z.string().nullable().optional(),
   modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
   created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
   kanbanorder: z.string().nullable().optional(),

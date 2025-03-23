@@ -19,7 +19,7 @@ from ..config import ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, F
 from ..prompts import get_code_mode_prompt, get_project_mode_prompt
 from ..db.connection import db_pool
 from .comment_service import add_agent_comment, get_comments_for_issue
-from .issue_service import set_issue_in_review, update_issue_description
+from .issue_service import set_issue_in_review, update_issue_plan
 from .repository_service import get_repository_language
 from .agent_run_service import create_agent_run, set_agent_run_status
 from .agent_run_message_service import store_agent_run_message, AgentRunMessageRecorder
@@ -82,8 +82,8 @@ async def process_issue(issue: Issue):
         try:
             async with db_pool.acquire() as conn:
                 if issue.is_project_mode:
-                    await update_issue_description(conn, issue.id, result.message)
-                    pr_comment = f"✅ Project planning complete. I have updated the description with the milestones and tasks. You can now review the description, edit it if needed, and then click 'Approve' to convert tasks into issues."
+                    await update_issue_plan(conn, issue.id, result.message)
+                    pr_comment = f"✅ Project planning complete. I have updated the plan with the milestones and tasks. You can now review the plan, edit it if needed, and then click 'Approve' to convert tasks into issues."
                 else:
                     # This is a code task, so we need to add a comment with the result
                     if result.pr_url is None:
