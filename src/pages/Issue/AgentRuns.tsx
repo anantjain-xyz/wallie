@@ -27,7 +27,7 @@ function AgentRuns({ issue }: AgentRunsProps) {
     FROM agent_run ar
     LEFT JOIN app_user u ON ar.app_user_id = u.id
     WHERE ar.issue_id = ${issue?.id || '00000000-0000-0000-0000-000000000000'}
-    ORDER BY ar.start_time DESC
+    ORDER BY ar.start_time ASC
   `
   const agentRuns = agentRunsResults?.rows || []
 
@@ -45,17 +45,6 @@ function AgentRuns({ issue }: AgentRunsProps) {
   const toggleExpandRun = (runId: string) => {
     setExpandedRunId(expandedRunId === runId ? null : runId)
   }
-
-  // Format the model information for display
-  const formatModel = (provider: string, name: string) => {
-    if (provider === 'anthropic') {
-      return `Anthropic ⸱ ${name.split('/').pop()}`
-    } else if (provider === 'openai') {
-      return `OpenAI ⸱ ${name.split('/').pop()}`
-    }
-    return `${provider.charAt(0).toUpperCase() + provider.slice(1)} ⸱ ${name.split('/').pop()}`
-  }
-
   // Format status for display with proper capitalization and colors
   const formatStatus = (status: string | null) => {
     if (!status) return { text: 'Unknown', color: 'text-gray-500' }
@@ -89,6 +78,13 @@ function AgentRuns({ issue }: AgentRunsProps) {
             ? dayjs(run.end_time).diff(dayjs(run.start_time), 'second')
             : null
           
+          // Format duration to show minutes and seconds if > 60s
+          const formattedDuration = duration !== null
+            ? duration > 60 
+              ? `${Math.floor(duration / 60)}m ${duration % 60}s`
+              : `${duration}s`
+            : null
+          
           return (
             <div 
               key={run.id} 
@@ -111,9 +107,8 @@ function AgentRuns({ issue }: AgentRunsProps) {
                   </span>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <span className="text-xs">{formatModel(run.model_provider, run.model_name)}</span>
                   {duration !== null && (
-                    <span className="text-xs text-gray-500">{duration}s</span>
+                    <span className="text-xs text-gray-500">{formattedDuration}</span>
                   )}
                   <span className={`text-xs font-medium ${status.color}`}>
                     {status.text === 'Started' && (
