@@ -3,11 +3,15 @@ import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
 import { authMiddleware, validateProxyAuth } from './auth'
+import { proxyRateLimiter } from './middleware/rate-limit'
 
 const app = new Hono()
 
 // Enable CORS
 app.use('*', cors())
+
+// Add rate limiting
+app.use('/*', proxyRateLimiter)
 
 // Add auth middleware
 app.use('/*', authMiddleware)

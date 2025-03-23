@@ -3,6 +3,7 @@ import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
 import { authMiddleware } from '../auth'
+import { apiRateLimiter, githubWebhookRateLimiter } from '../middleware/rate-limit'
 import githubAuthApp from './github-auth'
 import githubWebhookApp from './github-webhook'
 
@@ -10,6 +11,16 @@ const app = new Hono()
 
 // Enable CORS
 app.use('*', cors())
+
+// Add rate limiting with different limiters based on route
+app.use('/webhook/*', githubWebhookRateLimiter)
+app.use('/*', (c, next) => {
+  // Skip rate limiting for webhook routes as they use their own limiter
+  if (c.req.path.startsWith('/webhook')) {
+    return next();
+  }
+  return apiRateLimiter(c, next);
+})
 
 // Add auth middleware for non-webhook routes
 app.use('/*', async (c, next) => {

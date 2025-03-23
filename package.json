@@ -58,6 +58,7 @@
     "dotenv": "^16.4.5",
     "fractional-indexing": "^3.2.0",
     "hono": "^4.0.0",
+    "hono-rate-limiter": "^0.4.2",
     "jsonwebtoken": "^9.0.2",
     "lodash.debounce": "^4.0.8",
     "node-fetch": "^3.3.2",

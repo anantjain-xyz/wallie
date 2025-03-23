@@ -14,6 +14,7 @@ import {
 } from '../src/utils/changes'
 import { serve } from '@hono/node-server'
 import { authMiddleware, validateWriteAuth } from './auth'
+import { writeRateLimiter } from './middleware/rate-limit'
 
 const DATABASE_URL =
   process.env.DATABASE_URL ??
@@ -26,6 +27,9 @@ const app = new Hono()
 
 // Middleware
 app.use('/*', cors())
+
+// Add rate limiting
+app.use('/*', writeRateLimiter)
 
 // Add auth middleware
 app.use('/*', authMiddleware)
