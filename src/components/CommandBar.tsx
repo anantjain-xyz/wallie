@@ -73,7 +73,7 @@ const CommandBar: React.FC<CommandBarProps> = ({
     },
     {
       id: 'create-issue',
-      label: 'Create new issue',
+      label: 'Create new',
       icon: <AddIcon className="w-3 h-3 text-gray-500" />,
       shortcut: ['c'],
       action: () => {

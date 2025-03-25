@@ -101,16 +101,13 @@ function LeftMenu() {
         </div>
 
         <div className="flex flex-col flex-shrink flex-grow overflow-y-auto mb-0.5 px-2">
-        <ItemGroup title="Workspace">
-            <Link
-              to="/?estimate=5,8,13"
-              className="flex items-center pl-6 rounded cursor-pointer group h-7 hover:bg-gray-100"
-            >
-              <ProjectsIcon className="w-3.5 h-3.5 mr-2" />
-              <span>Projects</span>
-            </Link>
-          </ItemGroup>
-
+          <Link
+            to="/?estimate=5,8,13"
+            className="flex items-center pl-0.5 rounded cursor-pointer group h-7 hover:bg-gray-100"
+          >
+            <ProjectsIcon className="w-3.5 h-3.5 mr-2" />
+            <span>Projects</span>
+          </Link>
           <ItemGroup title="Issues">
             <Link
               to="/?estimate=null,0,1,2,3"

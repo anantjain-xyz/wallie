@@ -232,7 +232,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
             <span>{workspaceName}</span>
           </span>
           <ChevronRight className="ml-1" />
-          <span className="ml-1 font-normal text-gray-700">New Issue</span>
+          <span className="ml-1 font-normal text-gray-700">New Project or Issue</span>
         </div>
         <div className="flex items-center">
           <button
@@ -245,7 +245,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         </div>
       </div>
       <div className="flex flex-col flex-1 pb-3.5 overflow-y-auto">
-        {/* Issue title */}
+        {/* Project or issue title */}
         <div className="flex items-center w-full mt-1.5 px-4">
           <StatusMenu
             id="status-menu"
@@ -263,7 +263,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           />
           <input
             className="w-full ml-1.5 text-lg font-semibold placeholder-gray-400 border-none h-7 focus:border-none focus:outline-none focus:ring-0"
-            placeholder="Issue title"
+            placeholder="Title"
             value={title}
             ref={ref}
             onChange={(e) => setTitle(e.target.value)}
