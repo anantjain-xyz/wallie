@@ -1,7 +1,7 @@
 [project]
-name = "codebase-pr-api"
+name = "wallie"
 version = "0.1.0"
-description = "A REST API that uses the Codebase agent to create PRs from tickets"
+description = "AI Agent to plan and code your projects"
 requires-python = ">=3.12, <3.14"
 dependencies = [
   "codegen==0.52.19",
