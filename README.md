@@ -1,5 +1,5 @@
 
-# Wallie
+# Wallie - AI-Powered Issue Management
 
 ## Features
 
