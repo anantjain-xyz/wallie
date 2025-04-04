@@ -164,3 +164,30 @@ export type AgentRunMessage = {
   created: Date
   modified: Date
 }
+
+export const LinkType = {
+  BLOCKED_BY: 'blocked_by',
+  SUB_ISSUE: 'sub_issue',
+  RELATED: 'related',
+  DUPLICATE: 'duplicate',
+} as const
+
+export type LinkTypeValue = (typeof LinkType)[keyof typeof LinkType]
+
+export const LinkTypeDisplay = {
+  [LinkType.BLOCKED_BY]: 'Blocked by',
+  [LinkType.SUB_ISSUE]: 'Sub-issue of',
+  [LinkType.RELATED]: 'Related to',
+  [LinkType.DUPLICATE]: 'Duplicate of',
+}
+
+export type IssueLink = {
+  id: string
+  source_issue_id: string
+  target_issue_id: string
+  link_type: LinkTypeValue
+  workspace_id: string
+  modified: Date
+  created: Date
+  synced: boolean
+}

@@ -11,7 +11,8 @@ import type {
   GithubRepositoryChange,
   GithubBranchChange,
   AgentRunChange,
-  AgentRunMessageChange
+  AgentRunMessageChange,
+  IssueLinkChange
 } from './utils/changes'
 import { postInitialSync } from './migrations'
 import { useEffect, useState } from 'react'
@@ -73,6 +74,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
   let githubBranchShapeInitialSyncDone = false
   let agentRunShapeInitialSyncDone = false
   let agentRunMessageShapeInitialSyncDone = false
+  let issueLinkShapeInitialSyncDone = false
   
   let postInitialSyncDone = false
 
@@ -97,6 +99,7 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
       githubBranchShapeInitialSyncDone &&
       agentRunShapeInitialSyncDone &&
       agentRunMessageShapeInitialSyncDone &&
+      issueLinkShapeInitialSyncDone &&
       !postInitialSyncDone
     ) {
       postInitialSyncDone = true
@@ -337,6 +340,31 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
     },
   })
 
+  // Issue Links Sync
+  const issueLinkUrl = new URL(`${PROXY_SERVER_URL}/v1/shape`)
+  await pg.sync.syncShapeToTable({
+    shape: {
+      url: issueLinkUrl.toString(),
+      params: {
+        table: 'issue_link',
+      },
+      headers: {
+        ...await getAuthHeaders(),
+        'Cache-Control': 'no-cache'
+      },
+      onError: createShapeErrorHandler(getAuthHeaders)
+    },
+    table: 'issue_link',
+    primaryKey: ['id'],
+    shapeKey: 'issue_links',
+    useCopy: true,
+    onInitialSync: async () => {
+      issueLinkShapeInitialSyncDone = true
+      await pg.exec(`ALTER TABLE issue_link ENABLE TRIGGER ALL`)
+      doPostInitialSync()
+    },
+  })
+
   if (!hasIssuesAtStart) {
     await postInitialSyncDonePromise
     await pg.query(`SELECT 1;`) // Do a query to ensure PGlite is idle
@@ -360,6 +388,7 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
   await pg.exec(`ALTER TABLE github_branch ENABLE TRIGGER ALL`)
   await pg.exec(`ALTER TABLE agent_run ENABLE TRIGGER ALL`)
   await pg.exec(`ALTER TABLE agent_run_message ENABLE TRIGGER ALL`)
+  await pg.exec(`ALTER TABLE issue_link ENABLE TRIGGER ALL`)
 
   // Use a live query to watch for changes to the local tables that need to be synced
   pg.live.query<{
@@ -372,6 +401,7 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
     github_branch_count: number
     agent_run_count: number
     agent_run_message_count: number
+    issue_link_count: number
   }>(
     `
       SELECT * FROM
@@ -383,7 +413,8 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         (SELECT count(id) as github_repository_count FROM github_repository WHERE synced = false),
         (SELECT count(id) as github_branch_count FROM github_branch WHERE synced = false),
         (SELECT count(id) as agent_run_count FROM agent_run WHERE synced = false),
-        (SELECT count(id) as agent_run_message_count FROM agent_run_message WHERE synced = false)
+        (SELECT count(id) as agent_run_message_count FROM agent_run_message WHERE synced = false),
+        (SELECT count(id) as issue_link_count FROM issue_link WHERE synced = false)
     `,
     [],
     async (results) => {
@@ -396,7 +427,8 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         github_repository_count,
         github_branch_count,
         agent_run_count,
-        agent_run_message_count
+        agent_run_message_count,
+        issue_link_count
       } = results.rows[0]
       if (
         issue_count > 0 ||
@@ -407,7 +439,8 @@ async function startWritePath(pg: PGliteWithExtensions, getAuthHeaders: () => Pr
         github_repository_count > 0 ||
         github_branch_count > 0 ||
         agent_run_count > 0 ||
-        agent_run_message_count > 0
+        agent_run_message_count > 0 ||
+        issue_link_count > 0
       ) {
         await syncMutex.acquire()
         try {
@@ -592,6 +625,21 @@ async function doSyncToServer(pg: PGliteWithLive & PGliteWithSync, getAuthHeader
         FROM agent_run_message
         WHERE synced = false AND sent_to_server = false
       `)
+      const issueLinkRes = await tx.query<IssueLinkChange>(`
+        SELECT
+          id,
+          source_issue_id,
+          target_issue_id,
+          link_type,
+          workspace_id,
+          modified,
+          created,
+          modified_columns,
+          deleted,
+          new
+        FROM issue_link
+        WHERE synced = false AND sent_to_server = false
+      `)
       return {
         issues: issueRes.rows,
         comments: commentRes.rows,
@@ -602,6 +650,7 @@ async function doSyncToServer(pg: PGliteWithLive & PGliteWithSync, getAuthHeader
         githubBranches: githubBranchRes.rows,
         agentRuns: agentRunRes.rows,
         agentRunMessages: agentRunMessageRes.rows,
+        issueLinks: issueLinkRes.rows,
       }
     })
 
@@ -811,6 +860,27 @@ async function doSyncToServer(pg: PGliteWithLive & PGliteWithSync, getAuthHeader
                 : (() => {
                     console.error(`Invalid modified date for agent run message ${agentRunMessage.id}:`, agentRunMessage.modified)
                     return agentRunMessage.modified || new Date() // Fallback only if modified is null/undefined
+                  })()
+          ]
+        )
+      }
+
+      for (const issueLink of changeSet.issueLinks) {
+        await tx.query(
+          `
+          UPDATE issue_link
+          SET sent_to_server = true
+          WHERE id = $1 AND modified = $2
+        `,
+          [
+            issueLink.id,
+            issueLink.modified instanceof Date
+              ? issueLink.modified
+              : typeof issueLink.modified === 'string'
+                ? new Date(issueLink.modified)
+                : (() => {
+                    console.error(`Invalid modified date for issue link ${issueLink.id}:`, issueLink.modified)
+                    return issueLink.modified || new Date() // Fallback only if modified is null/undefined
                   })()
           ]
         )

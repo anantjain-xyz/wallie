@@ -160,6 +160,21 @@ export const agentRunMessageChangeSchema = z.object({
 
 export type AgentRunMessageChange = z.infer<typeof agentRunMessageChangeSchema>
 
+export const issueLinkChangeSchema = z.object({
+  id: z.string(),
+  source_issue_id: z.string().nullable().optional(),
+  target_issue_id: z.string().nullable().optional(),
+  link_type: z.string().nullable().optional(),
+  workspace_id: z.string().nullable().optional(),
+  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified_columns: z.array(z.string()).nullable().optional(),
+  deleted: z.boolean().nullable().optional(),
+  new: z.boolean().nullable().optional(),
+})
+
+export type IssueLinkChange = z.infer<typeof issueLinkChangeSchema>
+
 export const changeSetSchema = z.object({
   issues: z.array(issueChangeSchema),
   comments: z.array(commentChangeSchema),
@@ -170,6 +185,7 @@ export const changeSetSchema = z.object({
   githubRepositories: z.array(githubRepositoryChangeSchema),
   githubBranches: z.array(githubBranchChangeSchema),
   agentRunMessages: z.array(agentRunMessageChangeSchema),
+  issueLinks: z.array(issueLinkChangeSchema),
 })
 
 export type ChangeSet = z.infer<typeof changeSetSchema>
