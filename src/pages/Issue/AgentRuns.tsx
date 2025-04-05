@@ -69,7 +69,7 @@ function AgentRuns({ issue }: AgentRunsProps) {
   }
 
   return (
-    <div className="mt-3 pb-6 border-b border-gray-200">
+    <div className="mt-3 p-3">
       <div className="space-y-3">
         {agentRuns.map((run) => {
           const status = formatStatus(run.status)

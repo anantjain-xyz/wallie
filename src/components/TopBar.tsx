@@ -107,7 +107,7 @@ export default function({
 
   return (
     <div className='flex items-center justify-between border-b border-gray-200 w-full'>
-      <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 h-14 lg:pl-9">
+      <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 h-14 lg:pl-8">
         {/* left section */}
         <div className="flex items-center">
           <button

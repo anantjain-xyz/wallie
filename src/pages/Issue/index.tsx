@@ -1,33 +1,39 @@
 /* eslint-disable react-compiler/react-compiler */
 import { useNavigate, useLoaderData } from 'react-router-dom'
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { LiveQuery } from '@electric-sql/pglite/live'
 import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
 import { BsTrash3 as DeleteIcon } from 'react-icons/bs'
 import { BsXLg as CloseIcon } from 'react-icons/bs'
 import { BsClipboard as CopyIcon } from 'react-icons/bs'
+import { BsLink45Deg as LinkIcon } from 'react-icons/bs'
+import { BsChevronRight as ChevronRightIcon } from 'react-icons/bs'
 import { FaGithub } from 'react-icons/fa'
 import PriorityMenu from '../../components/contextmenu/PriorityMenu'
 import StatusMenu from '../../components/contextmenu/StatusMenu'
 import GithubRepoMenu from '../../components/contextmenu/GithubRepoMenu'
 import AssigneeMenu from '../../components/contextmenu/AssigneeMenu'
 import EstimateMenu from '../../components/contextmenu/EstimateMenu'
+import IssueLinkMenu from '../../components/contextmenu/IssueLinkMenu'
 import { ReactComponent as AssigneeIcon } from '../../assets/icons/assignee.svg'
 import PriorityIcon from '../../components/PriorityIcon'
 import StatusIcon from '../../components/StatusIcon'
 import Avatar from '../../components/Avatar'
-import { Issue, PriorityDisplay, StatusDisplay } from '../../types/types'
+import { Issue, PriorityDisplay, StatusDisplay, LinkType } from '../../types/types'
 import Editor from '../../components/editor/Editor'
 import DeleteModal from './DeleteModal'
 import Comments from './Comments'
 import AgentRuns from './AgentRuns'
+import SubIssuesTable from './SubIssuesTable'
+import SidebarRelationships from './SidebarRelationships'
 import debounce from 'lodash.debounce'
 import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 import { formatExternalId } from '../../utils/issueUtils'
 import { useHotkeys } from 'react-hotkeys-hook'
 import Tooltip from '../../components/Tooltip'
-import { showInfo } from '../../utils/notification.tsx'
+import { showInfo, showError } from '../../utils/notification.tsx'
 import CollapsibleSection from '../../components/CollapsibleSection'
+import { v4 as uuidv4 } from 'uuid'
 const debounceTime = 500
 
 function IssuePage() {
@@ -253,6 +259,25 @@ function IssuePage() {
     }
   }, [issue, dirtyTitle, dirtyDescription, dirtyPlan, dirtyDesign])
 
+  // Query for parent issue if current issue is a sub-issue
+  const parentIssueResult = useLiveQuery.sql<{
+    id: string,
+    title: string,
+    external_id: number | null
+  }>`
+    SELECT 
+      i.id, 
+      i.title, 
+      i.external_id
+    FROM issue_link il
+    JOIN issue i ON il.target_issue_id = i.id
+    WHERE il.source_issue_id = ${issue?.id || '00000000-0000-0000-0000-000000000000'}
+    AND il.link_type = ${LinkType.SUB_ISSUE}
+    LIMIT 1
+  `
+  
+  const parentIssue = useMemo(() => parentIssueResult?.rows?.[0], [parentIssueResult])
+
   if (issue === undefined) {
     return <div className="p-8 w-full text-center">Loading...</div>
   } else if (issue === null) {
@@ -393,48 +418,160 @@ function IssuePage() {
     copyIssueAsMarkdown();
   }, { enableOnFormTags: true }, [copyIssueAsMarkdown]);
 
+  // Add a function to handle creating issue links
+  const handleCreateIssueLink = async (linkType: string, targetIssueId: string) => {
+    if (!issue) return;
+    
+    try {
+      // Generate a new UUID for the link
+      const linkId = uuidv4();
+      
+      // Check if this is an inverse relationship (where the current issue is the target)
+      const isInverseRelationship = linkType.includes(':inverse');
+      
+      // Remove the ':inverse' suffix if present
+      const actualLinkType = isInverseRelationship ? linkType.split(':')[0] : linkType;
+      
+      if (isInverseRelationship) {
+        // For inverse relationships, swap source and target
+        await pg.sql`
+          INSERT INTO issue_link (
+            id, 
+            source_issue_id, 
+            target_issue_id, 
+            link_type, 
+            workspace_id, 
+            modified, 
+            created
+          ) 
+          VALUES (
+            ${linkId},
+            ${targetIssueId},
+            ${issue.id},
+            ${actualLinkType},
+            ${issue.workspace_id || '00000000-0000-0000-0000-000000000000'},
+            NOW(),
+            NOW()
+          )
+        `;
+      } else {
+        // Normal relationship - current issue is the source
+        await pg.sql`
+          INSERT INTO issue_link (
+            id, 
+            source_issue_id, 
+            target_issue_id, 
+            link_type, 
+            workspace_id, 
+            modified, 
+            created
+          ) 
+          VALUES (
+            ${linkId},
+            ${issue.id},
+            ${targetIssueId},
+            ${actualLinkType},
+            ${issue.workspace_id || '00000000-0000-0000-0000-000000000000'},
+            NOW(),
+            NOW()
+          )
+        `;
+      }
+      
+      showInfo('Issue link created successfully', 'Created link');
+    } catch (error) {
+      console.error('Error creating issue link:', error);
+      showError('Failed to create issue link', 'Error');
+    }
+  };
+
+  // Function to handle removing an issue link
+  const handleRemoveIssueLink = async (linkId: string) => {
+    try {
+      await pg.sql`
+        DELETE FROM issue_link
+        WHERE id = ${linkId}
+      `
+      showInfo('Issue link removed', 'Removed link')
+    } catch (error) {
+      console.error('Error removing issue link:', error)
+      showError('Failed to remove issue link', 'Error')
+    }
+  }
+
   return (
     <>
       <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex flex-col">
-          <div className="flex justify-between flex-shrink-0 pr-6 border-b border-gray-200 h-14 pl-3 md:pl-5 lg:pl-9">
-            <div className="flex items-center">
-              <span className="font-semibold me-2">Issue</span>
-              {issue.external_id !== null && (
-                <span className="text-gray-400 me-2 font-mono">{formatExternalId(workspaceName, issue.external_id)}</span>
-              )}
-            </div>
+          <div className="flex flex-col flex-shrink-0 border-b border-gray-200">
+            <div className="flex justify-between flex-shrink-0 pr-6 h-14 pl-3 md:pl-5 lg:pl-8 items-center">
+              <div className="flex items-center">
+                {/* Integrated breadcrumb with issue title */}
+                <div className="flex items-center">
+                  {parentIssue && (
+                    <>
+                      <button 
+                        onClick={() => navigate(`/issue/${parentIssue.id}`)}
+                        className="font-mono hover:text-gray-800 text-gray-600 truncate max-w-[150px]"
+                      >
+                        {parentIssue.external_id !== null 
+                          ? formatExternalId(workspaceName, parentIssue.external_id)
+                          : parentIssue.id.substring(0, 8)}
+                      </button>
+                      <ChevronRightIcon className="h-4 w-4 mx-2 text-gray-500" />
+                    </>
+                  )}
+                  {issue.external_id !== null && (
+                    <span className="text-gray-600 font-mono">{formatExternalId(workspaceName, issue.external_id)}</span>
+                  )}
+                </div>
+              </div>
 
-            <div className="flex items-center">
-              <Tooltip content="Copy as markdown" shortcut="⌘⌥C">
+              <div className="flex items-center">
+                <IssueLinkMenu
+                  id={`issue-link-menu-${issue?.id}`}
+                  button={
+                    <Tooltip content="Add issue links">
+                      <button
+                        type="button"
+                        className="p-2 rounded hover:bg-gray-100"
+                      >
+                        <LinkIcon size={18} />
+                      </button>
+                    </Tooltip>
+                  }
+                  currentIssueId={issue.id}
+                  onSelect={handleCreateIssueLink}
+                />
+                <Tooltip content="Copy as markdown" shortcut="⌘⌥C">
+                  <button
+                    type="button"
+                    className="p-2 rounded hover:bg-gray-100 ml-2"
+                    onClick={copyIssueAsMarkdown}
+                  >
+                    <CopyIcon size={14} />
+                  </button>
+                </Tooltip>
                 <button
                   type="button"
-                  className="p-2 rounded hover:bg-gray-100"
-                  onClick={copyIssueAsMarkdown}
+                  className="p-2 rounded hover:bg-gray-100 ml-2"
+                  onClick={() => setShowDeleteModal(true)}
                 >
-                  <CopyIcon size={14} />
+                  <DeleteIcon size={14} />
                 </button>
-              </Tooltip>
-              <button
-                type="button"
-                className="p-2 rounded hover:bg-gray-100 ml-2"
-                onClick={() => setShowDeleteModal(true)}
-              >
-                <DeleteIcon size={14} />
-              </button>
-              <button
-                type="button"
-                className="ms-2 p-2 rounded hover:bg-gray-100"
-                onClick={handleClose}
-              >
-                <CloseIcon size={14} />
-              </button>
+                <button
+                  type="button"
+                  className="ms-2 p-2 rounded hover:bg-gray-100"
+                  onClick={handleClose}
+                >
+                  <CloseIcon size={14} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* <div className="flex flex-col overflow-auto">issue info</div> */}
-        <div className="flex flex-1 p-3 md:p-2 overflow-hidden flex-col md:flex-row">
+        <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
           <div className="md:block flex md:flex-[1_0_0] min-w-0 md:p-3 md:order-2">
             <div className="max-w-4xl flex flex-row md:flex-col">
               <div className="flex flex-1 mb-3 md-mr-0">
@@ -612,31 +749,44 @@ function IssuePage() {
                   </div>
                 </div>
               )}
+
+              {/* Add SidebarRelationships component for non-parent relationships */}
+              {issue && issue.id && (
+                <div className="flex flex-1 mb-3 md-mr-0">
+                  <SidebarRelationships 
+                    issueId={issue.id} 
+                    onRemoveLink={handleRemoveIssueLink} 
+                  />
+                </div>
+              )}
             </div>
           </div>
+          
           <div className="flex flex-col md:flex-[3_0_0] md:p-3 border-gray-200 md:border-r min-h-0 min-w-0 overflow-auto">
-            <textarea
-              className="w-full px-3 py-1 text-2xl font-semibold placeholder-gray-400 border-transparent focus:border-transparent focus:ring-0 rounded resize-none overflow-hidden"
-              placeholder="Issue title"
-              value={titleIsDirty.current ? dirtyTitle! : issue.title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              rows={1}
-              style={{
-                minHeight: '2.5rem',
-                overflowY: 'hidden',
-                wordBreak: 'break-word'
-              }}
-              onInput={(e) => {
-                // Auto-resize the textarea based on content
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = `${target.scrollHeight}px`;
-              }}
-              ref={titleTextareaRef}
-            />
+            <div className="flex items-start justify-between">
+              <textarea
+                className="flex-1 px-3 py-2 text-3xl font-semibold placeholder-gray-400 border-transparent focus:border-transparent focus:ring-0 rounded resize-none overflow-hidden"
+                placeholder="Issue title"
+                value={titleIsDirty.current ? dirtyTitle! : issue.title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                rows={1}
+                style={{
+                  minHeight: '3rem',
+                  overflowY: 'hidden',
+                  wordBreak: 'break-word'
+                }}
+                onInput={(e) => {
+                  // Auto-resize the textarea based on content
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = 'auto';
+                  target.style.height = `${target.scrollHeight}px`;
+                }}
+                ref={titleTextareaRef}
+              />
+            </div>
 
             {/* Description section */}
-            <div className="w-full max-w-full mt-4 min-h-fit p-3 ">
+            <div className="w-full max-w-full mt-4 min-h-fit p-4">
               <CollapsibleSection 
                 title="Description" 
                 defaultExpanded={true} 
@@ -656,9 +806,14 @@ function IssuePage() {
               </CollapsibleSection>
             </div>
 
+            {/* Sub-issues table */}
+            {issue && issue.id && workspaceName && (
+              <SubIssuesTable issueId={issue.id} workspaceName={workspaceName} />
+            )}
+
             {/* Design section - only show if it has content */}
             {(issue.design && issue.design.trim() !== '') || designIsDirty.current ? (
-              <div className="w-full max-w-full mt-2 min-h-fit p-3 ">
+              <div className="w-full max-w-full mt-2 min-h-fit p-4">
                 <CollapsibleSection 
                   title="Design" 
                   defaultExpanded={false} 
@@ -681,7 +836,7 @@ function IssuePage() {
 
             {/* Plan section - only show if it has content */}
             {(issue.plan && issue.plan.trim() !== '') || planIsDirty.current ? (
-              <div className="w-full max-w-full mt-2 min-h-fit p-3 ">
+              <div className="w-full max-w-full mt-2 min-h-fit p-4">
                 <CollapsibleSection 
                   title="Plan" 
                   defaultExpanded={false} 
@@ -704,7 +859,7 @@ function IssuePage() {
 
             <div className="mt-3">
               <AgentRuns issue={issue} />
-              <div className="mt-6 pt-3">
+              <div className="mt-6 p-3">
                 <Comments issue={issue} />
               </div>
             </div>

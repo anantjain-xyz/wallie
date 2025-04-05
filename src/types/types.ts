@@ -23,6 +23,7 @@ export type Issue = {
   created: Date
   kanbanorder: string
   creator_id: string
+  workspace_id: string
   synced: boolean
   github_repository_id: string | null
   assignee_id: string | null
@@ -174,9 +175,18 @@ export const LinkType = {
 
 export type LinkTypeValue = (typeof LinkType)[keyof typeof LinkType]
 
+// Display text for outgoing links (this issue -> other issue)
 export const LinkTypeDisplay = {
   [LinkType.BLOCKED_BY]: 'Blocked by',
   [LinkType.SUB_ISSUE]: 'Sub-issue of',
+  [LinkType.RELATED]: 'Related to',
+  [LinkType.DUPLICATE]: 'Duplicate of',
+}
+
+// Display text for incoming links (other issue -> this issue)
+export const InverseLinkTypeDisplay = {
+  [LinkType.BLOCKED_BY]: 'Blocks',
+  [LinkType.SUB_ISSUE]: 'Parent of',
   [LinkType.RELATED]: 'Related to',
   [LinkType.DUPLICATE]: 'Duplicate of',
 }
