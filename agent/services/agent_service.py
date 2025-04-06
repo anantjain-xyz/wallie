@@ -13,6 +13,7 @@ from agent.codegen.agents.data import BaseMessage
 from agent.codegen.agents.loggers import ExternalLogger
 from codegen.configs.models.secrets import SecretsConfig
 from codegen.git.schemas.enums import SetupOption
+from codegen import Codebase
 from typing import Any, Dict, Union
 from ..data import Issue, AgentRunResponse
 from ..config import ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, FRONTEND_URL
@@ -368,8 +369,7 @@ async def _setup_codebase_and_branch(issue: Issue) -> CodebaseSetupResult:
     codebase = Codebase.from_repo(
         repo_name,
         language=language,
-        secrets=SecretsConfig(github_token=token),
-        setup_option=SetupOption.CLONE
+        secrets=SecretsConfig(github_token=token)
     )
 
     # Checkout the branch
