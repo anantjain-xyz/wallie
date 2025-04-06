@@ -99,9 +99,9 @@ def get_relace_api_key() -> str:
     Raises:
         ValueError: If the API key is not found
     """
-    api_key = os.environ.get("RELACE_API")
+    api_key = os.environ.get("RELACE_API_KEY")
     if not api_key:
-        msg = "RELACE_API environment variable not found. Please set it in your .env file."
+        msg = "RELACE_API_KEY environment variable not found. Please set it in your .env file."
         raise ValueError(msg)
     return api_key
 
@@ -121,7 +121,7 @@ def apply_relace_edit(api_key: str, initial_code: str, edit_snippet: str, stream
     Raises:
         Exception: If the API request fails
     """
-    url = "https://codegen-instantapply.endpoint.relace.run/v1/code/apply"
+    url = os.environ.get("RELACE_API_KEY_URL", "https://instantapply.endpoint.relace.run/v1/code/apply")
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
 
     data = {"initialCode": initial_code, "editSnippet": edit_snippet, "stream": stream}

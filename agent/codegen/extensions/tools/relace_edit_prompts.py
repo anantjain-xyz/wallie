@@ -57,7 +57,7 @@ def validate_input(data):
 ```
 
 The API will merge your edit snippet with the existing code to produce the final result.
-The API key will be automatically retrieved from the RELACE_API environment variable.
+The API key will be automatically retrieved from the RELACE_API_KEY environment variable.
 
 Common pitfalls to avoid:
 - Not providing enough context around changes
