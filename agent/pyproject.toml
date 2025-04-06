@@ -6,6 +6,10 @@ requires-python = ">=3.12, <3.14"
 dependencies = [
   "codegen==0.53.0",
   "langchain==0.3.21",
+  "langgraph==0.3.25",
+  "langchain-anthropic>=0.3.7",
+  "langchain_openai",
+  "langchain-xai>=0.2.1",
   "fastapi>=0.115.8",
   "uvicorn>=0.27.0",
   "pydantic>=2.10.6",
