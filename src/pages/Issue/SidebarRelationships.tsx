@@ -85,6 +85,7 @@ export default function SidebarRelationships({ issueId, onRemoveLink, workspaceN
                 <div className="flex-1 flex items-center">
                   <StatusIcon status={link.target_status} className="mr-2 w-4 h-4" />
                   <button 
+                    type="button"
                     className="text-gray-500"
                     onClick={() => navigate(`/issue/${formatExternalId(workspaceName, link.external_id)}`)}
                   >
@@ -92,6 +93,7 @@ export default function SidebarRelationships({ issueId, onRemoveLink, workspaceN
                   </button>
                 </div>
                 <button
+                  type="button"
                   onClick={() => onRemoveLink(link.id)}
                   className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100"
                 >
@@ -113,6 +115,7 @@ export default function SidebarRelationships({ issueId, onRemoveLink, workspaceN
                 <div className="flex-1 flex items-center">
                   <StatusIcon status={link.source_status} className="mr-2 w-4 h-4" />
                   <button 
+                    type="button"
                     className="text-gray-500"
                     onClick={() => navigate(`/issue/${formatExternalId(workspaceName, link.external_id)}`)}
                   >
@@ -120,6 +123,7 @@ export default function SidebarRelationships({ issueId, onRemoveLink, workspaceN
                   </button>
                 </div>
                 <button
+                  type="button"
                   onClick={() => onRemoveLink(link.id)}
                   className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100"
                 >
@@ -138,7 +142,6 @@ export default function SidebarRelationships({ issueId, onRemoveLink, workspaceN
           <ul className="space-y-2">
             {linkCategories.duplicateOf.map(link => {
               const isOutgoing = 'target_issue_id' in link;
-              const linkedIssueId = isOutgoing ? link.target_issue_id : link.source_issue_id;
               const linkedIssueTitle = isOutgoing ? link.target_title : link.source_title;
               const linkedIssueStatus = isOutgoing ? link.target_status : link.source_status;
               
@@ -173,7 +176,6 @@ export default function SidebarRelationships({ issueId, onRemoveLink, workspaceN
           <ul className="space-y-2">
             {linkCategories.related.map(link => {
               const isOutgoing = 'target_issue_id' in link;
-              const linkedIssueId = isOutgoing ? link.target_issue_id : link.source_issue_id;
               const linkedIssueTitle = isOutgoing ? link.target_title : link.source_title;
               const linkedIssueStatus = isOutgoing ? link.target_status : link.source_status;
               
@@ -202,4 +204,4 @@ export default function SidebarRelationships({ issueId, onRemoveLink, workspaceN
       )}
     </div>
   )
-} 
+}      

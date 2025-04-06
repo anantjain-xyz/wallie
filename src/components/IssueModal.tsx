@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState, useCallback } from 'react'
+import { memo, useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { generateKeyBetween } from 'fractional-indexing'
 import { useNavigate } from 'react-router-dom'
 
@@ -75,7 +75,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     AND deleted = false
     ORDER BY name ASC
   `
-  const repositories = repositoryResults?.rows || []
+  const repositories = useMemo(() => repositoryResults?.rows || [], [repositoryResults])
   
   // Query users for assignee dropdown
   const usersResults = useLiveQuery.sql<{
@@ -175,7 +175,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     } catch (error) {
       showError(error instanceof Error ? error.message : 'Unknown error', 'Failed to create issue')
     }
-  }, [title, description, priority, status, githubRepositoryId, assigneeId, estimate, currentUser, pg, onDismiss])
+  }, [title, description, priority, status, githubRepositoryId, assigneeId, estimate, plan, design, currentUser, pg, onDismiss])
 
   const handleClickCloseBtn = () => {
     if (onDismiss) onDismiss()
