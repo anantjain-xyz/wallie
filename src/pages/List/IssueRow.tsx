@@ -104,7 +104,7 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
       e.preventDefault();
       e.stopPropagation();
     } else if (issue?.id) {
-      navigate(`/issue/${issue.id}`);
+      navigate(`/issue/${formatExternalId(workspaceName, issue.external_id)}`);
     }
   }
 

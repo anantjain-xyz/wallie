@@ -82,7 +82,7 @@ export default function SubIssuesTable({ issueId, workspaceName }: SubIssuesTabl
             <div 
               key={subIssue.id} 
               className="flex justify-between items-center py-3 px-2 hover:bg-gray-50 cursor-pointer group"
-              onClick={() => navigate(`/issue/${subIssue.id}`)}
+              onClick={() => navigate(`/issue/${formatExternalId(workspaceName, subIssue.external_id)}`)}
             >
               <div className="flex items-center flex-grow overflow-hidden">
                 <StatusIcon status={subIssue.status} className="w-4 h-4 mr-2 flex-shrink-0" />

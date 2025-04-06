@@ -19,6 +19,8 @@ interface MovedIssues {
 
 export default function IssueBoard({ columnsLiveIssues }: IssueBoardProps) {
   const pg = usePGlite()
+  const workspaceResults = useLiveQuery.sql`SELECT * FROM workspace LIMIT 1`
+  const workspaceName: string = (workspaceResults?.rows[0]?.name as string) || ''
   const [movedIssues, setMovedIssues] = useState<MovedIssues>({})
 
   // Issues are coming from a live query, this may not have updated before we rerender
@@ -213,36 +215,42 @@ export default function IssueBoard({ columnsLiveIssues }: IssueBoardProps) {
           status={Status.BACKLOG}
           issues={issuesByStatus[Status.BACKLOG]}
           liveQuery={columnsLiveIssues[Status.BACKLOG]}
+          workspaceName={workspaceName}
         />
         <IssueCol
           title={StatusDisplay[Status.TODO]}
           status={Status.TODO}
           issues={issuesByStatus[Status.TODO]}
           liveQuery={columnsLiveIssues[Status.TODO]}
+          workspaceName={workspaceName}
         />
         <IssueCol
           title={StatusDisplay[Status.IN_PROGRESS]}
           status={Status.IN_PROGRESS}
           issues={issuesByStatus[Status.IN_PROGRESS]}
           liveQuery={columnsLiveIssues[Status.IN_PROGRESS]}
+          workspaceName={workspaceName}
         />
         <IssueCol
           title={StatusDisplay[Status.IN_REVIEW]}
           status={Status.IN_REVIEW}
           issues={issuesByStatus[Status.IN_REVIEW]}
           liveQuery={columnsLiveIssues[Status.IN_REVIEW]}
+          workspaceName={workspaceName}
         />
         <IssueCol
           title={StatusDisplay[Status.DONE]}
           status={Status.DONE}
           issues={issuesByStatus[Status.DONE]}
           liveQuery={columnsLiveIssues[Status.DONE]}
+          workspaceName={workspaceName}
         />
         <IssueCol
           title={StatusDisplay[Status.CANCELED]}
           status={Status.CANCELED}
           issues={issuesByStatus[Status.CANCELED]}
           liveQuery={columnsLiveIssues[Status.CANCELED]}
+          workspaceName={workspaceName}
         />
       </div>
     </DragDropContext>

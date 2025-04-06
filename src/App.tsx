@@ -112,9 +112,19 @@ async function issueLoader({
   request: Request
 }) {
   const pg = await pgPromise
+
+  // Extract numeric external ID from formattedExternalId, e.g., "WRK-123" -> 123
+  const formattedId = params.formattedExternalId || ''
+  const match = formattedId.match(/-(\d+)$/)
+  const externalId = match ? parseInt(match[1], 10) : null
+
+  if (!externalId) {
+    throw new Error('Invalid issue identifier')
+  }
+
   const liveIssue = await pg.live.query<IssueType>({
-    query: `SELECT * FROM issue WHERE id = $1`,
-    params: [params.id],
+    query: `SELECT * FROM issue WHERE external_id = $1`,
+    params: [externalId],
     signal: request.signal,
   })
   return { liveIssue }
@@ -249,7 +259,7 @@ const App = () => {
           loader: issueListLoader,
         },
         {
-          path: `/issue/:id`,
+          path: `/issue/:formattedExternalId`,
           element: <Issue />,
           loader: issueLoader,
         },

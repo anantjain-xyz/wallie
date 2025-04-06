@@ -4,13 +4,15 @@ import { useLiveQuery } from '@electric-sql/pglite-react'
 import closeIcon from '../../assets/icons/close.svg'
 import { LinkType } from '../../types/types'
 import StatusIcon from '../../components/StatusIcon'
+import { formatExternalId } from '../../utils/issueUtils'
 
 interface SidebarRelationshipsProps {
   issueId: string
   onRemoveLink: (linkId: string) => void
+  workspaceName: string
 }
 
-export default function SidebarRelationships({ issueId, onRemoveLink }: SidebarRelationshipsProps) {
+export default function SidebarRelationships({ issueId, onRemoveLink, workspaceName }: SidebarRelationshipsProps) {
   const navigate = useNavigate()
   
   // Query for outgoing non-parent relationships
@@ -84,7 +86,7 @@ export default function SidebarRelationships({ issueId, onRemoveLink }: SidebarR
                   <StatusIcon status={link.target_status} className="mr-2 w-4 h-4" />
                   <button 
                     className="text-gray-500"
-                    onClick={() => navigate(`/issue/${link.target_issue_id}`)}
+                    onClick={() => navigate(`/issue/${formatExternalId(workspaceName, link.external_id)}`)}
                   >
                     {link.target_title}
                   </button>
@@ -112,7 +114,7 @@ export default function SidebarRelationships({ issueId, onRemoveLink }: SidebarR
                   <StatusIcon status={link.source_status} className="mr-2 w-4 h-4" />
                   <button 
                     className="text-gray-500"
-                    onClick={() => navigate(`/issue/${link.source_issue_id}`)}
+                    onClick={() => navigate(`/issue/${formatExternalId(workspaceName, link.external_id)}`)}
                   >
                     {link.source_title}
                   </button>
@@ -146,7 +148,7 @@ export default function SidebarRelationships({ issueId, onRemoveLink }: SidebarR
                     <StatusIcon status={linkedIssueStatus} className="mr-2 w-4 h-4" />
                     <button 
                       className="text-gray-500"
-                      onClick={() => navigate(`/issue/${linkedIssueId}`)}
+                      onClick={() => navigate(`/issue/${formatExternalId(workspaceName, link.external_id)}`)}
                     >
                       {linkedIssueTitle}
                     </button>
@@ -181,7 +183,7 @@ export default function SidebarRelationships({ issueId, onRemoveLink }: SidebarR
                     <StatusIcon status={linkedIssueStatus} className="mr-2 w-4 h-4" />
                     <button 
                       className="text-gray-500"
-                      onClick={() => navigate(`/issue/${linkedIssueId}`)}
+                      onClick={() => navigate(`/issue/${formatExternalId(workspaceName, link.external_id)}`)}
                     >
                       {linkedIssueTitle}
                     </button>

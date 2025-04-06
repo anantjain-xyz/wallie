@@ -37,11 +37,12 @@ interface Props {
   title: string
   issues: Array<Issue> | undefined
   liveQuery: LiveQuery<Issue>
+  workspaceName: string
 }
 
 const itemSpacing = 8
 
-function IssueCol({ title, status, issues = EMPTY_ISSUES, liveQuery }: Props) {
+function IssueCol({ title, status, issues = EMPTY_ISSUES, liveQuery, workspaceName }: Props) {
   const statusIcon = <StatusIcon status={status} />
 
   const issuesRes = useLiveQuery(liveQuery)
@@ -83,6 +84,7 @@ function IssueCol({ title, status, issues = EMPTY_ISSUES, liveQuery }: Props) {
               issue={issue}
               isDragging={snapshot.isDragging}
               index={rubric.source.index}
+              workspaceName={workspaceName}
               // style={provided.draggableProps.style}
             />
           )

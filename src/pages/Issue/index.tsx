@@ -511,7 +511,7 @@ function IssuePage() {
                   {parentIssue && (
                     <>
                       <button 
-                        onClick={() => navigate(`/issue/${parentIssue.id}`)}
+                        onClick={() => navigate(`/issue/${formatExternalId(workspaceName, parentIssue.external_id)}`)}
                         className="font-mono hover:text-gray-800 text-gray-600 truncate max-w-[150px]"
                       >
                         {parentIssue.external_id !== null 
@@ -753,9 +753,10 @@ function IssuePage() {
               {/* Add SidebarRelationships component for non-parent relationships */}
               {issue && issue.id && (
                 <div className="flex flex-1 mb-3 md-mr-0">
-                  <SidebarRelationships 
-                    issueId={issue.id} 
-                    onRemoveLink={handleRemoveIssueLink} 
+                  <SidebarRelationships
+                    issueId={issue.id}
+                    onRemoveLink={handleRemoveIssueLink}
+                    workspaceName={workspaceName}
                   />
                 </div>
               )}

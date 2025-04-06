@@ -11,6 +11,7 @@ import EstimateMenu from '../../components/contextmenu/EstimateMenu'
 import { ReactComponent as AssigneeIcon } from '../../assets/icons/assignee.svg'
 import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 import { Issue } from '../../types/types'
+import { formatExternalId } from '../../utils/issueUtils'
 
 interface IssueProps {
   issue: Issue
@@ -18,6 +19,7 @@ interface IssueProps {
   isDragging?: boolean
   provided: DraggableProvided
   style?: CSSProperties
+  workspaceName: string
 }
 
 export const itemHeight = 100
@@ -33,7 +35,7 @@ function getStyle(
   }
 }
 
-const IssueItem = ({ issue, style, isDragging, provided }: IssueProps) => {
+const IssueItem = ({ issue, style, isDragging, provided, workspaceName }: IssueProps) => {
   const pg = usePGlite()
   const navigate = useNavigate()
   const [workspaceId, setWorkspaceId] = useState<string>('')
@@ -123,7 +125,7 @@ const IssueItem = ({ issue, style, isDragging, provided }: IssueProps) => {
       {...provided.draggableProps}
       {...provided.dragHandleProps}
       style={getStyle(provided, style)}
-      onClick={() => navigate(`/issue/${issue.id}`)}
+      onClick={() => navigate(`/issue/${formatExternalId(workspaceName, issue.external_id)}`)}
     >
       <div className="flex justify-between items-center w-full cursor-default">
         <div className="flex flex-col">
