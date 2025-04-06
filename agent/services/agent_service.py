@@ -8,9 +8,9 @@ import pytz
 import re
 import asyncio
 import threading
-from codegen import CodeAgent, Codebase
-from codegen.agents.data import BaseMessage
-from codegen.agents.loggers import ExternalLogger
+from agent.codegen.agents.code_agent import CodeAgent
+from agent.codegen.agents.data import BaseMessage
+from agent.codegen.agents.loggers import ExternalLogger
 from codegen.configs.models.secrets import SecretsConfig
 from codegen.git.schemas.enums import SetupOption
 from typing import Any, Dict, Union

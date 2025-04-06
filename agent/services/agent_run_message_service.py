@@ -4,8 +4,8 @@ import time
 from typing import Any, Dict, Union
 import uuid
 import json
-from codegen.agents.data import BaseMessage
-from codegen.agents.loggers import ExternalLogger
+from agent.codegen.agents.data import BaseMessage
+from agent.codegen.agents.loggers import ExternalLogger
 from ..config import DATABASE_URL
 from ..logging_config import get_logger
 import asyncpg
