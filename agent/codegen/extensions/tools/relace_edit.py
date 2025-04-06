@@ -99,9 +99,9 @@ def get_relace_api_key() -> str:
     Raises:
         ValueError: If the API key is not found
     """
-    api_key = os.environ.get("RELACE_API")
+    api_key = os.environ.get("RELACE_API_KEY")
     if not api_key:
-        msg = "RELACE_API environment variable not found. Please set it in your .env file."
+        msg = "RELACE_API_KEY environment variable not found. Please set it in your .env file."
         raise ValueError(msg)
     return api_key
 
