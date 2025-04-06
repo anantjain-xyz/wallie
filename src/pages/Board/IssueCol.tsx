@@ -114,7 +114,7 @@ function IssueCol({ title, status, issues = EMPTY_ISSUES, liveQuery, workspaceNa
                     itemCount={itemCount}
                     itemSize={itemHeight + itemSpacing}
                     width={width}
-                    itemData={issues}
+                    itemData={{ issues, workspaceName }}
                     className="w-full border-gray-200 pt-0.5"
                     onItemsRendered={handleOnItemsRendered}
                   >
@@ -131,15 +131,15 @@ function IssueCol({ title, status, issues = EMPTY_ISSUES, liveQuery, workspaceNa
 }
 
 const Row = ({
-  data: issues,
+  data,
   index,
   style,
 }: {
-  data: Issue[]
+  data: { issues: Issue[], workspaceName: string }
   index: number
   style: CSSProperties | undefined
 }) => {
-  const issue = issues[index]
+  const issue = data.issues[index]
   if (!issue) return null
   return (
     <Draggable draggableId={issue.id} index={index} key={issue.id}>
@@ -150,6 +150,7 @@ const Row = ({
           isDragging={snapshot.isDragging}
           index={index}
           style={style}
+          workspaceName={data.workspaceName}
         />
       )}
     </Draggable>

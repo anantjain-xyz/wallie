@@ -183,7 +183,7 @@ function AgentRunDetails({ runId, runStatus }: { runId: string, runStatus: strin
   // Helper to check if a string is valid JSON with a `type` key
   const shouldDisplayMessage = (str: string): boolean => {
     try {
-      let parsedJson = JSON.parse(str);
+      const parsedJson = JSON.parse(str);
       if ('type' in parsedJson) {
         return true;
       }

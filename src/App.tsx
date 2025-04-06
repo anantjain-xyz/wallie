@@ -70,7 +70,7 @@ async function issueListLoader({ request }: { request: Request }) {
   const url = new URL(request.url)
   
   // Get filter state from URL parameters
-  let filterState = getFilterStateFromSearchParams(url.searchParams)
+  const filterState = getFilterStateFromSearchParams(url.searchParams)
   
   // Try to get user preferences from localStorage if we're in a browser environment
   if (typeof window !== 'undefined' && window.localStorage) {
