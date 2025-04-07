@@ -76,3 +76,26 @@ async def update_issue_plan(conn, issue_id: UUID, plan: str) -> bool:
     except Exception as e:
         logger.error(f"Error updating issue plan: {str(e)}")
         return False
+
+async def update_issue_design(conn, issue_id: UUID, design: str) -> bool:
+    """
+    Update the design of an issue, directly overwriting the existing design
+    
+    Args:
+        conn: Database connection
+        issue_id: ID of the issue to update
+        design: New design content
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        await conn.execute(
+            "UPDATE issue SET design = $1, modified = NOW() WHERE id = $2",
+            design, issue_id
+        )
+        logger.info(f"Updated issue {issue_id} design")
+        return True
+    except Exception as e:
+        logger.error(f"Error updating issue design: {str(e)}")
+        return False
