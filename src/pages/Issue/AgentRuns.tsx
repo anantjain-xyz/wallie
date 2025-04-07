@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLiveQuery } from '@electric-sql/pglite-react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -29,7 +29,7 @@ function AgentRuns({ issue }: AgentRunsProps) {
     WHERE ar.issue_id = ${issue?.id || '00000000-0000-0000-0000-000000000000'}
     ORDER BY ar.start_time ASC
   `
-  const agentRuns = agentRunsResults?.rows || []
+  const agentRuns = useMemo(() => agentRunsResults?.rows || [], [agentRunsResults])
 
   // Auto-expand the first run with "Started" status
   useEffect(() => {
@@ -244,7 +244,7 @@ function AgentRunDetails({ runId, runStatus }: { runId: string, runStatus: strin
                         );
                         
                         return entries.map(([key, value], idx) => (
-                          <div key={idx} className="flex">
+                          <div key={`${key}-${idx}`} className="flex">
                             <span 
                               className="font-semibold text-blue-600 text-right min-w-[100px] mr-2"
                               style={{ width: `${maxKeyLength * 0.6 + 1}rem` }}
@@ -281,4 +281,4 @@ function AgentRunDetails({ runId, runStatus }: { runId: string, runStatus: strin
   )
 }
 
-export default AgentRuns 
+export default AgentRuns    

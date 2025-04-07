@@ -98,7 +98,7 @@ function IssuePage() {
     AND deleted = false
     ORDER BY full_name ASC
   `
-  const repositories = repositoryResults?.rows || []
+  const repositories = useMemo(() => repositoryResults?.rows || [], [repositoryResults])
 
   // State for current repository information
   const [currentRepoId, setCurrentRepoId] = useState<string | null>(null)
@@ -235,7 +235,7 @@ function IssuePage() {
     WHERE c.issue_id = ${issue?.id || '00000000-0000-0000-0000-000000000000'}
     ORDER BY c.created ASC
   `
-  const comments = commentsResults?.rows || []
+  const comments = useMemo(() => commentsResults?.rows || [], [commentsResults])
 
   // Check if dirty fields match actual fields and reset if they do
   useEffect(() => {
@@ -277,6 +277,57 @@ function IssuePage() {
   `
   
   const parentIssue = useMemo(() => parentIssueResult?.rows?.[0], [parentIssueResult])
+
+  const noopCallback = useCallback(() => {}, []);
+  
+  const copyIssueAsMarkdown = useMemo(() => {
+    if (!issue) return noopCallback;
+    
+    return () => {
+      // Create the issue URL
+      const issueIdentifier = formatExternalId(workspaceName, issue.external_id);
+  
+      // Format the markdown
+      let markdown = `# ${issue.title}\n\n`;
+      
+      if (issue.description) {
+        markdown += `${issue.description}\n\n`;
+      }
+      
+      markdown += `## Metadata\n\n`;
+      markdown += `- Identifier: ${issueIdentifier}\n`;
+      
+      markdown += `\n`;
+      
+      // Add comments if there are any
+      if (comments.length > 0) {
+        markdown += `## Comments\n\n`;
+        
+        comments.forEach(comment => {
+          const authorName = comment.author_full_name || comment.username;
+          markdown += `- ${authorName}:\n\n  ${comment.body.replace(/\n/g, '\n  ')}\n\n`;
+        });
+      }
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(markdown)
+        .then(() => {
+          // Show success notification
+          showInfo('Issue copied to clipboard as markdown', 'Copied!');
+        })
+        .catch(err => {
+          console.error('Failed to copy issue to clipboard:', err);
+        });
+    };
+  }, [issue, workspaceName, comments, noopCallback]);
+  
+  const handleCopyHotkey = useCallback((e: KeyboardEvent) => {
+    e.preventDefault();
+    copyIssueAsMarkdown();
+  }, [copyIssueAsMarkdown]);
+  
+  // Add keyboard shortcut for copying issue as markdown (Cmd+Option+C)
+  useHotkeys('mod+alt+c', handleCopyHotkey, { enableOnFormTags: true });
 
   if (issue === undefined) {
     return <div className="p-8 w-full text-center">Loading...</div>
@@ -371,52 +422,6 @@ function IssuePage() {
     const pointText = estimate === 1 ? 'point' : 'points';
     return `${estimate} ${pointText}${sizeLabel}`;
   }
-
-  // Function to copy issue data as markdown
-  const copyIssueAsMarkdown = useCallback(() => {
-    if (!issue) return;
-
-    // Create the issue URL
-    const issueIdentifier = formatExternalId(workspaceName, issue.external_id);
-
-    // Format the markdown
-    let markdown = `# ${issue.title}\n\n`;
-    
-    if (issue.description) {
-      markdown += `${issue.description}\n\n`;
-    }
-    
-    markdown += `## Metadata\n\n`;
-    markdown += `- Identifier: ${issueIdentifier}\n`;
-    
-    markdown += `\n`;
-    
-    // Add comments if there are any
-    if (comments.length > 0) {
-      markdown += `## Comments\n\n`;
-      
-      comments.forEach(comment => {
-        const authorName = comment.author_full_name || comment.username;
-        markdown += `- ${authorName}:\n\n  ${comment.body.replace(/\n/g, '\n  ')}\n\n`;
-      });
-    }
-    
-    // Copy to clipboard
-    navigator.clipboard.writeText(markdown)
-      .then(() => {
-        // Show success notification
-        showInfo('Issue copied to clipboard as markdown', 'Copied!');
-      })
-      .catch(err => {
-        console.error('Failed to copy issue to clipboard:', err);
-      });
-  }, [issue, workspaceName, comments, useLiveQuery]);
-
-  // Add keyboard shortcut for copying issue as markdown (Cmd+Option+C)
-  useHotkeys('mod+alt+c', (e) => {
-    e.preventDefault();
-    copyIssueAsMarkdown();
-  }, { enableOnFormTags: true }, [copyIssueAsMarkdown]);
 
   // Add a function to handle creating issue links
   const handleCreateIssueLink = async (linkType: string, targetIssueId: string) => {

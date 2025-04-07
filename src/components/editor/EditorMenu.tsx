@@ -75,9 +75,6 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
         return
       }
 
-      // Store the selection positions for later use
-      const selectionFrom = editor.state.selection.from
-      const selectionTo = editor.state.selection.to
 
       // Get the last issue for kanbanorder
       const lastIssue = (
