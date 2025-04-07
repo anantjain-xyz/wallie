@@ -98,6 +98,13 @@ export default function AssigneeMenu({
           className={className}
           searchPlaceholder="Assign to..."
           onKeywordChange={(kw) => setKeyword(kw)}
+          onSelect={(index) => {
+            if (index === 0) {
+              handleSelect(null) // Unassigned
+            } else if (index > 1 && index - 2 < filteredUsers.length) {
+              handleSelect(filteredUsers[index - 2].id) // User from the list
+            }
+          }}
         >
           {options}
         </Menu>

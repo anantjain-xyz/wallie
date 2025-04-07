@@ -59,6 +59,11 @@ function PriorityMenu({
           searchPlaceholder="Set priority..."
           onKeywordChange={(kw) => setKeyword(kw)}
           className={className}
+          onSelect={(index) => {
+            if (index >= 0 && index < statusOpts.length) {
+              handleSelect(statusOpts[index][1] as string)
+            }
+          }}
         >
           {options}
         </Menu>
