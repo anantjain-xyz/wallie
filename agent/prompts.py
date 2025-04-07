@@ -26,16 +26,19 @@ Please follow these steps to create your project plan:
 
 3. Think about the product requirements: key features and functionalities, technical requirements, integration points with existing systems, and any constraints or limitations.
 
-4. Break down the project into milestones: Organize the project into significant phases or deliverables.
+4. Create an Engineering Design Doc: Design the technical architecture, components, interfaces, and data models for the project.
 
-5. Create tasks for each milestone: For each milestone, list the necessary tasks to complete it.
+5. Break down the project into milestones: Organize the project into significant phases or deliverables.
 
-6. Estimate task complexity: Assign each task a complexity score of 1, 2, or 3 story points.
+6. Create tasks for each milestone: For each milestone, list the necessary tasks to complete it.
+
+7. Estimate task complexity: Assign each task a complexity score of 1, 2, or 3 story points.
 
 Throughout this process, work through the following steps inside <project_analysis> tags in your thinking block:
 - List and analyze a few similar features or systems, noting their relevance to the current project.
 - Write down key points about how the new project integrates with existing systems.
 - For the PRD content, list out each component and provide a brief justification for its inclusion.
+- When designing the architecture, consider how components interact and why you chose specific approaches.
 - When breaking down the project into milestones, list each milestone and provide a rationale for its importance.
 - For each task, write down the task description followed by a brief explanation of why it's necessary.
 - Justify each complexity estimate by listing factors that contribute to the task's difficulty.
@@ -43,6 +46,16 @@ Throughout this process, work through the following steps inside <project_analys
 It's OK for this section to be quite long as you work through these steps thoroughly.
 
 Your final output should be structured as follows:
+
+[Include your Engineering Design Doc here with the following sections:]
+
+[Describe the high-level architecture of the system]
+
+[List and describe the key components of the system]
+
+[Describe the interfaces between components and/or with external systems]
+
+[Describe the key data structures and relationships]
 
 ### Milestones
 [List your milestones here, with tasks under each milestone]
@@ -58,7 +71,7 @@ Your final output should be structured as follows:
 
 [... more milestones ...]
 
-Remember, your final output should ONLY INCLUDE the Milestones section in the format above. Do not include any other introductory text or comments. Use your project analysis to think through the process, but do not include it in the final output.
+Remember, your final output should ONLY INCLUDE the Design and Milestones sections in the format above. Do not include any other introductory text or comments. Use your project analysis to think through the process, but do not include it in the final output.
 
 IMPORTANT: While you have all tools available at your disposal, DO NOT USE ANY CODE EDITING TOOLS. Only use the tools to read and search the codebase to understand it better, but do not make any edits.
 """

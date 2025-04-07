@@ -19,7 +19,7 @@ from ..config import ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, F
 from ..prompts import get_code_mode_prompt, get_project_mode_prompt
 from ..db.connection import db_pool
 from .comment_service import add_agent_comment, get_comments_for_issue
-from .issue_service import set_issue_in_review, update_issue_plan
+from .issue_service import set_issue_in_review, update_issue_plan, update_issue_design
 from .repository_service import get_repository_language
 from .agent_run_service import create_agent_run, set_agent_run_status
 from .agent_run_message_service import store_agent_run_message, AgentRunMessageRecorder
@@ -83,7 +83,7 @@ async def process_issue(issue: Issue):
             async with db_pool.acquire() as conn:
                 if issue.is_project_mode:
                     await update_issue_plan(conn, issue.id, result.message)
-                    pr_comment = f"✅ Project planning complete. I have updated the plan with the milestones and tasks. You can now review the plan, edit it if needed, and then click 'Approve' to convert tasks into issues."
+                    pr_comment = f"✅ Project planning complete. I have updated the design and plan with the architecture, components, interfaces, data models, milestones, and tasks. You can now review the design and plan, edit if needed, and then click 'Approve' to convert tasks into issues."
                 else:
                     # This is a code task, so we need to add a comment with the result
                     if result.pr_url is None:
@@ -209,6 +209,23 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
             raise  # Re-raise to allow caller to handle the exception
         
         if issue.is_project_mode:
+            design_section = None
+            plan_section = None
+            
+            design_match = re.search(r'### Design(.*?)(?=### Milestones)', agent_result, re.DOTALL)
+            if design_match:
+                design_section = design_match.group(1).strip()
+            
+            plan_match = re.search(r'### Milestones(.*?)$', agent_result, re.DOTALL)
+            if plan_match:
+                plan_section = plan_match.group(1).strip()
+            
+            async with db_pool.acquire() as conn:
+                if design_section:
+                    await update_issue_design(conn, issue.id, design_section)
+                if plan_section:
+                    await update_issue_plan(conn, issue.id, plan_section)
+            
             return AgentRunResponse(
                 status="success",
                 message=agent_result
