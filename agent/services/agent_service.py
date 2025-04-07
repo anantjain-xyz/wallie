@@ -82,7 +82,6 @@ async def process_issue(issue: Issue):
         try:
             async with db_pool.acquire() as conn:
                 if issue.is_project_mode:
-                    await update_issue_plan(conn, issue.id, result.message)
                     pr_comment = f"✅ Project planning complete. I have updated the design and plan with the architecture, components, interfaces, data models, milestones, and tasks. You can now review the design and plan, edit if needed, and then click 'Approve' to convert tasks into issues."
                 else:
                     # This is a code task, so we need to add a comment with the result
@@ -212,15 +211,13 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
             design_section = None
             plan_section = None
             
-            plan_match = re.search(r'### Milestones(.*?)$', agent_result, re.DOTALL)
-            if plan_match:
-                plan_section = plan_match.group(1).strip()
-                
-                milestones_index = agent_result.find("### Milestones")
-                if milestones_index > 0:
-                    design_section = agent_result[:milestones_index].strip()
+            milestones_index = agent_result.find("### Milestones")
+            if milestones_index >= 0:
+                design_section = agent_result[:milestones_index].strip()
+                plan_section = agent_result[milestones_index:].strip()
             else:
                 design_section = agent_result.strip()
+                plan_section = None
             
             async with db_pool.acquire() as conn:
                 if design_section:

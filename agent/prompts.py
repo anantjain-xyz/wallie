@@ -47,14 +47,16 @@ It's OK for this section to be quite long as you work through these steps thorou
 
 Your final output should be structured as follows:
 
-[Include your Engineering Design Doc here with the following sections:]
-
+## Engineering Design Doc
 [Describe the high-level architecture of the system]
 
+### Key Components
 [List and describe the key components of the system]
 
+### Interfaces
 [Describe the interfaces between components and/or with external systems]
 
+### Data Structures and Relationships
 [Describe the key data structures and relationships]
 
 ### Milestones
