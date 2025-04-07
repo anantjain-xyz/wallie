@@ -13,6 +13,8 @@ import { ReactComponent as EstimateIcon } from '../assets/icons/estimate.svg'
 import { BsTrash3 as DeleteIcon } from 'react-icons/bs'
 import { useState } from 'react'
 import BulkDeleteModal from './BulkDeleteModal'
+import { useHotkeys } from 'react-hotkeys-hook'
+import { showMenu } from '@firefox-devtools/react-contextmenu'
 
 interface BulkActionBarProps {
   selectedIssues: Set<string>
@@ -92,6 +94,30 @@ export default function BulkActionBar({
       console.error('Error deleting issues:', error)
     }
   }
+  
+  useHotkeys('s', () => {
+    if (selectedIssues.size > 0) {
+      showMenu({ id: 'bulk-status-menu' })
+    }
+  }, { enableOnFormTags: false }, [selectedIssues])
+
+  useHotkeys('p', () => {
+    if (selectedIssues.size > 0) {
+      showMenu({ id: 'bulk-priority-menu' })
+    }
+  }, { enableOnFormTags: false }, [selectedIssues])
+
+  useHotkeys('shift+e', () => {
+    if (selectedIssues.size > 0) {
+      showMenu({ id: 'bulk-estimate-menu' })
+    }
+  }, { enableOnFormTags: false }, [selectedIssues])
+
+  useHotkeys('a', () => {
+    if (selectedIssues.size > 0) {
+      showMenu({ id: 'bulk-assignee-menu' })
+    }
+  }, { enableOnFormTags: false }, [selectedIssues])
 
   return (
     <>
@@ -104,13 +130,15 @@ export default function BulkActionBar({
           <StatusMenu
             id="bulk-status-menu"
             button={
-              <button
-                type="button"
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <StatusIcon className='mr-2 w-4 h-4' status={Status.TODO} />
-                Change Status
-              </button>
+              <Tooltip content="Change Status" shortcut="s">
+                <button
+                  type="button"
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <StatusIcon className='mr-2 w-4 h-4' status={Status.TODO} />
+                  Change Status
+                </button>
+              </Tooltip>
             }
             onSelect={handleBulkStatusChange}
           />
@@ -118,13 +146,15 @@ export default function BulkActionBar({
           <PriorityMenu
             id="bulk-priority-menu"
             button={
-              <button
-                type="button"
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <PriorityIcon className='mr-2 w-4 h-4' priority='medium' />
-                Change Priority
-              </button>
+              <Tooltip content="Change Priority" shortcut="p">
+                <button
+                  type="button"
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <PriorityIcon className='mr-2 w-4 h-4' priority='medium' />
+                  Change Priority
+                </button>
+              </Tooltip>
             }
             onSelect={handleBulkPriorityChange}
           />
@@ -132,13 +162,15 @@ export default function BulkActionBar({
           <EstimateMenu
             id="bulk-estimate-menu"
             button={
-              <button
-                type="button"
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <EstimateIcon className='mr-2 w-4 h-4' />
-                Set Estimate
-              </button>
+              <Tooltip content="Set Estimate" shortcut="Shift+e">
+                <button
+                  type="button"
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <EstimateIcon className='mr-2 w-4 h-4' />
+                  Set Estimate
+                </button>
+              </Tooltip>
             }
             onSelect={handleBulkEstimateChange}
           />
@@ -147,13 +179,15 @@ export default function BulkActionBar({
             id="bulk-assignee-menu"
             workspaceId={workspaceId}
             button={
-              <button
-                type="button"
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <AssigneeIcon className="mr-2 w-4 h-4" />
-                Change Assignee
-              </button>
+              <Tooltip content="Change Assignee" shortcut="a">
+                <button
+                  type="button"
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <AssigneeIcon className="mr-2 w-4 h-4" />
+                  Change Assignee
+                </button>
+              </Tooltip>
             }
             onSelect={handleBulkAssigneeChange}
           />
