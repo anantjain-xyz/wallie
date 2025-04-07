@@ -12,7 +12,6 @@ from agent.codegen.agents.code_agent import CodeAgent
 from agent.codegen.agents.data import BaseMessage
 from agent.codegen.agents.loggers import ExternalLogger
 from codegen.configs.models.secrets import SecretsConfig
-from codegen.git.schemas.enums import SetupOption
 from codegen import Codebase
 from typing import Any, Dict, Union
 from ..data import Issue, AgentRunResponse
@@ -116,120 +115,149 @@ async def process_issue(issue: Issue):
 
 async def _run_agent(issue: Issue) -> AgentRunResponse:
     """Create a PR for an issue using the Codebase agent"""
-    # Check for API key
-    if not ANTHROPIC_API_KEY:
-        return AgentRunResponse(
-            status="error",
-            message="Anthropic API key not configured"
-        )
+    agent_run_id = None
+    message_recorder = None
     
-    # Get the issue comments and create the prompt
-    prompt = await _prepare_agent_prompt(issue)
-
-    model_provider = "anthropic"
-    model_name = "claude-3-7-sonnet-latest"
-
-    # Create agent run record
-    from ..db.connection import db_pool
-    
-    async with db_pool.acquire() as conn:
-        # Get the agent user ID
-        app_user_id = await get_agent_user_id(conn, issue.workspace_id)
-        
-        # Create a new agent run record
-        agent_run_id = await create_agent_run(
-            conn, issue.id, app_user_id, issue.workspace_id, 
-            model_provider, model_name
-        )
-        
-        # Store the initial prompt as a message
-        await store_agent_run_message(conn, agent_run_id, issue.workspace_id, prompt, "prompt")
-    
-    # if issue.is_project_mode:
-    #     model_provider = "openai"
-    #     model_name = "o1"
-    
-    # Setup codebase and branch
-    setup_result = await _setup_codebase_and_branch(issue)
-    if not setup_result.is_success:
-        # Update the agent run record with failure status
-        async with db_pool.acquire() as conn:
-            await set_agent_run_status(conn, agent_run_id, "error")
-            await store_agent_run_message(
-                conn, agent_run_id, issue.workspace_id, 
-                setup_result.error_message, "error"
-            )
-            
-        return AgentRunResponse(
-            status="error",
-            message=setup_result.error_message
-        )
-    
-    # Create the message recorder
-    message_recorder = AgentRunMessageRecorder(agent_run_id, issue.workspace_id)
-    
-    # Run the agent
     try:
-        agent = CodeAgent(setup_result.codebase,
-                         model_provider=model_provider,
-                         model_name=model_name,
-                         logger=message_recorder)
-        agent_result = agent.run(prompt)
-        logger.info(f"Agent result: {agent_result}")
-        
-        # Update agent run with success status and save any remaining messages
-        async with db_pool.acquire() as conn:
-            # Save any messages that haven't been flushed yet
-            await message_recorder.save_remaining_messages(conn)
-            
-            await set_agent_run_status(conn, agent_run_id, "success")
-            await store_agent_run_message(
-                conn, agent_run_id, issue.workspace_id, 
-                agent_result, "response"
+        # Check for API key
+        if not ANTHROPIC_API_KEY:
+            return AgentRunResponse(
+                status="error",
+                message="Anthropic API key not configured"
             )
+        
+        # Get the issue comments and create the prompt
+        prompt = await _prepare_agent_prompt(issue)
+
+        model_provider = "anthropic"
+        model_name = "claude-3-7-sonnet-latest"
+
+        # Create agent run record
+        from ..db.connection import db_pool
+        
+        async with db_pool.acquire() as conn:
+            # Get the agent user ID
+            app_user_id = await get_agent_user_id(conn, issue.workspace_id)
+            
+            # Create a new agent run record
+            agent_run_id = await create_agent_run(
+                conn, issue.id, app_user_id, issue.workspace_id, 
+                model_provider, model_name
+            )
+            
+            # Store the initial prompt as a message
+            await store_agent_run_message(conn, agent_run_id, issue.workspace_id, prompt, "prompt")
+        
+        # if issue.is_project_mode:
+        #     model_provider = "openai"
+        #     model_name = "o1"
+        
+        # Setup codebase and branch
+        setup_result = await _setup_codebase_and_branch(issue)
+        if not setup_result.is_success:
+            # Update the agent run record with failure status
+            async with db_pool.acquire() as conn:
+                await set_agent_run_status(conn, agent_run_id, "error")
+                await store_agent_run_message(
+                    conn, agent_run_id, issue.workspace_id, 
+                    setup_result.error_message, "error"
+                )
+                
+            return AgentRunResponse(
+                status="error",
+                message=setup_result.error_message
+            )
+        
+        # Create the message recorder
+        message_recorder = AgentRunMessageRecorder(agent_run_id, issue.workspace_id)
+        
+        # Run the agent
+        try:
+            agent = CodeAgent(setup_result.codebase,
+                            model_provider=model_provider,
+                            model_name=model_name,
+                            logger=message_recorder)
+            agent_result = agent.run(prompt)
+            logger.info(f"Agent result: {agent_result}")
+            
+            # Update agent run with success status and save any remaining messages
+            async with db_pool.acquire() as conn:
+                # Save any messages that haven't been flushed yet
+                await message_recorder.save_remaining_messages(conn)
+                
+                await set_agent_run_status(conn, agent_run_id, "success")
+                await store_agent_run_message(
+                    conn, agent_run_id, issue.workspace_id, 
+                    agent_result, "response"
+                )
+        except Exception as e:
+            error_msg = f"Error running agent: {str(e)}"
+            logger.error(error_msg)
+            
+            # Update agent run with error status
+            async with db_pool.acquire() as conn:
+                # Save any messages that haven't been flushed yet
+                if message_recorder:
+                    await message_recorder.save_remaining_messages(conn)
+                
+                await set_agent_run_status(conn, agent_run_id, "error")
+                await store_agent_run_message(
+                    conn, agent_run_id, issue.workspace_id, 
+                    error_msg, "error"
+                )
+                    
+            raise  # Re-raise to allow caller to handle the exception
+        
+        if issue.is_project_mode:
+            return AgentRunResponse(
+                status="success",
+                message=agent_result
+            )
+        
+        # If not in project mode, handle post-agent tasks (commit, push, create/update PR)
+        pr_result = await _commit_changes_and_create_pr(
+            setup_result.codebase, 
+            issue, 
+            agent_result, 
+            setup_result.branch_name, 
+            setup_result.pr_url
+        )
+        
+        # Update the agent run with PR information if available
+        if pr_result.status == "success" and pr_result.pr_url:
+            async with db_pool.acquire() as conn:
+                # Store the PR info as a message
+                pr_info = f"PR URL: {pr_result.pr_url}, Branch: {pr_result.branch_name}"
+                await store_agent_run_message(
+                    conn, agent_run_id, issue.workspace_id, 
+                    pr_info, "pr_info"
+                )
+        
+        return pr_result
+        
     except Exception as e:
-        error_msg = f"Error running agent: {str(e)}"
+        error_msg = f"Unhandled error in agent run: {str(e)}"
         logger.error(error_msg)
         
-        # Update agent run with error status
-        async with db_pool.acquire() as conn:
-            # Save any messages that haven't been flushed yet
-            await message_recorder.save_remaining_messages(conn)
-            
-            await set_agent_run_status(conn, agent_run_id, "error")
-            await store_agent_run_message(
-                conn, agent_run_id, issue.workspace_id, 
-                error_msg, "error"
-            )
-                
-        raise  # Re-raise to allow caller to handle the exception
-    
-    if issue.is_project_mode:
+        if agent_run_id:
+            try:
+                async with db_pool.acquire() as conn:
+                    # Save any messages that haven't been flushed yet
+                    if message_recorder:
+                        await message_recorder.save_remaining_messages(conn)
+                    
+                    await set_agent_run_status(conn, agent_run_id, "error")
+                    await store_agent_run_message(
+                        conn, agent_run_id, issue.workspace_id, 
+                        error_msg, "error"
+                    )
+            except Exception as inner_e:
+                logger.error(f"Failed to update agent run status to error: {str(inner_e)}")
+        
         return AgentRunResponse(
-            status="success",
-            message=agent_result
+            status="error",
+            message=error_msg
         )
-    
-    # If not in project mode, handle post-agent tasks (commit, push, create/update PR)
-    pr_result = await _commit_changes_and_create_pr(
-        setup_result.codebase, 
-        issue, 
-        agent_result, 
-        setup_result.branch_name, 
-        setup_result.pr_url
-    )
-    
-    # Update the agent run with PR information if available
-    if pr_result.status == "success" and pr_result.pr_url:
-        async with db_pool.acquire() as conn:
-            # Store the PR info as a message
-            pr_info = f"PR URL: {pr_result.pr_url}, Branch: {pr_result.branch_name}"
-            await store_agent_run_message(
-                conn, agent_run_id, issue.workspace_id, 
-                pr_info, "pr_info"
-            )
-    
-    return pr_result
 
 async def _get_installation_token(workspace_id):
     """Get GitHub installation token for a workspace"""
