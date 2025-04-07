@@ -465,6 +465,17 @@ async def _commit_changes_and_create_pr(
     """Commit changes to the branch and create or update a PR"""
     # Commit and push changes
     try:
+        try:
+            import os
+            import subprocess
+            
+            repo_root = codebase.github.git_cli.working_dir if hasattr(codebase, 'github') and hasattr(codebase.github, 'git_cli') else None
+            
+            if repo_root and os.path.exists(os.path.join(repo_root, '.codegen')):
+                subprocess.run(['git', 'rm', '--cached', '-r', '.codegen'], cwd=repo_root, stderr=subprocess.PIPE, check=False)
+        except Exception as git_error:
+            logger.error(f"Error removing .codegen folder from staging: {str(git_error)}")
+            
         git_commit_result = codebase.git_commit("Vibing...")
 
         if git_commit_result is None:

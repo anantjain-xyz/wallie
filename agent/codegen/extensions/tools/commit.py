@@ -29,6 +29,17 @@ def commit(codebase: Codebase) -> CommitObservation:
         CommitObservation containing commit status
     """
     try:
+        try:
+            import os
+            import subprocess
+            
+            repo_root = codebase._op.git_cli.working_dir if hasattr(codebase, '_op') and hasattr(codebase._op, 'git_cli') else None
+            
+            if repo_root and os.path.exists(os.path.join(repo_root, '.codegen')):
+                subprocess.run(['git', 'rm', '--cached', '-r', '.codegen'], cwd=repo_root, stderr=subprocess.PIPE, check=False)
+        except Exception as git_error:
+            pass
+            
         codebase.commit()
         return CommitObservation(
             status="success",
