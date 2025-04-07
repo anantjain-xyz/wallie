@@ -212,13 +212,15 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
             design_section = None
             plan_section = None
             
-            design_match = re.search(r'### Design(.*?)(?=### Milestones)', agent_result, re.DOTALL)
-            if design_match:
-                design_section = design_match.group(1).strip()
-            
             plan_match = re.search(r'### Milestones(.*?)$', agent_result, re.DOTALL)
             if plan_match:
                 plan_section = plan_match.group(1).strip()
+                
+                milestones_index = agent_result.find("### Milestones")
+                if milestones_index > 0:
+                    design_section = agent_result[:milestones_index].strip()
+            else:
+                design_section = agent_result.strip()
             
             async with db_pool.acquire() as conn:
                 if design_section:
