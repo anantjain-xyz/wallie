@@ -12,7 +12,6 @@ from agent.codegen.agents.code_agent import CodeAgent
 from agent.codegen.agents.data import BaseMessage
 from agent.codegen.agents.loggers import ExternalLogger
 from codegen.configs.models.secrets import SecretsConfig
-from codegen.git.schemas.enums import SetupOption
 from codegen import Codebase
 from typing import Any, Dict, Union
 from ..data import Issue, AgentRunResponse
