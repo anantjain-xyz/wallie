@@ -321,13 +321,13 @@ function IssuePage() {
     };
   }, [issue, workspaceName, comments, noopCallback]);
   
-  const handleHotkeysCopy = useCallback((e: KeyboardEvent) => {
+  const handleCopyHotkey = useCallback((e: KeyboardEvent) => {
     e.preventDefault();
     copyIssueAsMarkdown();
   }, [copyIssueAsMarkdown]);
   
   // Add keyboard shortcut for copying issue as markdown (Cmd+Option+C)
-  useHotkeys('mod+alt+c', handleHotkeysCopy, { enableOnFormTags: true });
+  useHotkeys('mod+alt+c', handleCopyHotkey, { enableOnFormTags: true });
 
   if (issue === undefined) {
     return <div className="p-8 w-full text-center">Loading...</div>
