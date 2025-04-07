@@ -122,7 +122,7 @@ class CodeAgent:
                 "thread_id": self.thread_id,
                 "metadata": {"project": self.project_name},
             },
-            "recursion_limit": 100,
+            "recursion_limit": 50,
         }
 
         # Prepare content with prompt and images if provided
