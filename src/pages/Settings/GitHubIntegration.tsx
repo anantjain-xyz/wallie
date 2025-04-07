@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { useAuth } from '@clerk/clerk-react'
 import LanguageMenu, { getLanguageIcon } from '../../components/contextmenu/LanguageMenu'
-import { showError, showInfo, showSuccess } from '../../utils/notification'
+import { showError, showSuccess } from '../../utils/notification'
 
 // Get the API server URL from environment variables
 const API_SERVER_URL = import.meta.env.VITE_API_SERVER_URL

@@ -97,6 +97,7 @@ export default function IssueSelector({ isOpen, linkType, currentIssueId, onDism
             {issues.map((issue) => (
               <li key={issue.id}>
                 <button
+                  type="button"
                   onClick={() => handleSelect(issue)}
                   className="w-full text-left py-3 px-2 hover:bg-gray-50 rounded flex items-center"
                 >
@@ -122,12 +123,14 @@ export default function IssueSelector({ isOpen, linkType, currentIssueId, onDism
       
       <div className="border-t p-4 flex justify-end w-full">
         <button
+          type="button"
           onClick={onDismiss}
           className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 mr-2"
         >
           Cancel
         </button>
         <button
+          type="button"
           onClick={() => selectedIssue && onSelect(selectedIssue.id)}
           disabled={!selectedIssue}
           className={`px-4 py-2 rounded-md text-white ${

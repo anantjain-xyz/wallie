@@ -52,7 +52,7 @@ export default function SubIssuesTable({ issueId, workspaceName }: SubIssuesTabl
   const hasSubIssues = subIssues.length > 0
 
   // Function to remove sub-issue relationship
-  const removeSubIssueRelationship = async (targetIssueId: string, e: React.MouseEvent) => {
+  const removeSubIssueRelationship = async (targetIssueId: string, _e: React.MouseEvent) => {
     // Event handling moved to button onClick
     try {
       await pg.sql`
@@ -108,6 +108,7 @@ export default function SubIssuesTable({ issueId, workspaceName }: SubIssuesTabl
                   </div>
                 )}
                 <button 
+                  type="button"
                   className="ml-2 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation(); // Stop event propagation first

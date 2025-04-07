@@ -150,6 +150,7 @@ export default function SidebarRelationships({ issueId, onRemoveLink, workspaceN
                   <div className="flex-1 flex items-center">
                     <StatusIcon status={linkedIssueStatus} className="mr-2 w-4 h-4" />
                     <button 
+                      type="button"
                       className="text-gray-500"
                       onClick={() => navigate(`/issue/${formatExternalId(workspaceName, link.external_id)}`)}
                     >
@@ -157,6 +158,7 @@ export default function SidebarRelationships({ issueId, onRemoveLink, workspaceN
                     </button>
                   </div>
                   <button
+                    type="button"
                     onClick={() => onRemoveLink(link.id)}
                     className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100"
                   >
@@ -184,6 +186,7 @@ export default function SidebarRelationships({ issueId, onRemoveLink, workspaceN
                   <div className="flex-1 flex items-center">
                     <StatusIcon status={linkedIssueStatus} className="mr-2 w-4 h-4" />
                     <button 
+                      type="button"
                       className="text-gray-500"
                       onClick={() => navigate(`/issue/${formatExternalId(workspaceName, link.external_id)}`)}
                     >
@@ -191,6 +194,7 @@ export default function SidebarRelationships({ issueId, onRemoveLink, workspaceN
                     </button>
                   </div>
                   <button
+                    type="button"
                     onClick={() => onRemoveLink(link.id)}
                     className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100"
                   >

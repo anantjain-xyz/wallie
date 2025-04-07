@@ -135,7 +135,7 @@ function AgentRuns({ issue }: AgentRunsProps) {
 
 // Component to display the details of an agent run when expanded
 function AgentRunDetails({ runId, runStatus }: { runId: string, runStatus: string | null }) {
-  const [expandedMessageIds, setExpandedMessageIds] = useState<Set<string>>(new Set())
+  const [expandedMessageIds, setExpandedMessageIds] = useState<Set<string>>(() => new Set())
   
   // Query for messages associated with this agent run
   const messagesResults = useLiveQuery.sql<{ 
@@ -188,7 +188,7 @@ function AgentRunDetails({ runId, runStatus }: { runId: string, runStatus: strin
         return true;
       }
       return false;
-    } catch (e) {
+    } catch (_e) {
       return false;
     }
   }
@@ -243,8 +243,8 @@ function AgentRunDetails({ runId, runStatus }: { runId: string, runStatus: strin
                           (max, [key]) => Math.max(max, key.length), 0
                         );
                         
-                        return entries.map(([key, value], idx) => (
-                          <div key={`${key}-${idx}`} className="flex">
+                        return entries.map(([key, value]) => (
+                          <div key={`${key}-${value}`} className="flex">
                             <span 
                               className="font-semibold text-blue-600 text-right min-w-[100px] mr-2"
                               style={{ width: `${maxKeyLength * 0.6 + 1}rem` }}
