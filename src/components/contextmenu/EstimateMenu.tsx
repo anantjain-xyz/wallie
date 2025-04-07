@@ -71,6 +71,11 @@ function EstimateMenu({
           searchPlaceholder="Set estimate..."
           onKeywordChange={(kw) => setKeyword(kw)}
           className={className}
+          onSelect={(index) => {
+            if (index >= 0 && index < filteredOptions.length) {
+              handleSelect(filteredOptions[index].value)
+            }
+          }}
         >
           {options}
         </Menu>

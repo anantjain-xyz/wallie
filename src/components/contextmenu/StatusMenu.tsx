@@ -48,6 +48,11 @@ export default function StatusMenu({ id, button, filterKeyword = false, classNam
           className={className}
           searchPlaceholder="Set status..."
           onKeywordChange={(kw) => setKeyword(kw)}
+          onSelect={(index) => {
+            if (index >= 0 && index < statuses.length) {
+              handleSelect(statuses[index][1])
+            }
+          }}
         >
           {options}
         </Menu>
