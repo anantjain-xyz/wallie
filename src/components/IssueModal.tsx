@@ -289,6 +289,11 @@ function IssueModal({ isOpen, onDismiss }: Props) {
             <button
               type="button"
               className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.click();
+                }
+              }}
             >
               <StatusIcon status={status} className="mr-1" />
               <span>{StatusDisplay[status]}</span>
@@ -304,6 +309,11 @@ function IssueModal({ isOpen, onDismiss }: Props) {
             <button
               type="button"
               className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.click();
+                }
+              }}
             >
               <PriorityIcon priority={priority} className="mr-1" />
               <span>{PriorityDisplay[priority]}</span>
@@ -320,6 +330,11 @@ function IssueModal({ isOpen, onDismiss }: Props) {
             <button
               type="button"
               className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.click();
+                }
+              }}
             >
               <span>{estimate !== null ? `${estimate} point${estimate !== 1 ? 's' : ''}` : 'No estimate'}</span>
             </button>
@@ -335,6 +350,11 @@ function IssueModal({ isOpen, onDismiss }: Props) {
               <button
                 type="button"
                 className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.click();
+                  }
+                }}
               >
                 {assigneeId && currentAssignee ? (
                   <>
