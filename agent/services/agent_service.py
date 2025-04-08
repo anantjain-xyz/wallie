@@ -445,10 +445,15 @@ async def _prepare_agent_prompt(issue: Issue) -> str:
     else:
         return get_code_mode_prompt(issue.title, issue.description, comments)
 
-def _create_pr_body(issue: Issue) -> str:
+def _format_external_id(workspace_name: str, external_id: int) -> str:
+    prefix = workspace_name[:3].upper()
+    return f"{prefix}-{external_id}"
+
+def _create_pr_body(issue: Issue, workspace_name: str) -> str:
     """Create the body text for a pull request"""
     pr_body = f"This PR was automatically created by Wallie :robot:"
-    pr_body += f"\n\nIssue: [{issue.title}]({FRONTEND_URL}/issue/{issue.id})"
+    formatted_id = _format_external_id(workspace_name, issue.external_id)
+    pr_body += f"\n\nIssue: [{issue.title}]({FRONTEND_URL}/issue/{formatted_id})"
     
     if issue.description:
         pr_body += f"\n\nDescription: {issue.description}"
@@ -500,7 +505,14 @@ async def _commit_changes_and_create_pr(
     # Create a new PR
     try:
         pr_title = issue.title
-        pr_body = _create_pr_body(issue)
+
+        async with db_pool.acquire() as conn:
+            workspace_name = await conn.fetchval(
+                "SELECT name FROM workspace WHERE id = $1",
+                issue.workspace_id
+            )
+
+        pr_body = _create_pr_body(issue, workspace_name)
         
         create_pr_result = codebase.github.remote_git_repo.create_pull(
             head_branch_name=codebase.github.git_cli.active_branch.name,

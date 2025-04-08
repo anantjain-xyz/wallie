@@ -17,8 +17,8 @@ import { Priority, Status, Issue } from '../../types/types'
 import { showInfo, showWarning, showError } from '../../utils/notification'
 import { useCurrentUser } from '../../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
-import { getNextExternalId } from '../../utils/issueUtils'
-
+import { getNextExternalId, formatExternalId } from '../../utils/issueUtils'
+import { useLiveQuery } from '@electric-sql/pglite-react'
 export interface EditorMenuProps {
   editor: TipTapEditor
 }
@@ -29,6 +29,10 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
   const currentUserResult = useCurrentUser(user)
   const currentUser = currentUserResult?.rows[0]
 
+  const workspaceResults = useLiveQuery.sql<{ id: string, name: string }>`
+    SELECT id, name FROM workspace LIMIT 1
+  `
+  const workspaceName = workspaceResults?.rows[0]?.name || ''
   const setLink = () => {
     const previousUrl = editor.getAttributes('link').href
     const url = window.prompt('URL', previousUrl)
@@ -169,7 +173,8 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
       if (createdIssues.length > 0) {
         // Create a bullet list content structure
         const listItems = createdIssues.map(issue => {
-          const issueLink = `/issue/${issue.id}`
+          const formattedId = formatExternalId(workspaceName, issue.externalId)
+          const issueLink = `/issue/${formattedId}`
           const displayText = `#${issue.externalId}: ${issue.title}`
           
           return {
