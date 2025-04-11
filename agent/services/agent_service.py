@@ -412,6 +412,7 @@ async def _setup_codebase_and_branch(issue: Issue) -> CodebaseSetupResult:
     # Create codebase instance with the workspace token
     codebase = Codebase.from_repo(
         repo_name,
+        tmp_dir=f"/tmp/{issue.id}/",
         language=language,
         secrets=SecretsConfig(github_token=token)
     )

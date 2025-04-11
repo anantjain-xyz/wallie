@@ -28,8 +28,8 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app with lifespan
 app = FastAPI(
-    title="Codebase PR API",
-    description="API that creates PRs using Codebase agent",
+    title="Wallie Agent",
+    description="Agent for monitoring and solving issues",
     version="0.1.0",
     lifespan=lifespan
 )

@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 # Global variable to store the last checked timestamp
 last_checked_timestamp = None
 
-async def get_last_modified_issue_timestamp():
+async def _get_last_modified_issue_timestamp():
     """Get the timestamp of the most recent issue modification"""
     # Get the current db_pool from the connection module
     from ..db.connection import db_pool
@@ -39,7 +39,7 @@ async def get_last_modified_issue_timestamp():
         logger.error(f"Error getting latest issue timestamp: {str(e)}")
         return None
 
-async def get_new_issues(timestamp):
+async def _get_new_issues(timestamp):
     """Get all issues modified after the given timestamp"""
     # Get the current db_pool from the connection module
     from ..db.connection import db_pool
@@ -77,7 +77,7 @@ async def _monitor_issues_task():
     
     # Get the latest timestamp on startup
     try:
-        last_checked_timestamp = await get_last_modified_issue_timestamp()
+        last_checked_timestamp = await _get_last_modified_issue_timestamp()
         if last_checked_timestamp:
             logger.info(f"Starting issue monitoring from timestamp: {last_checked_timestamp}")
     except Exception as e:
@@ -87,12 +87,12 @@ async def _monitor_issues_task():
     while True:
         try:
             await asyncio.sleep(POLLING_INTERVAL_SECONDS)
-            await check_for_new_issues()
+            await _check_for_new_issues()
         except Exception as e:
             logger.error(f"Error in issue monitoring: {str(e)}")
             await asyncio.sleep(ERROR_RETRY_SECONDS)
 
-async def check_for_new_issues():
+async def _check_for_new_issues():
     """Check for new issues and process them"""
     global last_checked_timestamp
     
@@ -104,7 +104,7 @@ async def check_for_new_issues():
         return
     
     try:
-        rows = await get_new_issues(last_checked_timestamp)
+        rows = await _get_new_issues(last_checked_timestamp)
         
         for row in rows:
             logger.info(f"Found {len(rows)} new issues")
