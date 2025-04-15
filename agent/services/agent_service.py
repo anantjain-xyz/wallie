@@ -410,7 +410,7 @@ async def _setup_codebase_and_branch(issue: Issue) -> CodebaseSetupResult:
         )
 
     # Set git config at global level in production only
-    if os.environ.get('ENV') == 'production':
+    if os.environ.get('VITE_ENV') == 'production':
         os.system(f"git config --global user.email 'bot@wallie.app'")
         os.system(f"git config --global user.name 'Wallie'")
 
