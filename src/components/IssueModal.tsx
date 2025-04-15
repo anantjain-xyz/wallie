@@ -34,6 +34,7 @@ import { useCurrentUser } from '../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
 import { getNextExternalId } from '../utils/issueUtils'
 import { formatExternalId } from '../utils/issueUtils'
+import { showMenu } from '@firefox-devtools/react-contextmenu'
 
 interface Props {
   isOpen: boolean
@@ -231,6 +232,71 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     };
   }, [handleSubmit]);
 
+  // Refs for menu buttons
+  const statusBtnRef = useRef<HTMLButtonElement>(null)
+  const priorityBtnRef = useRef<HTMLButtonElement>(null)
+  const estimateBtnRef = useRef<HTMLButtonElement>(null)
+  const assigneeBtnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleHotkey = (e: KeyboardEvent) => {
+      // Ignore if focus is in input, textarea, or contenteditable
+      const active = document.activeElement;
+      if (
+        active && (
+          active.tagName === 'INPUT' ||
+          active.tagName === 'TEXTAREA' ||
+          (active as HTMLElement).isContentEditable
+        )
+      ) {
+        return;
+      }
+      // Only trigger if modal is open
+      if (!isOpen) return;
+      // s: status
+      if (e.key === 's' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const btn = statusBtnRef.current;
+        if (btn) {
+          const rect = btn.getBoundingClientRect();
+          showMenu({ id: 'status-dropdown-menu', position: { x: rect.left, y: rect.bottom } });
+        }
+      }
+      // p: priority
+      if (e.key === 'p' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const btn = priorityBtnRef.current;
+        if (btn) {
+          const rect = btn.getBoundingClientRect();
+          showMenu({ id: 'priority-menu', position: { x: rect.left, y: rect.bottom } });
+        }
+      }
+      // Shift+e: estimate
+      if ((e.key === 'E' || e.key === 'e') && e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const btn = estimateBtnRef.current;
+        if (btn) {
+          const rect = btn.getBoundingClientRect();
+          showMenu({ id: 'estimate-menu', position: { x: rect.left, y: rect.bottom } });
+        }
+      }
+      // a: assignee
+      if (e.key === 'a' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const btn = assigneeBtnRef.current;
+        if (btn) {
+          const rect = btn.getBoundingClientRect();
+          showMenu({ id: 'assignee-menu', position: { x: rect.left, y: rect.bottom } });
+        }
+      }
+    };
+    document.addEventListener('keydown', handleHotkey);
+    return () => {
+      document.removeEventListener('keydown', handleHotkey);
+    };
+  }, [isOpen]);
+
   const body = (
     <div className="flex flex-col w-full py-4 overflow-hidden">
       {/* header */}
@@ -294,13 +360,16 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         <StatusMenu
           id="status-dropdown-menu"
           button={
-            <button
-              type="button"
-              className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
-            >
-              <StatusIcon status={status} className="mr-1" />
-              <span>{StatusDisplay[status]}</span>
-            </button>
+            <Tooltip content="Set status" shortcut="S">
+              <button
+                type="button"
+                className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                ref={statusBtnRef}
+              >
+                <StatusIcon status={status} className="mr-1" />
+                <span>{StatusDisplay[status]}</span>
+              </button>
+            </Tooltip>
           }
           onSelect={(st) => {
             setStatus(st as StatusValue)
@@ -309,13 +378,16 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         <PriorityMenu
           id="priority-menu"
           button={
-            <button
-              type="button"
-              className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
-            >
-              <PriorityIcon priority={priority} className="mr-1" />
-              <span>{PriorityDisplay[priority]}</span>
-            </button>
+            <Tooltip content="Set priority" shortcut="P">
+              <button
+                type="button"
+                className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                ref={priorityBtnRef}
+              >
+                <PriorityIcon priority={priority} className="mr-1" />
+                <span>{PriorityDisplay[priority]}</span>
+              </button>
+            </Tooltip>
           }
           onSelect={(val) => {
             setPriority(val as PriorityValue)
@@ -325,12 +397,15 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         <EstimateMenu
           id="estimate-menu"
           button={
-            <button
-              type="button"
-              className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
-            >
-              <span>{estimate !== null ? `${estimate} point${estimate !== 1 ? 's' : ''}` : 'No estimate'}</span>
-            </button>
+            <Tooltip content="Set estimate" shortcut="Shift+E">
+              <button
+                type="button"
+                className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                ref={estimateBtnRef}
+              >
+                <span>{estimate !== null ? `${estimate} point${estimate !== 1 ? 's' : ''}` : 'No estimate'}</span>
+              </button>
+            </Tooltip>
           }
           onSelect={(val) => setEstimate(val)}
         />
@@ -340,27 +415,30 @@ function IssueModal({ isOpen, onDismiss }: Props) {
             id="assignee-menu"
             workspaceId={workspaceId}
             button={
-              <button
-                type="button"
-                className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
-              >
-                {assigneeId && currentAssignee ? (
-                  <>
-                    <Avatar
-                      name={currentAssignee.full_name || currentAssignee.username}
-                      avatarUrl={currentAssignee.profile_picture || undefined}
-                    />
-                    <span className="ml-1">
-                      {currentAssignee.full_name || currentAssignee.username}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <AssigneeIcon className="mr-1 w-4 h-4" />
-                    <span>Unassigned</span>
-                  </>
-                )}
-              </button>
+              <Tooltip content="Set assignee" shortcut="A">
+                <button
+                  type="button"
+                  className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                  ref={assigneeBtnRef}
+                >
+                  {assigneeId && currentAssignee ? (
+                    <>
+                      <Avatar
+                        name={currentAssignee.full_name || currentAssignee.username}
+                        avatarUrl={currentAssignee.profile_picture || undefined}
+                      />
+                      <span className="ml-1">
+                        {currentAssignee.full_name || currentAssignee.username}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <AssigneeIcon className="mr-1 w-4 h-4" />
+                      <span>Unassigned</span>
+                    </>
+                  )}
+                </button>
+              </Tooltip>
             }
             onSelect={(userId) => setAssigneeId(userId)}
           />
