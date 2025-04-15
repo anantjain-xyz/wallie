@@ -409,6 +409,11 @@ async def _setup_codebase_and_branch(issue: Issue) -> CodebaseSetupResult:
             error_message="GitHub integration not configured for this workspace. Please go to [Settings](/settings) and install the GitHub App."
         )
 
+    # Set git config at global level in production only
+    if os.environ.get('ENV') == 'production':
+        os.system(f"git config --global user.email 'bot@wallie.app'")
+        os.system(f"git config --global user.name 'Wallie'")
+
     # Create codebase instance with the workspace token
     codebase = Codebase.from_repo(
         repo_name,
@@ -471,7 +476,7 @@ async def _commit_changes_and_create_pr(
     """Commit changes to the branch and create or update a PR"""
     # Commit and push changes
     try:
-        git_commit_result = codebase.git_commit("Vibing...")
+        git_commit_result = codebase.git_commit(".", exclude_paths=[".codegen"])
 
         if git_commit_result is None:
             logger.info("No changes to commit, returning early")
