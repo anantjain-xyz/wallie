@@ -100,7 +100,7 @@ function LeftMenu() {
           </div>
         </div>
 
-        <div className="flex flex-col flex-shrink flex-grow overflow-y-auto mb-0.5 px-2">
+        <div className="flex flex-col flex-shrink flex-grow overflow-y-auto mb-0.5 px-5">
           <Link
             to="/?estimate=5,8,13"
             className="flex items-center pl-0.5 rounded cursor-pointer group h-7 hover:bg-gray-100"
