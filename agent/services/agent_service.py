@@ -471,9 +471,30 @@ async def _commit_changes_and_create_pr(
     """Commit changes to the branch and create or update a PR"""
     # Commit and push changes
     try:
-        git_commit_result = codebase.git_commit("Vibing...")
+        codebase.ctx.commit_transactions(sync_graph=False)
 
-        if git_commit_result is None:
+        codebase.github.git_cli.git.add(A=True)
+        # Unstage the excluded paths
+        for path in [".codegen"]:
+            try:
+                codebase.github.git_cli.git.reset("HEAD", "--", path)
+            except Exception as e:
+                logger.warning(f"Failed to exclude path {path}: {e}")
+
+        # Get the staged changes
+        staged_changes = codebase.github.git_cli.git.diff('--staged')
+
+        git_commit_result = None
+        if staged_changes:
+            commit_args = ["-m", "."]
+            commit_args.append("--author='Wallie <bot@wallie.app>'")
+            codebase.github.git_cli.git.commit(*commit_args)
+            git_commit_result = True
+        else:
+            logger.info("No changes to commit. Do nothing.")
+            git_commit_result = False
+
+        if not git_commit_result:
             logger.info("No changes to commit, returning early")
             return AgentRunResponse(
                 status="success",
