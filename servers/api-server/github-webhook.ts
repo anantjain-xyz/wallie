@@ -219,22 +219,22 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
     
     // Only process merged PRs
     if (action === 'closed' && pullRequest.merged === true) {
-      const isRevert = pullRequest.title.toLowerCase().includes('revert') || 
-                     (pullRequest.body && pullRequest.body.toLowerCase().includes('revert'));
+      const isRevert = pullRequest.title.toLowerCase().includes('revert') ||
+                     (typeof pullRequest.body === 'string' && pullRequest.body?.toLowerCase().includes('revert'));
       
       if (isRevert) {
         console.log('Processing revert PR:', pullRequest.number);
         
-        const originalPrMatch = pullRequest.title.match(/#(\d+)/) || 
-                              (pullRequest.body && pullRequest.body.match(/#(\d+)/));
+        const originalPrMatch = pullRequest.title.match(/#(\d+)/) ||
+                              (typeof pullRequest.body === 'string' && pullRequest.body.match(/#(\d+)/));
         
-        if (originalPrMatch && originalPrMatch[1]) {
+        if (originalPrMatch?.[1]) {
           const originalPrNumber = originalPrMatch[1];
           console.log('Found original PR number:', originalPrNumber);
           
           const branches = await sql`
             SELECT issue_id FROM github_branch 
-            WHERE pull_request_link LIKE ${'%/pull/' + originalPrNumber + '$' || '%/pull/' + originalPrNumber}
+            WHERE pull_request_link LIKE ${`%/pull/${originalPrNumber}`}
             ORDER BY modified DESC
             LIMIT 1
           `;
@@ -246,7 +246,7 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
             // Update issue status to todo
             await sql`
               UPDATE issue
-              SET status = 'todo', modified = NOW()
+              SET status = 'in_progress', modified = NOW()
               WHERE id = ${issueId}
             `;
             
