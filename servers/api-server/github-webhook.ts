@@ -204,6 +204,7 @@ interface PullRequestPayload {
     number: number;
     merged: boolean;
     title: string;
+    draft: boolean;
     head: {
       ref: string;
     };
@@ -216,6 +217,48 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
   try {
     const action = payload.action;
     const pullRequest = payload.pull_request;
+    console.log('Processing pull request event:', action, pullRequest.number);
+    
+    // Handle PR draft status changes
+    if ((action === 'opened' || action === 'ready_for_review' || action === 'converted_to_draft') && pullRequest.draft !== undefined) {
+      console.log(`Processing PR draft status change for PR #${pullRequest.number}, draft status: ${pullRequest.draft}`);
+      
+      // Get the branch name from the PR
+      const branchName = pullRequest.head.ref;
+      
+      // Look up the issue ID from the github_branch table
+      const branches = await sql`
+        SELECT issue_id FROM github_branch 
+        WHERE name = ${branchName}
+        ORDER BY modified DESC
+        LIMIT 1
+      `;
+      
+      if (branches.length > 0 && branches[0].issue_id) {
+        const issueId = branches[0].issue_id;
+        console.log('Found issue ID from branch:', issueId);
+        
+        if (pullRequest.draft) {
+          // If PR is in draft state, set issue to in_progress
+          await sql`
+            UPDATE issue
+            SET status = 'in_progress', modified = NOW()
+            WHERE id = ${issueId}
+          `;
+          console.log('Updated issue status to in_progress for issue:', issueId);
+        } else {
+          // If PR is ready for review, set issue to in_review
+          await sql`
+            UPDATE issue
+            SET status = 'in_review', modified = NOW()
+            WHERE id = ${issueId}
+          `;
+          console.log('Updated issue status to in_review for issue:', issueId);
+        }
+      } else {
+        console.log('Could not find issue ID for branch:', branchName);
+      }
+    }
     
     // Only process merged PRs
     if (action === 'closed' && pullRequest.merged === true) {
