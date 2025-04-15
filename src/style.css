@@ -83,3 +83,10 @@ html {
 .prose :where(.prose > ol > li > p:first-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
   margin: 0;
 }
+
+/* Style for issue links within the Tiptap editor */
+.tiptap a[href^="/issue/"] {
+  @apply inline-block bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-md no-underline hover:bg-gray-200 hover:text-gray-900 cursor-pointer;
+  /* Optional: Adjust font size or weight if needed */
+  /* font-size: 0.9em; */
+}

@@ -175,7 +175,7 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
         const listItems = createdIssues.map(issue => {
           const formattedId = formatExternalId(workspaceName, issue.externalId)
           const issueLink = `/issue/${formattedId}`
-          const displayText = `#${issue.externalId}: ${issue.title}`
+          const displayText = `${formattedId}: ${issue.title}`
           
           return {
             type: 'listItem',
