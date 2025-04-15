@@ -217,9 +217,10 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
   try {
     const action = payload.action;
     const pullRequest = payload.pull_request;
+    console.log('Processing pull request event:', action, pullRequest.number);
     
     // Handle PR draft status changes
-    if ((action === 'ready_for_review' || action === 'opened' || action === 'edited') && pullRequest.draft !== undefined) {
+    if ((action === 'opened' || action === 'ready_for_review' || action === 'converted_to_draft') && pullRequest.draft !== undefined) {
       console.log(`Processing PR draft status change for PR #${pullRequest.number}, draft status: ${pullRequest.draft}`);
       
       // Get the branch name from the PR
