@@ -219,33 +219,73 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
     
     // Only process merged PRs
     if (action === 'closed' && pullRequest.merged === true) {
-      console.log('Processing merged PR:', pullRequest.number);
+      const isRevert = pullRequest.title.toLowerCase().includes('revert') || 
+                     (pullRequest.body && pullRequest.body.toLowerCase().includes('revert'));
       
-      // Get the branch name from the PR
-      const branchName = pullRequest.head.ref;
-      
-      // Look up the issue ID from the github_branch table
-      const branches = await sql`
-        SELECT issue_id FROM github_branch 
-        WHERE name = ${branchName}
-        ORDER BY modified DESC
-        LIMIT 1
-      `;
-      
-      if (branches.length > 0 && branches[0].issue_id) {
-        const issueId = branches[0].issue_id;
-        console.log('Found issue ID from branch:', issueId);
+      if (isRevert) {
+        console.log('Processing revert PR:', pullRequest.number);
         
-        // Update issue status to done
-        await sql`
-          UPDATE issue
-          SET status = 'done', modified = NOW()
-          WHERE id = ${issueId}
+        const originalPrMatch = pullRequest.title.match(/#(\d+)/) || 
+                              (pullRequest.body && pullRequest.body.match(/#(\d+)/));
+        
+        if (originalPrMatch && originalPrMatch[1]) {
+          const originalPrNumber = originalPrMatch[1];
+          console.log('Found original PR number:', originalPrNumber);
+          
+          const branches = await sql`
+            SELECT issue_id FROM github_branch 
+            WHERE pull_request_link LIKE ${'%/pull/' + originalPrNumber + '$' || '%/pull/' + originalPrNumber}
+            ORDER BY modified DESC
+            LIMIT 1
+          `;
+          
+          if (branches.length > 0 && branches[0].issue_id) {
+            const issueId = branches[0].issue_id;
+            console.log('Found issue ID from original PR:', issueId);
+            
+            // Update issue status to todo
+            await sql`
+              UPDATE issue
+              SET status = 'todo', modified = NOW()
+              WHERE id = ${issueId}
+            `;
+            
+            console.log('Updated issue status to todo for issue:', issueId);
+          } else {
+            console.log('Could not find issue ID for original PR:', originalPrNumber);
+          }
+        } else {
+          console.log('Could not extract original PR number from revert PR title/body');
+        }
+      } else {
+        console.log('Processing merged PR:', pullRequest.number);
+        
+        // Get the branch name from the PR
+        const branchName = pullRequest.head.ref;
+        
+        // Look up the issue ID from the github_branch table
+        const branches = await sql`
+          SELECT issue_id FROM github_branch 
+          WHERE name = ${branchName}
+          ORDER BY modified DESC
+          LIMIT 1
         `;
         
-        console.log('Updated issue status to done for issue:', issueId);
-      } else {
-        console.log('Could not find issue ID for branch:', branchName);
+        if (branches.length > 0 && branches[0].issue_id) {
+          const issueId = branches[0].issue_id;
+          console.log('Found issue ID from branch:', issueId);
+          
+          // Update issue status to done
+          await sql`
+            UPDATE issue
+            SET status = 'done', modified = NOW()
+            WHERE id = ${issueId}
+          `;
+          
+          console.log('Updated issue status to done for issue:', issueId);
+        } else {
+          console.log('Could not find issue ID for branch:', branchName);
+        }
       }
     }
   } catch (error) {
