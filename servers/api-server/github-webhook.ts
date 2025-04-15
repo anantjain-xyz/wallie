@@ -170,31 +170,71 @@ async function handlePullRequestEvent(payload: any) {
     if (action === 'closed' && pullRequest.merged === true) {
       console.log('Processing merged PR:', pullRequest.number);
       
-      // Get the branch name from the PR
-      const branchName = pullRequest.head.ref;
+      // Check if this is a revert PR
+      const isRevertPR = pullRequest.title.startsWith('Revert "') && pullRequest.title.endsWith('"');
       
-      // Look up the issue ID from the github_branch table
-      const branches = await sql`
-        SELECT issue_id FROM github_branch 
-        WHERE name = ${branchName}
-        ORDER BY modified DESC
-        LIMIT 1
-      `;
-      
-      if (branches.length > 0 && branches[0].issue_id) {
-        const issueId = branches[0].issue_id;
-        console.log('Found issue ID from branch:', issueId);
+      if (isRevertPR) {
+        console.log('Detected revert PR:', pullRequest.title);
         
-        // Update issue status to done
-        await sql`
-          UPDATE issue
-          SET status = 'done', modified = NOW()
-          WHERE id = ${issueId}
+        // Extract the original PR title from the revert PR title
+        // Format is typically: Revert "Original PR Title"
+        const originalPRTitle = pullRequest.title.substring(8, pullRequest.title.length - 1);
+        console.log('Original PR title:', originalPRTitle);
+        
+        // Try to find the issue associated with the original PR
+        // First, look for PRs with the original title
+        const branches = await sql`
+          SELECT gb.issue_id 
+          FROM github_branch gb
+          JOIN issue i ON gb.issue_id = i.id
+          WHERE i.title = ${originalPRTitle}
+          ORDER BY gb.modified DESC
+          LIMIT 1
         `;
         
-        console.log('Updated issue status to done for issue:', issueId);
+        if (branches.length > 0 && branches[0].issue_id) {
+          const issueId = branches[0].issue_id;
+          console.log('Found issue ID for reverted PR:', issueId);
+          
+          // Reopen the issue by setting status to 'todo'
+          await sql`
+            UPDATE issue
+            SET status = 'todo', modified = NOW()
+            WHERE id = ${issueId}
+          `;
+          
+          console.log('Reopened issue:', issueId);
+        } else {
+          console.log('Could not find issue for reverted PR with title:', originalPRTitle);
+        }
       } else {
-        console.log('Could not find issue ID for branch:', branchName);
+        // Regular PR handling (existing code)
+        // Get the branch name from the PR
+        const branchName = pullRequest.head.ref;
+        
+        // Look up the issue ID from the github_branch table
+        const branches = await sql`
+          SELECT issue_id FROM github_branch 
+          WHERE name = ${branchName}
+          ORDER BY modified DESC
+          LIMIT 1
+        `;
+        
+        if (branches.length > 0 && branches[0].issue_id) {
+          const issueId = branches[0].issue_id;
+          console.log('Found issue ID from branch:', issueId);
+          
+          // Update issue status to done
+          await sql`
+            UPDATE issue
+            SET status = 'done', modified = NOW()
+            WHERE id = ${issueId}
+          `;
+          
+          console.log('Updated issue status to done for issue:', issueId);
+        } else {
+          console.log('Could not find issue ID for branch:', branchName);
+        }
       }
     }
   } catch (error) {
