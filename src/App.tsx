@@ -62,24 +62,19 @@ async function createPGlite() {
 
 const pgPromise = createPGlite()
 
-let syncStarted = false
-
 async function issueListLoader({ request }: { request: Request }) {
   await waitForInitialSyncDone()
   const pg = await pgPromise
   const url = new URL(request.url)
   
-  // Get filter state from URL parameters
   const filterState = getFilterStateFromSearchParams(url.searchParams)
   
-  // Try to get user preferences from localStorage if we're in a browser environment
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       const storedPreferences = localStorage.getItem('wallie_user_preferences')
       if (storedPreferences) {
         const userPreferences = JSON.parse(storedPreferences)
         
-        // Only apply user preferences for ordering if URL doesn't explicitly specify them
         if (!url.searchParams.has('orderBy') && userPreferences.order_by) {
           filterState.orderBy = userPreferences.order_by
         }
@@ -113,7 +108,6 @@ async function issueLoader({
 }) {
   const pg = await pgPromise
 
-  // Extract numeric external ID from formattedExternalId, e.g., "WRK-123" -> 123
   const formattedId = params.formattedExternalId || ''
   const match = formattedId.match(/-(\d+)$/)
   const externalId = match ? parseInt(match[1], 10) : null
@@ -130,7 +124,6 @@ async function issueLoader({
   return { liveIssue }
 }
 
-// Move GlobalShortcutsHandler to be used inside the router
 const AppLayout = () => {
   const navigate = useNavigate();
   const { setShowIssueModal } = useContext(IssueModalContext)!;
@@ -138,7 +131,6 @@ const AppLayout = () => {
   const [lastKeyPressed, setLastKeyPressed] = useState<string | null>(null);
   const [keySequenceTimer, setKeySequenceTimer] = useState<NodeJS.Timeout | null>(null);
 
-  // Clear the last key pressed after a delay
   const clearLastKeyPressed = () => {
     if (keySequenceTimer) clearTimeout(keySequenceTimer);
     const timer = setTimeout(() => {
@@ -147,13 +139,11 @@ const AppLayout = () => {
     setKeySequenceTimer(timer);
   };
 
-  // Command+K / Ctrl+K to open command bar
   useHotkeys('mod+k', (e) => {
     e.preventDefault();
     setShowCommandBar(true);
   }, { enableOnFormTags: false }, [setShowCommandBar]);
 
-  // Single key shortcuts
   useHotkeys('c', () => {
     setShowIssueModal(true);
   }, { enableOnFormTags: false }, [setShowIssueModal]);
@@ -162,7 +152,6 @@ const AppLayout = () => {
     navigate('/search');
   }, { enableOnFormTags: false }, [navigate]);
 
-  // Key sequence handler
   useHotkeys('g', () => {
     setLastKeyPressed('g');
     clearLastKeyPressed();
@@ -217,11 +206,15 @@ const App = () => {
   }, [])
 
   useEffect(() => {
-    if (pgForProvider && !syncStarted) {
+    if (pgForProvider) {
       pgForProvider.onLeaderChange(() => {
-        if (pgForProvider.isLeader && !syncStarted) {
-          syncStarted = true
-          startSync(pgForProvider, getAuthHeaders)
+        if (pgForProvider.isLeader) {
+          const syncStarted = localStorage.getItem('syncStarted') === 'true'
+          
+          if (!syncStarted) {
+            localStorage.setItem('syncStarted', 'true')
+            startSync(pgForProvider, getAuthHeaders)
+          }
         }
       })
     }
@@ -242,7 +235,6 @@ const App = () => {
     [showCommandBar, setShowCommandBar]
   )
 
-  // Create router inside the component to have access to context values
   const router = useMemo(() => createBrowserRouter([
     {
       path: `/`,
