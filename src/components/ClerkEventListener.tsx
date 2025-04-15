@@ -16,7 +16,6 @@ export const ClerkEventListener = () => {
 
     // Initial update with current user data if available
     if (user) {
-      console.log('User data:', user);
       // Convert Clerk user data to our expected format
       const userData = {
         id: user.id,
