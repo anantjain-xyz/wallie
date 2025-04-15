@@ -506,7 +506,9 @@ async def _commit_changes_and_create_pr(
     # Create a new PR
     try:
         pr_title = issue.title
-
+        # Get the current db_pool from the connection module
+        from ..db.connection import db_pool
+        
         async with db_pool.acquire() as conn:
             workspace_name = await conn.fetchval(
                 "SELECT name FROM workspace WHERE id = $1",
