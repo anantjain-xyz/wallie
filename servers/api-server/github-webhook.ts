@@ -23,8 +23,12 @@ app.post('/', async (c) => {
     const payload = JSON.parse(rawBody);
     
     // Verify webhook signature
+    const webhookSecret = process.env.GITHUB_APP_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      throw new Error('GITHUB_APP_WEBHOOK_SECRET is not configured');
+    }
     const isValid = await verify(
-      process.env.GITHUB_APP_WEBHOOK_SECRET!,
+      webhookSecret,
       rawBody,
       signature
     );
@@ -35,7 +39,7 @@ app.post('/', async (c) => {
     
     // Handle different webhook events
     const event = c.req.header('x-github-event');
-    console.log(`Webhook event received: `, event)
+    console.log("Webhook event received: ", event)
     
     switch (event) {
       case 'installation':
@@ -57,7 +61,16 @@ app.post('/', async (c) => {
   }
 });
 
-async function handleInstallationEvent(payload: any) {
+interface InstallationPayload {
+  action: string;
+  installation: {
+    id: number;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+async function handleInstallationEvent(payload: InstallationPayload) {
   try {
     const action = payload.action;
     const installation = payload.installation;
@@ -88,11 +101,35 @@ async function handleInstallationEvent(payload: any) {
   }
 }
 
-async function handleRepositoryEvent(payload: any) {
+interface InstallationRepositoriesPayload {
+  action: string;
+  installation: {
+    id: number;
+    [key: string]: unknown;
+  };
+  repositories_added?: Array<{
+    id: number;
+    name: string;
+    full_name: string;
+    private: boolean;
+    html_url: string;
+    description?: string;
+  }>;
+  repositories_removed?: Array<{
+    id: number;
+    name: string;
+    full_name: string;
+    private: boolean;
+    html_url: string;
+    description?: string;
+  }>;
+  [key: string]: unknown;
+}
+
+async function handleRepositoryEvent(payload: InstallationRepositoriesPayload) {
   try {
     const action = payload.action;
     const installation = payload.installation;
-    const repositorySelection = payload.repository_selection;
     
     // Get the installation record
     const installations = await sql`
@@ -107,7 +144,7 @@ async function handleRepositoryEvent(payload: any) {
     
     const installationRecord = installations[0];
     
-    if (action === 'added') {
+    if (action === 'added' && Array.isArray(payload.repositories_added)) {
       // Add new repositories
       for (const repo of payload.repositories_added) {
         await sql`
@@ -146,7 +183,7 @@ async function handleRepositoryEvent(payload: any) {
             modified = NOW()
         `;
       }
-    } else if (action === 'removed') {
+    } else if (action === 'removed' && Array.isArray(payload.repositories_removed)) {
       // Delete removed repositories
       for (const repo of payload.repositories_removed) {
         await sql`
@@ -161,7 +198,21 @@ async function handleRepositoryEvent(payload: any) {
   }
 }
 
-async function handlePullRequestEvent(payload: any) {
+interface PullRequestPayload {
+  action: string;
+  pull_request: {
+    number: number;
+    merged: boolean;
+    title: string;
+    head: {
+      ref: string;
+    };
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+async function handlePullRequestEvent(payload: PullRequestPayload) {
   try {
     const action = payload.action;
     const pullRequest = payload.pull_request;
@@ -171,7 +222,7 @@ async function handlePullRequestEvent(payload: any) {
       console.log('Processing merged PR:', pullRequest.number);
       
       // Check if this is a revert PR
-      const isRevertPR = pullRequest.title.startsWith('Revert "') && pullRequest.title.endsWith('"');
+      const isRevertPR = pullRequest.title.startsWith('Revert "');
       
       if (isRevertPR) {
         console.log('Detected revert PR:', pullRequest.title);
@@ -187,7 +238,7 @@ async function handlePullRequestEvent(payload: any) {
           SELECT gb.issue_id 
           FROM github_branch gb
           JOIN issue i ON gb.issue_id = i.id
-          WHERE i.title = ${originalPRTitle}
+          WHERE i.title LIKE ${`${originalPRTitle}%`}
           ORDER BY gb.modified DESC
           LIMIT 1
         `;
@@ -196,10 +247,10 @@ async function handlePullRequestEvent(payload: any) {
           const issueId = branches[0].issue_id;
           console.log('Found issue ID for reverted PR:', issueId);
           
-          // Reopen the issue by setting status to 'todo'
+          // Reopen the issue by setting status to 'in_progress'
           await sql`
             UPDATE issue
-            SET status = 'todo', modified = NOW()
+            SET status = 'in_progress', modified = NOW()
             WHERE id = ${issueId}
           `;
           
