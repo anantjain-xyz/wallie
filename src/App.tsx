@@ -62,8 +62,6 @@ async function createPGlite() {
 
 const pgPromise = createPGlite()
 
-let syncStarted = false
-
 async function issueListLoader({ request }: { request: Request }) {
   await waitForInitialSyncDone()
   const pg = await pgPromise
@@ -217,10 +215,9 @@ const App = () => {
   }, [])
 
   useEffect(() => {
-    if (pgForProvider && !syncStarted) {
+    if (pgForProvider) {
       pgForProvider.onLeaderChange(() => {
-        if (pgForProvider.isLeader && !syncStarted) {
-          syncStarted = true
+        if (pgForProvider.isLeader) {
           startSync(pgForProvider, getAuthHeaders)
         }
       })
