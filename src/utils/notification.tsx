@@ -1,6 +1,7 @@
 import { toast } from 'react-toastify'
+import { ReactNode } from 'react'
 
-export function showInfo(msg: string, title: string = ``) {
+export function showInfo(msg: ReactNode, title: string = ``) {
   //TODO: make notification showing from bottom
   const content = (
     <div className="flex flex-col">
@@ -24,7 +25,7 @@ export function showInfo(msg: string, title: string = ``) {
   })
 }
 
-export function showSuccess(msg: string, title: string = ``) {
+export function showSuccess(msg: ReactNode, title: string = ``) {
   const content = (
     <div className="flex flex-col">
       {title !== `` && (
@@ -47,7 +48,7 @@ export function showSuccess(msg: string, title: string = ``) {
   })
 }
 
-export function showWarning(msg: string, title: string = ``) {
+export function showWarning(msg: ReactNode, title: string = ``) {
   //TODO: make notification showing from bottom
   const content = (
     <div className="flex flex-col">
@@ -71,7 +72,7 @@ export function showWarning(msg: string, title: string = ``) {
   })
 }
 
-export function showError(msg: string, title: string = ``) {
+export function showError(msg: ReactNode, title: string = ``) {
   const content = (
     <div className="flex flex-col">
       {title !== `` && (

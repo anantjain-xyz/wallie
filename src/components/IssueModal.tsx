@@ -27,12 +27,13 @@ import {
   StatusValue,
   PriorityValue,
 } from '../types/types'
-import { showInfo, showWarning, showError } from '../utils/notification'
+import { showWarning, showError, showSuccess } from '../utils/notification'
 import { usePGlite, useLiveQuery } from '@electric-sql/pglite-react'
 import { Issue } from '../types/types'
 import { useCurrentUser } from '../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
 import { getNextExternalId } from '../utils/issueUtils'
+import { formatExternalId } from '../utils/issueUtils'
 
 interface Props {
   isOpen: boolean
@@ -171,7 +172,14 @@ function IssueModal({ isOpen, onDismiss }: Props) {
 
       if (onDismiss) onDismiss()
       reset()
-      showInfo(`Issue created successfully`, `Issue created`)
+      // Show notification with link to the new issue
+      const formattedId = formatExternalId(workspaceName, externalId)
+      showSuccess(
+        <span>
+          Issue created successfully: <a href={`/issue/${formattedId}`} style={{ color: '#2563eb', textDecoration: 'underline' }}>{formattedId}</a>
+        </span>,
+        'Issue created'
+      )
     } catch (error) {
       showError(error instanceof Error ? error.message : 'Unknown error', 'Failed to create issue')
     }
