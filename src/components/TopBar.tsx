@@ -19,7 +19,7 @@ const EstimateDisplay: Record<number | string, string> = {
   5: '5 points (Project)',
   8: '8 points (Project)',
   13: '13 points (Project)',
-  'null': 'No estimate (Task'
+  'null': 'No estimate (Task)'
 }
 
 interface Props {
