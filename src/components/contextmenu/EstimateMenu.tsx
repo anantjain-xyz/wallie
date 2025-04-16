@@ -18,9 +18,9 @@ const estimateOptions = [
   { label: '1 point', value: 1 },
   { label: '2 points', value: 2 },
   { label: '3 points', value: 3 },
-  { label: '5 points (S)', value: 5 },
-  { label: '8 points (M)', value: 8 },
-  { label: '13 points (L)', value: 13 },
+  { label: '5 points', value: 5 },
+  { label: '8 points', value: 8 },
+  { label: '13 points', value: 13 },
 ]
 
 function EstimateMenu({
@@ -30,32 +30,24 @@ function EstimateMenu({
   className,
   onSelect,
 }: Props) {
-  const [keyword, setKeyword] = useState(``)
+  const [keyword, setKeyword] = useState("")
 
   const handleSelect = (estimate: number | null) => {
-    setKeyword(``)
+    setKeyword("")
     if (onSelect) onSelect(estimate)
   }
-  
+
   let filteredOptions = estimateOptions
-  if (keyword !== ``) {
+  if (keyword !== "") {
     const normalizedKeyword = keyword.toLowerCase().trim()
     filteredOptions = estimateOptions.filter(
       (option) => option.label.toLowerCase().indexOf(normalizedKeyword) !== -1
     )
   }
 
-  const options = filteredOptions.map((option) => (
-    <Menu.Item
-      key={`estimate-${option.label}`}
-      onClick={() => handleSelect(option.value)}
-    >
-      <div className="flex items-center">
-        <EstimateIcon className="w-4 h-4 mb-1 mr-2" />
-        <span>{option.label}</span>
-      </div>
-    </Menu.Item>
-  ))
+  // Split filtered options into Task and Project sections
+  const taskOptions = filteredOptions.filter((_, i) => i < 5)
+  const projectOptions = filteredOptions.filter((_, i) => i >= 5)
 
   return (
     <>
@@ -66,18 +58,47 @@ function EstimateMenu({
       <Portal>
         <Menu
           id={id}
-          size="small"
+          size="medium"
           filterKeyword={filterKeyword}
           searchPlaceholder="Set estimate..."
           onKeywordChange={(kw) => setKeyword(kw)}
           className={className}
           onSelect={(index) => {
-            if (index >= 0 && index < filteredOptions.length) {
-              handleSelect(filteredOptions[index].value)
+            const allOptions = [...taskOptions, ...projectOptions]
+            if (index >= 0 && index < allOptions.length) {
+              handleSelect(allOptions[index].value)
             }
           }}
         >
-          {options}
+          {taskOptions.map((option) => (
+            <Menu.Item
+              key={`estimate-${option.label}`}
+              onClick={() => handleSelect(option.value)}
+            >
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center">
+                  <EstimateIcon className="w-4 h-4 mb-1 mr-2" />
+                  <span>{option.label}</span>
+                </div>
+                <span className="ml-4 text-xs text-gray-400 font-semibold">Task</span>
+              </div>
+            </Menu.Item>
+          ))}
+          {taskOptions.length > 0 && projectOptions.length > 0 && <Menu.Divider />}
+          {projectOptions.map((option) => (
+            <Menu.Item
+              key={`estimate-${option.label}`}
+              onClick={() => handleSelect(option.value)}
+            >
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center">
+                  <EstimateIcon className="w-4 h-4 mb-1 mr-2" />
+                  <span>{option.label}</span>
+                </div>
+                <span className="ml-4 text-xs text-gray-400 font-semibold">Project</span>
+              </div>
+            </Menu.Item>
+          ))}
         </Menu>
       </Portal>
     </>

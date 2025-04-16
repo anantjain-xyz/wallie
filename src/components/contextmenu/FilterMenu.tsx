@@ -20,9 +20,9 @@ const EstimateOptions = [
   { value: 1, label: '1 point' },
   { value: 2, label: '2 points' },
   { value: 3, label: '3 points' },
-  { value: 5, label: '5 points (S)' },
-  { value: 8, label: '8 points (M)' },
-  { value: 13, label: '13 points (L)' },
+  { value: 5, label: '5 points' },
+  { value: 8, label: '8 points' },
+  { value: 13, label: '13 points' },
 ]
 
 function FilterMenu({ id, button, className }: Props) {
@@ -50,10 +50,52 @@ function FilterMenu({ id, button, className }: Props) {
   let estimates = EstimateOptions
   if (keyword !== ``) {
     const normalizedKeyword = keyword.toLowerCase().trim()
-    estimates = estimates.filter(
+    estimates = EstimateOptions.filter(
       (option) => option.label.toLowerCase().indexOf(normalizedKeyword) !== -1
     )
   }
+
+  // Split filtered estimate options into Task and Project sections
+  const taskEstimateOptions = estimates.filter((_, i) => i < 5)
+  const projectEstimateOptions = estimates.filter((_, i) => i >= 5)
+
+  const estimateOptions = [
+    ...taskEstimateOptions.map((option) => (
+      <Menu.Item
+        key={`estimate-${option.value === null ? 'null' : option.value}`}
+        onClick={() => handleEstimateSelect(option.value)}
+      >
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center">
+            <EstimateIcon className="mr-3" />
+            <span>{option.label}</span>
+          </div>
+          <span className="ml-4 text-xs text-gray-400 font-semibold">Task</span>
+          {filterState.estimate?.some(e => (e === null && option.value === null) || e === option.value) && (
+            <BsCheck2 className="ml-2" />
+          )}
+        </div>
+      </Menu.Item>
+    )),
+    ...(taskEstimateOptions.length > 0 && projectEstimateOptions.length > 0 ? [<Menu.Divider key="estimate-divider" />] : []),
+    ...projectEstimateOptions.map((option) => (
+      <Menu.Item
+        key={`estimate-${option.value === null ? 'null' : option.value}-project`}
+        onClick={() => handleEstimateSelect(option.value)}
+      >
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center">
+            <EstimateIcon className="mr-3" />
+            <span>{option.label}</span>
+          </div>
+          <span className="ml-4 text-xs text-gray-400 font-semibold">Project</span>
+          {filterState.estimate?.some(e => (e === null && option.value === null) || e === option.value) && (
+            <BsCheck2 className="ml-2" />
+          )}
+        </div>
+      </Menu.Item>
+    )),
+  ]
 
   const priorityOptions = priorities.map(([Icon, priority, label]) => {
     return (
@@ -79,23 +121,6 @@ function FilterMenu({ id, button, className }: Props) {
         <Icon className="mr-3" />
         <span>{label}</span>
         {filterState.status?.includes(status) && (
-          <BsCheck2 className="ml-auto" />
-        )}
-      </Menu.Item>
-    )
-  })
-
-  const estimateOptions = estimates.map((option) => {
-    return (
-      <Menu.Item
-        key={`estimate-${option.value === null ? 'null' : option.value}`}
-        onClick={() => handleEstimateSelect(option.value)}
-      >
-        <EstimateIcon className="mr-3" />
-        <span>{option.label}</span>
-        {filterState.estimate?.some(e => 
-          (e === null && option.value === null) || e === option.value
-        ) && (
           <BsCheck2 className="ml-auto" />
         )}
       </Menu.Item>
@@ -166,7 +191,7 @@ function FilterMenu({ id, button, className }: Props) {
       <Portal>
         <Menu
           id={id}
-          size="normal"
+          size="medium"
           filterKeyword={false}
           className={className}
           searchPlaceholder="Filter by..."

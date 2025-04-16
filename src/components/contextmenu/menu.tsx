@@ -10,7 +10,8 @@ import { useHotkeys } from 'react-hotkeys-hook'
 
 const sizeClasses = {
   small: `w-34`,
-  normal: `w-72`,
+  medium: `w-48`,
+  large: `w-72`,
 }
 
 export interface MenuProps {

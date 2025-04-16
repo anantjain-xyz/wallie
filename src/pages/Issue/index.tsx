@@ -415,9 +415,8 @@ function IssuePage() {
     if (estimate === null) return 'No estimate';
     
     let sizeLabel = '';
-    if (estimate === 5) sizeLabel = ' (S)';
-    else if (estimate === 8) sizeLabel = ' (M)';
-    else if (estimate === 13) sizeLabel = ' (L)';
+    if (estimate >= 5) sizeLabel = ' (Project)';
+    else sizeLabel = ' (Task)';
     
     const pointText = estimate === 1 ? 'point' : 'points';
     return `${estimate} ${pointText}${sizeLabel}`;

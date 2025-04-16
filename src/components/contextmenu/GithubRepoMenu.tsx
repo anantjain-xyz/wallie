@@ -61,7 +61,7 @@ function GithubRepoMenu({
       <Portal>
         <Menu
           id={id}
-          size="normal"
+          size="large"
           filterKeyword={filterKeyword}
           searchPlaceholder="Select repository..."
           onKeywordChange={(kw) => setKeyword(kw)}

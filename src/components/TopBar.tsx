@@ -12,14 +12,14 @@ import DisplayToggle from './DisplayToggle'
 
 // Define a mapping for estimate display values
 const EstimateDisplay: Record<number | string, string> = {
-  0: '0 points',
-  1: '1 point',
-  2: '2 points',
-  3: '3 points',
-  5: '5 points (S)',
-  8: '8 points (M)',
-  13: '13 points (L)',
-  'null': 'No estimate'
+  0: '0 points (Task)',
+  1: '1 point (Task)',
+  2: '2 points (Task)',
+  3: '3 points (Task)',
+  5: '5 points (Project)',
+  8: '8 points (Project)',
+  13: '13 points (Project)',
+  'null': 'No estimate (Task'
 }
 
 interface Props {
