@@ -74,14 +74,12 @@ export default function({
 
   const eqEstimates = (estimates: (number | null)[]) => {
     const estimateSet = new Set(estimates)
-    console.log(filterState.estimate)
     return (
       filterState.estimate?.length === estimateSet.size &&
       filterState.estimate.every((x) => estimateSet.has(x))
     )
   }
 
-  console.log(filterState)
   if (filterState.status?.length) {
     if (eqStatuses([`backlog`])) {
       title = `Backlog tasks`

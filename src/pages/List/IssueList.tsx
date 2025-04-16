@@ -8,6 +8,7 @@ import { memo } from 'react'
 import AutoSizer from 'react-virtualized-auto-sizer'
 import IssueRow from './IssueRow'
 import { Issue } from '../../types/types'
+import React from 'react'
 
 export interface IssueListProps {
   issues: (Issue | undefined)[]
@@ -22,6 +23,16 @@ export interface IssueListProps {
 
 // Define constant for default empty set outside the component
 const EMPTY_SET = new Set<string>();
+
+function EmptyState({ title, description, actionHint }: { title: string, description: string, actionHint: React.ReactNode }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-[60vh] text-center select-none">
+      <div className="text-xl font-semibold mb-6">{title}</div>
+      <div className="text-gray-500 max-w-md mb-2">{description}</div>
+      <div className="text-gray-500 max-w-md mb-6">{actionHint}</div>
+    </div>
+  );
+}
 
 function IssueList({
   issues,
@@ -52,50 +63,76 @@ function IssueList({
     filterState.status.length === 1 &&
     filterState.status[0] === "done";
 
-  // Show empty state if no issues and on Active tab
+  const isProjectsTab = filterState?.estimate &&
+    Array.isArray(filterState.estimate) &&
+    filterState.estimate.length === 3 &&
+    [5, 8, 13].every(e => filterState.estimate.includes(e));
+
+  const isTasksTab = filterState?.estimate &&
+    Array.isArray(filterState.estimate) &&
+    filterState.estimate.length === 5 &&
+    [null, 0, 1, 2, 3].every(e => filterState.estimate.includes(e));
+
   if (isActiveTab && issues.filter(Boolean).length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center select-none">
-        <div className="text-xl font-semibold mb-6">Active issues</div>
-        <div className="text-gray-500 max-w-md mb-2">
-          Active issues are issues that are currently in the Todo, In Progress or In Review state. There are no active issues as of now. Once an issue moves to the Todo or In Progress state, it will show up here.
-        </div>
-        <div className="text-gray-500 max-w-md mb-6">
-          Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new issue.
-        </div>
-      </div>
+      <EmptyState
+        title="Active issues"
+        description="Active tasks are issues that are currently in the Todo, In Progress or In Review state. There are no active tasks as of now. Once a task moves to the Todo, In Progress, or In Review state, it will show up here."
+        actionHint={<>Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new task.</>}
+      />
     );
   }
 
-  // Show empty state if no issues and on Active tab
   if (isBacklogTab && issues.filter(Boolean).length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center select-none">
-        <div className="text-xl font-semibold mb-6">Backlog</div>
-        <div className="text-gray-500 max-w-md mb-2">
-          There are currently no backlog issues as of now. Once an issue is created in your backlog, it will show up here.
-        </div>
-        <div className="text-gray-500 max-w-md mb-6">
-          Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new issue.
-        </div>
-      </div>
+      <EmptyState
+        title="Backlog"
+        description="There are no tasks in the backlog as of now. Once a task is in your backlog, it will show up here."
+        actionHint={<>Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new task.</>}
+      />
     );
   }
 
-  // Show empty state if no issues and on Done tab
   if (isDoneTab && issues.filter(Boolean).length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center select-none">
-        <div className="text-xl font-semibold mb-6">Done</div>
-        <div className="text-gray-500 max-w-md mb-2">
-          There are currently no completed issues as of now. Once an issue is completed, it will show up here.
-        </div>
-        <div className="text-gray-500 max-w-md mb-6">
-          Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new issue.
-        </div>
-      </div>
+      <EmptyState
+        title="Done"
+        description="There are no completed tasks as of now. Once a task is completed, it will show up here."
+        actionHint={<>Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new task.</>}
+      />
     );
   }
+
+  if (isProjectsTab && issues.filter(Boolean).length === 0) {
+    return (
+      <EmptyState
+        title="Projects"
+        description="Projects are high-effort issues (estimates: 5, 8, or 13). There are no projects yet. Once you create a project, it will show up here."
+        actionHint={<>Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new project.</>}
+      />
+    );
+  }
+
+  if (isTasksTab && issues.filter(Boolean).length === 0) {
+    return (
+      <EmptyState
+        title="Tasks"
+        description="Tasks are issues with a small estimate (0, 1, 2, or 3). There are no tasks yet. Once you create a task, it will show up here."
+        actionHint={<>Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new task.</>}
+      />
+    );
+  }
+
+  if(issues.filter(Boolean).length === 0) {
+    return (
+      <EmptyState
+        title="No issues"
+        description="Nothing to show here. Make sure your filters are set correctly if you expect to see issues."
+        actionHint={<>Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new issue.</>}
+      />
+    );
+  }
+
   // Custom onItemsRendered handler to adjust for the extra padding item
   const handleItemsRendered = (props: ListOnItemsRenderedProps) => {
     if (onItemsRendered) {
