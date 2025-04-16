@@ -22,8 +22,7 @@ import Avatar from '../../components/Avatar'
 import { Issue, PriorityDisplay, StatusDisplay, LinkType } from '../../types/types'
 import Editor from '../../components/editor/Editor'
 import DeleteModal from './DeleteModal'
-import Comments from './Comments'
-import AgentRuns from './AgentRuns'
+import UnifiedTimelineView from './UnifiedTimelineView'
 import SubIssuesTable from './SubIssuesTable'
 import SidebarRelationships from './SidebarRelationships'
 import debounce from 'lodash.debounce'
@@ -862,11 +861,8 @@ function IssuePage() {
               </div>
             ) : null}
 
-            <div className="mt-3">
-              <AgentRuns issue={issue} />
-              <div className="mt-6 p-3">
-                <Comments issue={issue} />
-              </div>
+            <div className="mt-3 p-3">
+              <UnifiedTimelineView issue={issue} />
             </div>
           </div>
         </div>
