@@ -140,7 +140,7 @@ def get_llm_edit(original_file_section: str, edit_content: str) -> str:
     human_message = _HUMAN_PROMPT_DRAFT_EDITOR
     prompt = ChatPromptTemplate.from_messages([system_message, human_message])
 
-    llm = LLM(model_provider="anthropic", model_name="claude-3-5-sonnet-latest", temperature=0, max_tokens=5000)
+    llm = LLM(model_provider="anthropic", model_name="claude-3-7-sonnet-latest", temperature=0, max_tokens=5000)
 
     chain = prompt | llm | StrOutputParser()
     response = chain.invoke({"original_file_section": original_file_section, "edit_content": edit_content})

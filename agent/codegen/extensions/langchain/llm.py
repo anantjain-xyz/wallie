@@ -22,7 +22,7 @@ class LLM(BaseChatModel):
 
     model_provider: str = Field(default="anthropic", description="The model provider to use.")
 
-    model_name: str = Field(default="claude-3-5-sonnet-latest", description="Name of the model to use.")
+    model_name: str = Field(default="claude-3-7-sonnet-latest", description="Name of the model to use.")
 
     temperature: float = Field(default=0, description="Temperature parameter for the model.", ge=0, le=1)
 
@@ -32,7 +32,7 @@ class LLM(BaseChatModel):
 
     max_tokens: Optional[int] = Field(default=None, description="Maximum number of tokens to generate.", ge=1)
 
-    def __init__(self, model_provider: str = "anthropic", model_name: str = "claude-3-5-sonnet-latest", **kwargs: Any) -> None:
+    def __init__(self, model_provider: str = "anthropic", model_name: str = "claude-3-7-sonnet-latest", **kwargs: Any) -> None:
         """Initialize the LLM.
 
         Args:
@@ -89,8 +89,7 @@ class LLM(BaseChatModel):
             if not os.getenv("ANTHROPIC_API_KEY"):
                 msg = "ANTHROPIC_API_KEY not found in environment. Please set it in your .env file or environment variables."
                 raise ValueError(msg)
-            max_tokens = 8192
-            return ChatAnthropic(**self._get_model_kwargs(), max_tokens=max_tokens, max_retries=10, timeout=1000)
+            return ChatAnthropic(**self._get_model_kwargs(), max_tokens=8192, max_retries=10, timeout=1000)
 
         elif self.model_provider == "openai":
             if not os.getenv("OPENAI_API_KEY"):

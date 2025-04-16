@@ -251,9 +251,6 @@ function UnifiedTimelineView({ issue }: UnifiedTimelineViewProps) {
                     <span className="text-xs text-gray-500">{formattedDuration}</span>
                   )}
                   <span className={`text-xs font-medium ${status.color}`}>
-                    {status.text === 'Started' && (
-                      <ImSpinner2 className="inline mr-1 animate-spin-fast" />
-                    )}
                     {status.text}
                   </span>
                   <span className="text-xs">

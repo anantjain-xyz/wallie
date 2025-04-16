@@ -8,13 +8,13 @@ def get_max_model_input_tokens(llm: LLM) -> int:
         int: Maximum number of input tokens supported by the model
     """
     # For Claude models not explicitly listed, if model name contains "claude", use Claude's limit
-    if "claude" in llm.model.lower():
+    if "claude" in llm.model_name.lower():
         return 200000
     # For GPT-4 models
-    elif "gpt-4" in llm.model.lower():
+    elif "gpt-4" in llm.model_name.lower():
         return 128000
     # For Grok models
-    elif "grok" in llm.model.lower():
+    elif "grok" in llm.model_name.lower():
         return 1000000
 
     # default to gpt as it's lower bound
