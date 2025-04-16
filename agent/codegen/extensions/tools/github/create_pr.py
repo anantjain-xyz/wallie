@@ -49,7 +49,7 @@ def create_pr(codebase: Codebase, title: str, body: str) -> CreatePRObservation:
         # TODO: this is very jank. We should ideally check out the branch before
         # making the changes, but it looks like `codebase.checkout` blows away
         # all of your changes
-        codebase.git_commit(".")
+        codebase.git_commit(message=f"feat: {title}")
 
         # If on default branch, create a new branch
         if codebase._op.git_cli.active_branch.name == codebase._op.default_branch:

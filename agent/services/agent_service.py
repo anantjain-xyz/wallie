@@ -476,7 +476,7 @@ async def _commit_changes_and_create_pr(
     """Commit changes to the branch and create or update a PR"""
     # Commit and push changes
     try:
-        git_commit_result = codebase.git_commit(".", exclude_paths=[".codegen"])
+        git_commit_result = codebase.git_commit(f"feat: {issue.title}", exclude_paths=[".codegen"])
 
         if git_commit_result is None:
             logger.info("No changes to commit, returning early")
