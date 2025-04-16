@@ -72,11 +72,29 @@ export default function({
     )
   }
 
+  const eqEstimates = (estimates: (number | null)[]) => {
+    const estimateSet = new Set(estimates)
+    console.log(filterState.estimate)
+    return (
+      filterState.estimate?.length === estimateSet.size &&
+      filterState.estimate.every((x) => estimateSet.has(x))
+    )
+  }
+
+  console.log(filterState)
   if (filterState.status?.length) {
     if (eqStatuses([`backlog`])) {
-      title = `Backlog`
+      title = `Backlog tasks`
     } else if (eqStatuses([`todo`, `in_progress`, `in_review`])) {
-      title = `Active`
+      title = `Active tasks`
+    } else if (eqStatuses([`done`])) {
+      title = `Done tasks`
+    }
+  } else if (filterState.estimate?.length) {
+    if (eqEstimates([5, 8, 13])) {
+      title = `Projects`
+    } else if (eqEstimates([null, 0, 1, 2, 3])) {
+      title = `Tasks`
     }
   }
 

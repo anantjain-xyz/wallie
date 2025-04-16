@@ -306,7 +306,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
             <span>{workspaceName}</span>
           </span>
           <ChevronRight className="ml-1" />
-          <span className="ml-1 font-normal text-gray-700">New Project or Issue</span>
+          <span className="ml-1 font-normal text-gray-700">New Project or Task</span>
         </div>
         <div className="flex items-center">
           <button
@@ -319,7 +319,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         </div>
       </div>
       <div className="flex flex-col flex-1 pb-3.5 overflow-y-auto">
-        {/* Project or issue title */}
+        {/* Project or task title */}
         <div className="flex items-center w-full mt-1.5 px-4">
           <StatusMenu
             id="status-menu"
