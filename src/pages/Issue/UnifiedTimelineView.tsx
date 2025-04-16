@@ -1,21 +1,80 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useLiveQuery } from '@electric-sql/pglite-react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io'
 import { ImSpinner2 } from 'react-icons/im'
-import { AgentRun, Issue } from '../../types/types'
+import { AgentRun, Comment, Issue } from '../../types/types'
 import Avatar from '../../components/Avatar'
+import CommentInput from './CommentInput'
+import { ReactComponent as DeleteIcon } from '../../assets/icons/delete.svg'
+import { useCurrentUser } from '../../utils/userUtils'
+import { useUser } from '@clerk/clerk-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { showInfo, showError } from '../../utils/notification'
 
 // Initialize dayjs relative time plugin
 dayjs.extend(relativeTime)
 
-export interface AgentRunsProps {
+interface TimelineItem {
+  id: string
+  type: 'agent_run' | 'comment'
+  timestamp: Date
+  data: AgentRun & { 
+    author_full_name: string | null, 
+    username: string, 
+    profile_picture: string | null 
+  } | (Comment & { 
+    author_full_name: string, 
+    profile_picture: string | null 
+  })
+}
+
+export interface UnifiedTimelineViewProps {
   issue: Issue
 }
 
-function AgentRuns({ issue }: AgentRunsProps) {
+// Error boundary component for ReactMarkdown (reused from Comments)
+function SafeMarkdown({ children }: { children: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    // Reset error state when content changes
+    setHasError(false);
+  }, [children]);
+
+  if (hasError) {
+    return <div className="text-gray-700 whitespace-pre-wrap">{children}</div>;
+  }
+
+  try {
+    return (
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: (props) => (
+            <a target="_blank" rel="noopener noreferrer" {...props} />
+          )
+        }}
+      >
+        {children}
+      </ReactMarkdown>
+    );
+  } catch (error) {
+    console.error('Error rendering markdown:', error);
+    setHasError(true);
+    return <div className="text-gray-700 whitespace-pre-wrap">{children}</div>;
+  }
+}
+
+function UnifiedTimelineView({ issue }: UnifiedTimelineViewProps) {
+  const pg = usePGlite()
+  const { user } = useUser()
+  const currentUserResult = useCurrentUser(user)
+  const currentUser = currentUserResult?.rows[0]
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null)
+  const [timelineKey, setTimelineKey] = useState(0) // Used to force re-render
   
   // Query for agent runs associated with this issue
   const agentRunsResults = useLiveQuery.sql<AgentRun & { 
@@ -31,6 +90,63 @@ function AgentRuns({ issue }: AgentRunsProps) {
   `
   const agentRuns = useMemo(() => agentRunsResults?.rows || [], [agentRunsResults])
 
+  // Query for comments associated with this issue
+  const commentsResults = useLiveQuery.sql<Comment & { 
+    author_full_name: string, 
+    profile_picture: string | null 
+  }>`
+    SELECT c.*, u.full_name as author_full_name, u.profile_picture
+    FROM comment c
+    LEFT JOIN app_user u ON c.creator_id = u.id 
+    WHERE c.issue_id = ${issue?.id || '00000000-0000-0000-0000-000000000000'}
+    ORDER BY c.created ASC
+  `
+  const comments = useMemo(() => commentsResults?.rows || [], [commentsResults])
+
+  // Create a combined timeline of agent runs and comments
+  const timelineItems = useMemo(() => {
+    const items: TimelineItem[] = []
+
+    // Add agent runs to timeline
+    agentRuns.forEach(run => {
+      // Determine which timestamp to use for sorting
+      const timestamp = run.end_time || run.start_time
+      
+      items.push({
+        id: run.id,
+        type: 'agent_run',
+        timestamp,
+        data: run
+      })
+    })
+
+    // Add comments to timeline
+    comments.forEach(comment => {
+      items.push({
+        id: comment.id,
+        type: 'comment',
+        timestamp: comment.created,
+        data: comment
+      })
+    })
+
+    // Sort timeline items by timestamp (ongoing runs will use start_time)
+    return items.sort((a, b) => {
+      // Check if item is an ongoing agent run (should be at the end)
+      const aIsOngoing = a.type === 'agent_run' && 
+        (a.data as AgentRun).status?.toLowerCase() === 'started'
+      const bIsOngoing = b.type === 'agent_run' && 
+        (b.data as AgentRun).status?.toLowerCase() === 'started'
+      
+      // If one is ongoing and the other isn't, order is determined by that
+      if (aIsOngoing && !bIsOngoing) return 1
+      if (!aIsOngoing && bIsOngoing) return -1
+      
+      // Otherwise sort by timestamp
+      return a.timestamp.getTime() - b.timestamp.getTime()
+    })
+  }, [agentRuns, comments])
+
   // Auto-expand the first run with "Started" status
   useEffect(() => {
     if (agentRuns.length > 0) {
@@ -45,6 +161,29 @@ function AgentRuns({ issue }: AgentRunsProps) {
   const toggleExpandRun = (runId: string) => {
     setExpandedRunId(expandedRunId === runId ? null : runId)
   }
+
+  // Handle deleting a comment
+  const handleDeleteComment = useCallback(async (commentId: string) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) {
+      return
+    }
+
+    try {
+      await pg.sql`
+        DELETE FROM comment
+        WHERE id = ${commentId}
+      `
+      showInfo('Comment deleted successfully', 'Success')
+    } catch (error) {
+      showError(error instanceof Error ? error.message : 'Unknown error', 'Failed to delete comment')
+    }
+  }, [pg])
+
+  // Callback for when a new comment is posted
+  const handleCommentPosted = useCallback(() => {
+    setTimelineKey(prev => prev + 1) // Force re-render to refresh the timeline
+  }, [])
+
   // Format status for display with proper capitalization and colors
   const formatStatus = (status: string | null) => {
     if (!status) return { text: 'Unknown', color: 'text-gray-500' }
@@ -63,15 +202,16 @@ function AgentRuns({ issue }: AgentRunsProps) {
     }
   }
 
-  // If there are no agent runs, don't display anything
-  if (agentRuns.length === 0) {
-    return null
-  }
-
+  // Render a timeline with both agent runs and comments
   return (
-    <div className="mt-3 p-3">
-      <div className="space-y-3">
-        {agentRuns.map((run) => {
+    <div className="space-y-6" key={timelineKey}>
+      {timelineItems.map(item => {
+        if (item.type === 'agent_run') {
+          const run = item.data as AgentRun & { 
+            author_full_name: string | null, 
+            username: string, 
+            profile_picture: string | null 
+          }
           const status = formatStatus(run.status)
           const isExpanded = expandedRunId === run.id
           const duration = run.end_time 
@@ -127,13 +267,60 @@ function AgentRuns({ issue }: AgentRunsProps) {
               )}
             </div>
           )
-        })}
-      </div>
+        } else if (item.type === 'comment') {
+          const comment = item.data as Comment & { 
+            author_full_name: string, 
+            profile_picture: string | null 
+          }
+          
+          return (
+            <div
+              key={comment.id}
+              className="flex flex-col w-full p-3 mb-3 bg-white rounded shadow-sm border"
+            >
+              <div className="flex items-center mb-2">
+                <Avatar name={comment.author_full_name} avatarUrl={comment.profile_picture || undefined} />
+                <div className='flex flex-row items-baseline'>
+                  <span className="ms-2 text-sm text-gray-400">
+                    {comment.author_full_name}
+                  </span>
+                  <span className="ms-2 text-xs text-gray-400">
+                    {dayjs(comment.created).fromNow()}
+                  </span>
+                </div>
+                <span className="ms-auto"></span>
+                {currentUser?.id === comment.creator_id && (
+                  <button
+                    type="button"
+                    className="ml-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
+                    onClick={() => handleDeleteComment(comment.id)}
+                    title="Delete comment"
+                  >
+                    <DeleteIcon width={16} height={16} />
+                  </button>
+                )}
+              </div>
+              <div className="mt-2 text-sm font-light prose w-full max-w-full">
+                <SafeMarkdown>
+                  {comment.body}
+                </SafeMarkdown>
+              </div>
+            </div>
+          )
+        }
+        return null
+      })}
+      
+      {/* Comment input at the bottom */}
+      <CommentInput 
+        issue={issue}
+        onCommentPosted={handleCommentPosted}
+      />
     </div>
   )
 }
 
-// Component to display the details of an agent run when expanded
+// Component to display the details of an agent run when expanded (reused from AgentRuns)
 function AgentRunDetails({ runId, runStatus }: { runId: string, runStatus: string | null }) {
   const [expandedMessageIds, setExpandedMessageIds] = useState<Set<string>>(() => new Set())
   
@@ -281,4 +468,4 @@ function AgentRunDetails({ runId, runStatus }: { runId: string, runStatus: strin
   )
 }
 
-export default AgentRuns    
+export default UnifiedTimelineView
