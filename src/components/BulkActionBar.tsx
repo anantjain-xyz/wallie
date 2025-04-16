@@ -11,8 +11,9 @@ import { Status } from '../types/types'
 import EstimateMenu from './contextmenu/EstimateMenu'
 import { ReactComponent as EstimateIcon } from '../assets/icons/estimate.svg'
 import { BsTrash3 as DeleteIcon } from 'react-icons/bs'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import BulkDeleteModal from './BulkDeleteModal'
+import { showMenu } from '@firefox-devtools/react-contextmenu'
 
 interface BulkActionBarProps {
   selectedIssues: Set<string>
@@ -28,6 +29,71 @@ export default function BulkActionBar({
   const pg = usePGlite()
   const selectedCount = selectedIssues.size
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  
+  // Refs for menu buttons
+  const statusBtnRef = useRef<HTMLButtonElement>(null)
+  const priorityBtnRef = useRef<HTMLButtonElement>(null)
+  const estimateBtnRef = useRef<HTMLButtonElement>(null)
+  const assigneeBtnRef = useRef<HTMLButtonElement>(null)
+
+  // Hotkeys for bulk menu
+  useEffect(() => {
+    // Only active if bar is visible (selectedCount > 0)
+    if (!selectedCount) return;
+    const handleHotkey = (e: KeyboardEvent) => {
+      // Ignore if focus is in input, textarea, or contenteditable
+      const active = document.activeElement;
+      if (
+        active && (
+          active.tagName === 'INPUT' ||
+          active.tagName === 'TEXTAREA' ||
+          (active as HTMLElement).isContentEditable
+        )
+      ) {
+        return;
+      }
+      // s: status
+      if (e.key === 's' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const btn = statusBtnRef.current;
+        if (btn) {
+          const rect = btn.getBoundingClientRect();
+          showMenu({ id: 'bulk-status-menu', position: { x: rect.left, y: rect.bottom } });
+        }
+      }
+      // p: priority
+      if (e.key === 'p' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const btn = priorityBtnRef.current;
+        if (btn) {
+          const rect = btn.getBoundingClientRect();
+          showMenu({ id: 'bulk-priority-menu', position: { x: rect.left, y: rect.bottom } });
+        }
+      }
+      // Shift+e: estimate
+      if ((e.key === 'E' || e.key === 'e') && e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const btn = estimateBtnRef.current;
+        if (btn) {
+          const rect = btn.getBoundingClientRect();
+          showMenu({ id: 'bulk-estimate-menu', position: { x: rect.left, y: rect.bottom } });
+        }
+      }
+      // a: assignee
+      if (e.key === 'a' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const btn = assigneeBtnRef.current;
+        if (btn) {
+          const rect = btn.getBoundingClientRect();
+          showMenu({ id: 'bulk-assignee-menu', position: { x: rect.left, y: rect.bottom } });
+        }
+      }
+    };
+    document.addEventListener('keydown', handleHotkey);
+    return () => {
+      document.removeEventListener('keydown', handleHotkey);
+    };
+  }, [selectedCount]);
   
   const handleBulkStatusChange = async (status: string) => {
     // Convert Set to Array for SQL query
@@ -107,9 +173,14 @@ export default function BulkActionBar({
               <button
                 type="button"
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                ref={statusBtnRef}
               >
-                <StatusIcon className='mr-2 w-4 h-4' status={Status.TODO} />
-                Change Status
+                <Tooltip content="Change status" shortcut="S" placement="top">
+                  <span className="flex items-center">
+                    <StatusIcon className='mr-2 w-4 h-4' status={Status.TODO} />
+                    Change Status
+                  </span>
+                </Tooltip>
               </button>
             }
             onSelect={handleBulkStatusChange}
@@ -121,9 +192,14 @@ export default function BulkActionBar({
               <button
                 type="button"
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                ref={priorityBtnRef}
               >
-                <PriorityIcon className='mr-2 w-4 h-4' priority='medium' />
-                Change Priority
+                <Tooltip content="Change priority" shortcut="P" placement="top">
+                  <span className="flex items-center">
+                    <PriorityIcon className='mr-2 w-4 h-4' priority='medium' />
+                    Change Priority
+                  </span>
+                </Tooltip>
               </button>
             }
             onSelect={handleBulkPriorityChange}
@@ -135,9 +211,14 @@ export default function BulkActionBar({
               <button
                 type="button"
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                ref={estimateBtnRef}
               >
-                <EstimateIcon className='mr-2 w-4 h-4' />
-                Set Estimate
+                <Tooltip content="Set estimate" shortcut="Shift+E" placement="top">
+                  <span className="flex items-center">
+                    <EstimateIcon className='mr-2 w-4 h-4' />
+                    Set Estimate
+                  </span>
+                </Tooltip>
               </button>
             }
             onSelect={handleBulkEstimateChange}
@@ -150,9 +231,14 @@ export default function BulkActionBar({
               <button
                 type="button"
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                ref={assigneeBtnRef}
               >
-                <AssigneeIcon className="mr-2 w-4 h-4" />
-                Change Assignee
+                <Tooltip content="Change assignee" shortcut="A" placement="top">
+                  <span className="flex items-center">
+                    <AssigneeIcon className="mr-2 w-4 h-4" />
+                    Change Assignee
+                  </span>
+                </Tooltip>
               </button>
             }
             onSelect={handleBulkAssigneeChange}
