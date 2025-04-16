@@ -76,7 +76,7 @@ function IssueList({
   if (isActiveTab && issues.filter(Boolean).length === 0) {
     return (
       <EmptyState
-        title="Active issues"
+        title="Active tasks"
         description="Active tasks are issues that are currently in the Todo, In Progress or In Review state. There are no active tasks as of now. Once a task moves to the Todo, In Progress, or In Review state, it will show up here."
         actionHint={<>Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new task.</>}
       />
@@ -86,7 +86,7 @@ function IssueList({
   if (isBacklogTab && issues.filter(Boolean).length === 0) {
     return (
       <EmptyState
-        title="Backlog"
+        title="Backlog tasks"
         description="There are no tasks in the backlog as of now. Once a task is in your backlog, it will show up here."
         actionHint={<>Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new task.</>}
       />
@@ -96,7 +96,7 @@ function IssueList({
   if (isDoneTab && issues.filter(Boolean).length === 0) {
     return (
       <EmptyState
-        title="Done"
+        title="Done tasks"
         description="There are no completed tasks as of now. Once a task is completed, it will show up here."
         actionHint={<>Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new task.</>}
       />
