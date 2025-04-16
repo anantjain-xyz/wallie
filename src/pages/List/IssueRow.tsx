@@ -30,23 +30,7 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
   const navigate = useNavigate()
   const [assigneeName, setAssigneeName] = React.useState<string | undefined>(undefined)
   const [assigneeProfilePicture, setAssigneeProfilePicture] = React.useState<string | null>(null)
-  const [issueEstimate, setIssueEstimate] = React.useState<number | null>(null)
   
-  React.useEffect(() => {
-    if (issue?.id) {
-      pg.sql`
-        SELECT estimate
-        FROM issue
-        WHERE id = ${issue.id}
-      `.then((result: { rows: unknown[] }) => {
-        if (result.rows.length > 0) {
-          const row = result.rows[0] as { estimate: number | null };
-          setIssueEstimate(row.estimate);
-        }
-      })
-    }
-  }, [issue?.id, pg.sql])
-
   React.useEffect(() => {
     if (issue?.assignee_id) {
       pg.sql`
@@ -197,7 +181,7 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
               <div className="flex items-center gap-1">
                 <EstimateIcon className="w-4 h-4" />
                 <div className="w-4">
-                  {issueEstimate !== null && <span>{issueEstimate}</span>}
+                  {issue.estimate !== null && <span>{issue.estimate}</span>}
                 </div>
               </div>
             </div>
