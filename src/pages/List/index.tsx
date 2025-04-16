@@ -233,6 +233,7 @@ function List({ showSearch = false }) {
           selectionMode={selectionMode}
           workspaceId={workspaceId}
           workspaceName={workspaceName}
+          filterState={filterState}
         />
       ) : (
         Object.keys(columnsLiveIssues).length > 0 && (

@@ -17,6 +17,7 @@ export interface IssueListProps {
   selectionMode?: boolean
   workspaceId?: string
   workspaceName?: string
+  filterState?: any
 }
 
 // Define constant for default empty set outside the component
@@ -29,11 +30,72 @@ function IssueList({
   onSelectIssue,
   selectionMode = false,
   workspaceId = '',
-  workspaceName = ''
+  workspaceName = '',
+  filterState,
 }: IssueListProps) {
   // Add 1 to itemCount to create space for bottom padding
   const itemCount = issues.length + 1;
   
+  // Detect if this is the Active tab (status is exactly [todo, in_progress, in_review])
+  const isActiveTab = filterState?.status &&
+    Array.isArray(filterState.status) &&
+    filterState.status.length === 3 &&
+    ["todo", "in_progress", "in_review"].every(s => filterState.status.includes(s));
+  
+  const isBacklogTab = filterState?.status &&
+    Array.isArray(filterState.status) &&
+    filterState.status.length === 1 &&
+    filterState.status[0] === "backlog";
+
+  const isDoneTab = filterState?.status &&
+    Array.isArray(filterState.status) &&
+    filterState.status.length === 1 &&
+    filterState.status[0] === "done";
+
+  // Show empty state if no issues and on Active tab
+  if (isActiveTab && issues.filter(Boolean).length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center select-none">
+        <div className="text-xl font-semibold mb-6">Active issues</div>
+        <div className="text-gray-500 max-w-md mb-2">
+          Active issues are issues that are currently in the Todo, In Progress or In Review state. There are no active issues as of now. Once an issue moves to the Todo or In Progress state, it will show up here.
+        </div>
+        <div className="text-gray-500 max-w-md mb-6">
+          Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new issue.
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state if no issues and on Active tab
+  if (isBacklogTab && issues.filter(Boolean).length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center select-none">
+        <div className="text-xl font-semibold mb-6">Backlog</div>
+        <div className="text-gray-500 max-w-md mb-2">
+          There are currently no backlog issues as of now. Once an issue is created in your backlog, it will show up here.
+        </div>
+        <div className="text-gray-500 max-w-md mb-6">
+          Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new issue.
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state if no issues and on Done tab
+  if (isDoneTab && issues.filter(Boolean).length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center select-none">
+        <div className="text-xl font-semibold mb-6">Done</div>
+        <div className="text-gray-500 max-w-md mb-2">
+          There are currently no completed issues as of now. Once an issue is completed, it will show up here.
+        </div>
+        <div className="text-gray-500 max-w-md mb-6">
+          Press <span className="bg-gray-100 rounded-sm p-1">c</span> to create a new issue.
+        </div>
+      </div>
+    );
+  }
   // Custom onItemsRendered handler to adjust for the extra padding item
   const handleItemsRendered = (props: ListOnItemsRenderedProps) => {
     if (onItemsRendered) {
