@@ -66,14 +66,14 @@ function FilterMenu({ id, button, className }: Props) {
         onClick={() => handleEstimateSelect(option.value)}
       >
         <div className="flex items-center justify-between w-full">
-          <div className="flex items-center">
+          <div className="flex items-center grow">
             <EstimateIcon className="mr-3" />
             <span>{option.label}</span>
           </div>
-          <span className="ml-4 text-xs text-gray-400 font-semibold">Task</span>
           {filterState.estimate?.some(e => (e === null && option.value === null) || e === option.value) && (
             <BsCheck2 className="ml-2" />
           )}
+          <span className="ml-2 text-xs text-gray-400">Task</span>
         </div>
       </Menu.Item>
     )),
@@ -84,14 +84,14 @@ function FilterMenu({ id, button, className }: Props) {
         onClick={() => handleEstimateSelect(option.value)}
       >
         <div className="flex items-center justify-between w-full">
-          <div className="flex items-center">
+          <div className="flex items-center grow">
             <EstimateIcon className="mr-3" />
             <span>{option.label}</span>
           </div>
-          <span className="ml-4 text-xs text-gray-400 font-semibold">Project</span>
           {filterState.estimate?.some(e => (e === null && option.value === null) || e === option.value) && (
             <BsCheck2 className="ml-2" />
           )}
+          <span className="ml-2 text-xs text-gray-400">Project</span>
         </div>
       </Menu.Item>
     )),

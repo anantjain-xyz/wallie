@@ -80,7 +80,7 @@ function EstimateMenu({
                   <EstimateIcon className="w-4 h-4 mb-1 mr-2" />
                   <span>{option.label}</span>
                 </div>
-                <span className="ml-4 text-xs text-gray-400 font-semibold">Task</span>
+                <span className="ml-4 text-xs text-gray-400">Task</span>
               </div>
             </Menu.Item>
           ))}
@@ -95,7 +95,7 @@ function EstimateMenu({
                   <EstimateIcon className="w-4 h-4 mb-1 mr-2" />
                   <span>{option.label}</span>
                 </div>
-                <span className="ml-4 text-xs text-gray-400 font-semibold">Project</span>
+                <span className="ml-4 text-xs text-gray-400">Project</span>
               </div>
             </Menu.Item>
           ))}
