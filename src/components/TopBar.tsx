@@ -80,22 +80,23 @@ export default function({
     )
   }
 
-  if (filterState.status?.length) {
-    if (eqStatuses([`backlog`])) {
-      title = `Backlog tasks`
-    } else if (eqStatuses([`todo`, `in_progress`, `in_review`])) {
-      title = `Active tasks`
-    } else if (eqStatuses([`done`])) {
-      title = `Done tasks`
-    }
-  } else if (filterState.estimate?.length) {
+  let issuesType = `tasks`
+  if (filterState.estimate?.length) {
     if (eqEstimates([5, 8, 13])) {
-      title = `Projects`
-    } else if (eqEstimates([null, 0, 1, 2, 3])) {
-      title = `Tasks`
+      issuesType = `projects`
     }
   }
 
+  if (filterState.status?.length) {
+    if (eqStatuses([`backlog`])) {
+      title = `Backlog ${issuesType}`
+    } else if (eqStatuses([`todo`, `in_progress`, `in_review`])) {
+      title = `Active ${issuesType}`
+    } else if (eqStatuses([`done`])) {
+      title = `Done ${issuesType}`
+    }
+  }
+  
   useEffect(() => {
     if (!showSearch) return
     const checkFTSIndex = async () => {
