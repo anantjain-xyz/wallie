@@ -514,6 +514,7 @@ function IssuePage() {
                   {parentIssue && (
                     <>
                       <button 
+                        type="button"
                         onClick={() => navigate(`/issue/${formatExternalId(workspaceName, parentIssue.external_id)}`)}
                         className="font-mono hover:text-gray-800 text-gray-600 truncate max-w-[150px]"
                       >
