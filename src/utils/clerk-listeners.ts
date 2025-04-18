@@ -14,6 +14,7 @@ type User = {
  * @param user The Clerk user object
  * @param db The PGlite database instance
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const updateUserProfile = async (user: User, db: any) => {
   try {
     // Get primary email

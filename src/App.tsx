@@ -266,7 +266,7 @@ const App = () => {
         },
       ],
     },
-  ]), [issueModalContextValue, commandBarContextValue])
+  ]), [])
 
   const { isLoaded, isSignedIn } = useAuth()
 
