@@ -18,6 +18,7 @@ export interface IssueListProps {
   selectionMode?: boolean
   workspaceId?: string
   workspaceName?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   filterState?: any
 }
 

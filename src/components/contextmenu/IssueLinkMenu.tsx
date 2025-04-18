@@ -23,6 +23,7 @@ interface Props {
 interface MenuOption {
   value: LinkTypeValue;
   displayText: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon: React.ComponentType<any>;
   isInverse?: boolean;
 }

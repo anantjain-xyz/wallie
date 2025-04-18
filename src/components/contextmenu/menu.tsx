@@ -1,3 +1,4 @@
+/* eslint-disable @eslint-react/no-children-to-array, @eslint-react/no-children-map, @eslint-react/no-clone-element */
 import classnames from 'classnames'
 import { ReactNode, useRef, useState, useEffect } from 'react'
 import React from 'react'
