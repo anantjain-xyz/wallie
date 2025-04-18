@@ -6,6 +6,19 @@ import { authMiddleware } from '../auth'
 import { apiRateLimiter, githubWebhookRateLimiter } from '../middleware/rate-limit'
 import githubAuthApp from './github-auth'
 import githubWebhookApp from './github-webhook'
+import secretsApp from './secrets'
+import { EncryptionService } from './encryption'
+
+// Check that encryption key is set
+try {
+  // This will throw an error if the key is not set
+  EncryptionService.encrypt('test');
+  console.log('Encryption service initialized successfully');
+} catch (error) {
+  console.error('Error initializing encryption service:', error);
+  // Don't exit the process, let it continue but with encryption service disabled
+  console.warn('Encryption service is not available. Secrets API will not function correctly!');
+}
 
 const app = new Hono()
 
@@ -34,9 +47,10 @@ app.use('/*', async (c, next) => {
   return authMiddleware(c, next);
 });
 
-// GitHub API routes
+// API routes
 app.route('/', githubAuthApp);
 app.route('/webhook', githubWebhookApp);
+app.route('/secrets', secretsApp);
 
 // Error handling
 app.onError((err, c) => {
