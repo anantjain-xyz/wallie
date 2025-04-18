@@ -65,6 +65,11 @@ export default [
   {
     files: ["**/*.{ts,tsx}"],
     ...pluginReact.configs.recommended,
+    // Disable overly-aggressive no-direct-set-state-in-use-effect rule globally
+    rules: {
+      ...pluginReact.configs.recommended.rules,
+      "@eslint-react/hooks-extra/no-direct-set-state-in-use-effect": "off",
+    },
   },
   {
     plugins: {
