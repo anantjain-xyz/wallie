@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '@clerk/clerk-react'
+import { useAuth, useUser } from '@clerk/clerk-react'
 import { showError, showSuccess } from '../../utils/notification'
+
+interface Secret {
+  id: string
+  key: string
+  value_preview?: string
+  created_by?: string
+  workspace_id: string
+  created: string
+  modified: string
+}
 
 interface AnthropicApiKeyProps {
   workspaceId: string
@@ -11,7 +21,9 @@ const AnthropicApiKey = ({ workspaceId }: AnthropicApiKeyProps) => {
   const [isSaving, setIsSaving] = useState(false)
   const [hasKey, setHasKey] = useState(false)
   const [showKey, setShowKey] = useState(false)
+  const [keyDetails, setKeyDetails] = useState<Secret | null>(null)
   const { getToken } = useAuth()
+  const { user } = useUser()
 
   // Get the API server URL from environment variables
   const API_SERVER_URL = import.meta.env.VITE_API_SERVER_URL
@@ -36,8 +48,11 @@ const AnthropicApiKey = ({ workspaceId }: AnthropicApiKeyProps) => {
         })
         if (response.ok) {
           const secrets = await response.json()
-          const anthropicKey = secrets.find((secret: any) => secret.key === 'ANTHROPIC_API_KEY')
+          const anthropicKey = secrets.find((secret: Secret) => secret.key === 'ANTHROPIC_API_KEY')
           setHasKey(!!anthropicKey)
+          if (anthropicKey) {
+            setKeyDetails(anthropicKey)
+          }
         }
       } catch (error) {
         console.error('Error checking API key:', error)
@@ -75,6 +90,8 @@ const AnthropicApiKey = ({ workspaceId }: AnthropicApiKeyProps) => {
       if (!response.ok) {
         throw new Error('Failed to save API key')
       }
+      const savedKey = await response.json()
+      setKeyDetails(savedKey)
       setHasKey(true)
       setApiKey('')
       setShowKey(false)
@@ -104,11 +121,34 @@ const AnthropicApiKey = ({ workspaceId }: AnthropicApiKeyProps) => {
         throw new Error('Failed to delete API key')
       }
       setHasKey(false)
+      setKeyDetails(null)
       showSuccess('Anthropic API key deleted successfully', 'Success')
     } catch (error) {
       console.error('Error deleting API key:', error)
       showError('Failed to delete API key', 'Error')
     }
+  }
+
+  // Find user full name and email from user ID
+  const getUserEmail = (userId: string | undefined) => {
+    if (!userId) return 'Unknown user'
+    if (userId === user?.id) {
+      const name = user.fullName || user.firstName || user.lastName || 'You'
+      const email = user.primaryEmailAddress?.emailAddress || ''
+      return email ? `${name} (${email})` : name
+    }
+    // For other users, show fallback (could be improved if you have a user map)
+    return `User ${userId.substring(0, 8)}...`
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString(undefined, {
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   }
 
   return (
@@ -132,6 +172,25 @@ const AnthropicApiKey = ({ workspaceId }: AnthropicApiKeyProps) => {
                 Anthropic API key configured
               </span>
             </div>
+            
+            {keyDetails && (
+              <div className="bg-gray-50 rounded p-4 text-sm">
+                <div className="flex flex-wrap items-center space-x-6">
+                  <div className="flex items-center space-x-1">
+                    <span className="text-gray-500">Key:</span>
+                    <span className="font-mono">{keyDetails.value_preview || '•••••••'}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-gray-500">Added:</span>
+                    <span>{formatDate(keyDetails.modified)}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-gray-500">Set by:</span>
+                    <span>{getUserEmail(keyDetails.created_by)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <div className="flex items-center">
               <button

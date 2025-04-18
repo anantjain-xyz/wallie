@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS "workspace_secret" (
     "workspace_id" UUID NOT NULL,
     "key" TEXT NOT NULL,
     "value" TEXT NOT NULL,
+    "value_preview" TEXT,
+    "created_by" TEXT,
     "created" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "modified" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT "workspace_secret_pkey" PRIMARY KEY ("id"),

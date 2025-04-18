@@ -25,6 +25,8 @@ const secretResponseSchema = z.object({
   id: z.string(),
   key: z.string(),
   workspace_id: z.string(),
+  value_preview: z.string().optional(),
+  created_by: z.string().optional(),
   created: z.string(),
   modified: z.string()
 })
@@ -46,7 +48,7 @@ app.get('/', async (c) => {
     }
 
     const secrets = await sql`
-      SELECT id, key, workspace_id, created, modified
+      SELECT id, key, workspace_id, value_preview, created_by, created, modified
       FROM workspace_secret
       WHERE workspace_id = ${workspaceId}
       ORDER BY key ASC
@@ -80,6 +82,9 @@ app.post('/', async (c) => {
 
     const { key, value } = validatedBody
 
+    // Extract the last 6 characters for the preview
+    const valuePreview = value.length > 6 ? `...${value.slice(-6)}` : value
+
     // Encrypt the value before storing
     const encryptedValue = EncryptionService.encrypt(value)
 
@@ -90,6 +95,8 @@ app.post('/', async (c) => {
         workspace_id,
         key,
         value,
+        value_preview,
+        created_by,
         created,
         modified
       ) VALUES (
@@ -97,13 +104,17 @@ app.post('/', async (c) => {
         ${workspaceId},
         ${key},
         ${encryptedValue},
+        ${valuePreview},
+        ${auth.userId},
         NOW(),
         NOW()
       )
       ON CONFLICT (key, workspace_id) DO UPDATE SET
         value = ${encryptedValue},
+        value_preview = ${valuePreview},
+        created_by = ${auth.userId},
         modified = NOW()
-      RETURNING id, key, workspace_id, created, modified
+      RETURNING id, key, workspace_id, value_preview, created_by, created, modified
     `
 
     if (!result.length) {
