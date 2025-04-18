@@ -22,3 +22,19 @@ CREATE INDEX IF NOT EXISTS "agent_run_message_agent_run_id_idx" ON "agent_run_me
 CREATE INDEX IF NOT EXISTS "agent_run_message_workspace_id_idx" ON "agent_run_message" ("workspace_id");
 CREATE INDEX IF NOT EXISTS "agent_run_message_deleted_idx" ON "agent_run_message" ("deleted");
 CREATE INDEX IF NOT EXISTS "agent_run_message_synced_idx" ON "agent_run_message" ("synced");
+
+-- Indexes for cycle_configuration table
+CREATE INDEX IF NOT EXISTS "cycle_configuration_workspace_id_idx" ON "cycle_configuration" ("workspace_id");
+CREATE INDEX IF NOT EXISTS "cycle_configuration_is_active_idx" ON "cycle_configuration" ("is_active");
+CREATE INDEX IF NOT EXISTS "cycle_configuration_is_default_idx" ON "cycle_configuration" ("is_default");
+CREATE INDEX IF NOT EXISTS "cycle_configuration_start_date_idx" ON "cycle_configuration" ("start_date");
+CREATE INDEX IF NOT EXISTS "cycle_configuration_end_date_idx" ON "cycle_configuration" ("end_date");
+CREATE INDEX IF NOT EXISTS "cycle_configuration_deleted_idx" ON "cycle_configuration" ("deleted") WHERE "deleted" IS NOT NULL;
+CREATE INDEX IF NOT EXISTS "cycle_configuration_synced_idx" ON "cycle_configuration" ("synced") WHERE "synced" IS NOT NULL;
+
+-- Indexes for cycle_issue table
+CREATE INDEX IF NOT EXISTS "cycle_issue_cycle_id_idx" ON "cycle_issue" ("cycle_id");
+CREATE INDEX IF NOT EXISTS "cycle_issue_issue_id_idx" ON "cycle_issue" ("issue_id");
+CREATE INDEX IF NOT EXISTS "cycle_issue_workspace_id_idx" ON "cycle_issue" ("workspace_id");
+CREATE INDEX IF NOT EXISTS "cycle_issue_deleted_idx" ON "cycle_issue" ("deleted") WHERE "deleted" IS NOT NULL;
+CREATE INDEX IF NOT EXISTS "cycle_issue_synced_idx" ON "cycle_issue" ("synced") WHERE "synced" IS NOT NULL;

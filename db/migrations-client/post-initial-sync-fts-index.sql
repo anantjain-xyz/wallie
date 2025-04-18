@@ -1,1 +1,3 @@
 CREATE INDEX IF NOT EXISTS "issue_search_idx" ON "issue" USING GIN ((setweight(to_tsvector('simple', coalesce(title, '')), 'A') || setweight(to_tsvector('simple', coalesce(description, '')), 'B')));
+
+CREATE INDEX IF NOT EXISTS "cycle_configuration_search_idx" ON "cycle_configuration" USING GIN ((setweight(to_tsvector('simple', coalesce(name, '')), 'A') || setweight(to_tsvector('simple', coalesce(description, '')), 'B')));
