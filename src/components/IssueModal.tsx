@@ -184,7 +184,7 @@ function IssueModal({ isOpen, onDismiss }: Props) {
     } catch (error) {
       showError(error instanceof Error ? error.message : 'Unknown error', 'Failed to create issue')
     }
-  }, [title, description, priority, status, githubRepositoryId, assigneeId, estimate, plan, design, currentUser, pg, onDismiss])
+  }, [title, description, priority, status, githubRepositoryId, assigneeId, estimate, plan, design, currentUser, workspaceName, pg, onDismiss])
 
   const handleClickCloseBtn = () => {
     if (onDismiss) onDismiss()
