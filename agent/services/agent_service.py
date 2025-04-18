@@ -15,7 +15,7 @@ from codegen.configs.models.secrets import SecretsConfig
 from codegen import Codebase
 from typing import Any, Dict, Union
 from ..data import Issue, AgentRunResponse
-from ..config import ANTHROPIC_API_KEY, GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, FRONTEND_URL
+from ..config import GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, FRONTEND_URL
 from ..prompts import get_code_mode_prompt, get_project_mode_prompt
 from ..db.connection import db_pool
 from .comment_service import add_agent_comment, get_comments_for_issue
@@ -23,6 +23,7 @@ from .issue_service import set_issue_in_review, update_issue_plan, update_issue_
 from .repository_service import get_repository_language
 from .agent_run_service import create_agent_run, set_agent_run_status
 from .agent_run_message_service import store_agent_run_message, AgentRunMessageRecorder
+from .secrets_service import SecretsService
 from ..logging_config import get_logger
 from dataclasses import dataclass
 from typing import Optional
@@ -118,11 +119,13 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
     message_recorder = None
     
     try:
-        # Check for API key
-        if not ANTHROPIC_API_KEY:
+        # Get Anthropic API key from workspace secrets
+        try:
+            anthropic_api_key = await SecretsService.get_anthropic_api_key(issue.workspace_id)
+        except ValueError:
             return AgentRunResponse(
                 status="error",
-                message="Anthropic API key not configured"
+                message="Anthropic API key not configured. Please go to Settings and add your API key."
             )
         
         # Get the issue comments and create the prompt
@@ -175,7 +178,8 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
             agent = CodeAgent(setup_result.codebase,
                             model_provider=model_provider,
                             model_name=model_name,
-                            logger=message_recorder)
+                            logger=message_recorder,
+                            anthropic_api_key=anthropic_api_key)
             agent_result = agent.run(prompt)
             logger.info(f"Agent result: {agent_result}")
             

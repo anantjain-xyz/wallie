@@ -6,6 +6,7 @@ import { useDropzone } from 'react-dropzone'
 import { uploadFileToS3 } from '../../utils/s3Upload'
 import { showError, showSuccess } from '../../utils/notification'
 import GitHubIntegration from './GitHubIntegration'
+import AnthropicApiKey from './AnthropicApiKey'
 
 const Settings = () => {
   const { user } = useUser()
@@ -192,6 +193,9 @@ const Settings = () => {
         
         {/* GitHub Integration */}
         {workspaceId && <GitHubIntegration workspaceId={workspaceId} />}
+        
+        {/* Anthropic API Key */}
+        {workspaceId && <AnthropicApiKey workspaceId={workspaceId} />}
       </div>
     </div>
   )

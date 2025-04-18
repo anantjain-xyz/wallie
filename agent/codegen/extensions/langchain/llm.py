@@ -31,6 +31,8 @@ class LLM(BaseChatModel):
     top_k: Optional[int] = Field(default=None, description="Top-k sampling parameter.", ge=1)
 
     max_tokens: Optional[int] = Field(default=None, description="Maximum number of tokens to generate.", ge=1)
+    
+    anthropic_api_key: Optional[str] = Field(default=None, description="Anthropic API key to use instead of environment variable.")
 
     def __init__(self, model_provider: str = "anthropic", model_name: str = "claude-3-7-sonnet-latest", **kwargs: Any) -> None:
         """Initialize the LLM.
@@ -49,7 +51,7 @@ class LLM(BaseChatModel):
         kwargs["model_name"] = model_name
 
         # Filter out unsupported kwargs
-        supported_kwargs = {"model_provider", "model_name", "temperature", "top_p", "top_k", "max_tokens", "callbacks", "tags", "metadata"}
+        supported_kwargs = {"model_provider", "model_name", "temperature", "top_p", "top_k", "max_tokens", "callbacks", "tags", "metadata", "anthropic_api_key"}
         filtered_kwargs = {k: v for k, v in kwargs.items() if k in supported_kwargs}
 
         super().__init__(**filtered_kwargs)
@@ -86,10 +88,11 @@ class LLM(BaseChatModel):
     def _get_model(self) -> BaseChatModel:
         """Get the appropriate model instance based on configuration."""
         if self.model_provider == "anthropic":
-            if not os.getenv("ANTHROPIC_API_KEY"):
-                msg = "ANTHROPIC_API_KEY not found in environment. Please set it in your .env file or environment variables."
+            # Only use the explicitly provided API key
+            if not self.anthropic_api_key:
+                msg = "No Anthropic API key provided. An API key must be provided explicitly."
                 raise ValueError(msg)
-            return ChatAnthropic(**self._get_model_kwargs(), max_tokens=8192, max_retries=10, timeout=1000)
+            return ChatAnthropic(**self._get_model_kwargs(), api_key=self.anthropic_api_key, max_tokens=8192, max_retries=10, timeout=1000)
 
         elif self.model_provider == "openai":
             if not os.getenv("OPENAI_API_KEY"):

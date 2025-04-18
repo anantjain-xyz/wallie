@@ -294,38 +294,10 @@ wheels = [
 ]
 
 [[package]]
-name = "codebase-pr-api"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "asyncpg" },
-    { name = "codegen" },
-    { name = "fastapi" },
-    { name = "pydantic" },
-    { name = "pyjwt" },
-    { name = "python-dotenv" },
-    { name = "pytz" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "asyncpg", specifier = ">=0.29.0" },
-    { name = "codegen", specifier = "==0.52.19" },
-    { name = "fastapi", specifier = ">=0.115.8" },
-    { name = "pydantic", specifier = ">=2.10.6" },
-    { name = "pyjwt", specifier = ">=2.10.1" },
-    { name = "python-dotenv", specifier = ">=1.0.0" },
-    { name = "pytz", specifier = ">=2024.1" },
-    { name = "uvicorn", specifier = ">=0.27.0" },
-]
-
-[[package]]
 name = "codegen"
-version = "0.52.19"
+version = "0.53.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "anthropic" },
     { name = "astor" },
     { name = "click" },
     { name = "codegen-sdk-pink" },
@@ -344,14 +316,6 @@ dependencies = [
     { name = "hatchling" },
     { name = "httpx" },
     { name = "humanize" },
-    { name = "langchain", extra = ["openai"] },
-    { name = "langchain-anthropic" },
-    { name = "langchain-core" },
-    { name = "langchain-openai" },
-    { name = "langchain-xai" },
-    { name = "langgraph" },
-    { name = "langgraph-prebuilt" },
-    { name = "langsmith" },
     { name = "lazy-object-proxy" },
     { name = "lox" },
     { name = "mcp", extra = ["cli"] },
@@ -402,14 +366,14 @@ dependencies = [
     { name = "xmltodict" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/47/77/7a70c766e8894bab5ff46abcf5d3ac559bfc155907707f5e3021016bf52d/codegen-0.52.19-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:d16610929736c99213df93710ae11c4ab29e00c0d3b19e50d64a53a74958c559", size = 1209964 },
-    { url = "https://files.pythonhosted.org/packages/21/30/e23722ca797cc5da0d92d97f939052250c319c631a5c6216e400a0f1e5c2/codegen-0.52.19-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:8d92d6acd4653c02733bfd5f8921f1c61a9b03af22e356698005ab02a27063f4", size = 1201095 },
-    { url = "https://files.pythonhosted.org/packages/8e/57/0adb69faf8677ebc063562259ac5ea066bd23d69a61472bf279e0954eb46/codegen-0.52.19-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:8169ae44577982f4fd2ec2a605ba811a29e1e164e39b89f9955075d6f30784c9", size = 2205396 },
-    { url = "https://files.pythonhosted.org/packages/49/f2/f3d25577622e5d5965d35a454022cec078ef3475e7a5a2e923e256f2e262/codegen-0.52.19-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_34_x86_64.whl", hash = "sha256:80bcfe0bfe130b1707e214669dfccaeba4efa1bed6b29052f930c2a6cdd9713d", size = 2254674 },
-    { url = "https://files.pythonhosted.org/packages/29/93/1ed0827666cfb7ff37bbd78d88f141e9b07370dce02d9b0aecbd2be4c94e/codegen-0.52.19-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:ed4d86d8febf2fac833aba331ce65fb35ee4b77531e970e3870060d30ca9facb", size = 1205383 },
-    { url = "https://files.pythonhosted.org/packages/93/08/8a51d79479a65b1401aaae64dcbf6b9657b8e20fd9b03ae951cd47fad117/codegen-0.52.19-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:eb67c406d63448e70b23019ecb55a0c3c9e4fed3843c3451102a9878acfb7517", size = 1197266 },
-    { url = "https://files.pythonhosted.org/packages/fd/7b/72717e584d20a120f517ed4a81c772270e77ba1e57a41d5609dfe442ec9d/codegen-0.52.19-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:b6b1e7f77d720ebf3babd0a8ea8c670ef0451ae1ed5415bfcd940395f2f94d4c", size = 2198141 },
-    { url = "https://files.pythonhosted.org/packages/39/58/9f27416b3ca7b72d808cbc0243ee077fa50b1a7bf54c4db9b47964b9824b/codegen-0.52.19-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_34_x86_64.whl", hash = "sha256:af94f6cfd44ac1e077eb024796cb3247e7ffa1036726b39c2214c94d218e953a", size = 2244518 },
+    { url = "https://files.pythonhosted.org/packages/d6/3f/b536ab53c8c1934871f0b227e89de35e78a24b946f94aef1115ff1068339/codegen-0.53.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:33211cc3fbcd7966ab84e963c591d7c7e404c85d42c89ec6f3ae43afc24d725e", size = 1117945 },
+    { url = "https://files.pythonhosted.org/packages/92/f3/bbffe200220cb2e7d0b91d81e4e725925e15f2dd58a9a1411ef3d505fbd5/codegen-0.53.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:84735e9e58fa8ae6f53ff31ede25de1598d12ae14b225e6f3499cc0230c71f3f", size = 1109093 },
+    { url = "https://files.pythonhosted.org/packages/fd/23/69ad6d7100a37d4377e4beed708fa5def3d7382c19d36326ba1573242be9/codegen-0.53.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:43be809c0cff7c63671091a3676150a963645264340695da83e1f5086c36dcf7", size = 2113390 },
+    { url = "https://files.pythonhosted.org/packages/df/a9/58f50bd0674851ffe00f94c22359d47c75bfc0758a5d21160b2886780062/codegen-0.53.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_34_x86_64.whl", hash = "sha256:e9bfda10c8da8a1f18cd7bcded832d02a1806135c4033c7f2673a98bf66ad11f", size = 2162666 },
+    { url = "https://files.pythonhosted.org/packages/5b/4d/7b8ceec4f1a9c4fd5eee72cd2f0863127bba6dd269e2d1e3f1e5c49b6461/codegen-0.53.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:4b291294c3c38cec50bb034abea5aa05aa31ac5c359ee399288db426a84857d7", size = 1113363 },
+    { url = "https://files.pythonhosted.org/packages/59/87/06c970cd1053f46a73ac4cdf63e77140b4c3dc1d840ec675dd3f01e8b110/codegen-0.53.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:b562679143b77e36d7adc1ab9a5d3eb8357c7376b41c66ee42ab100ad79b6b23", size = 1105254 },
+    { url = "https://files.pythonhosted.org/packages/05/89/9bf27a8a526949d7aa3aca21ade48fbbb26d2cc5ac8c6fbeb3099ab1be17/codegen-0.53.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:3ea28278c327f5dc484a503a6a49374fddd9d6ba9e2c5dee4e317bebf0970b4b", size = 2106133 },
+    { url = "https://files.pythonhosted.org/packages/87/86/9a03f088339f8a96c0c790f914f942ad2c7f2edbf77bda9c70d321b0b77e/codegen-0.53.0-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_34_x86_64.whl", hash = "sha256:04df1c912e5aa74fbd4458b0ce51a06f417665bbd00950e4a0fcd6eec3ab7087", size = 2152513 },
 ]
 
 [[package]]
@@ -1121,11 +1085,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/c3/89/eeab8c671d791ce872225aa77a05805ba67052764a3faa6331fc4674e855/langchain-0.3.21-py3-none-any.whl", hash = "sha256:c8bd2372440cc5d48cb50b2d532c2e24036124f1c467002ceb15bc7b86c92579", size = 1011714 },
 ]
 
-[package.optional-dependencies]
-openai = [
-    { name = "langchain-openai" },
-]
-
 [[package]]
 name = "langchain-anthropic"
 version = "0.3.10"
@@ -1201,7 +1160,7 @@ wheels = [
 
 [[package]]
 name = "langgraph"
-version = "0.3.19"
+version = "0.3.25"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "langchain-core" },
@@ -1210,9 +1169,9 @@ dependencies = [
     { name = "langgraph-sdk" },
     { name = "xxhash" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3c/4f/f9d4822bd0ab288de64b5c61d59ac50ffcfb5232acaf3749ce70e7b6911b/langgraph-0.3.19.tar.gz", hash = "sha256:b5e013e6723d10910fc2677d436c82a3e86f2874864b8498eb7018359f40c148", size = 116507 }
+sdist = { url = "https://files.pythonhosted.org/packages/f9/3f/565526f03e3a1b67c36b04e82bfbf85b933ac9b65ffc6fb0e79b91d6cdab/langgraph-0.3.25.tar.gz", hash = "sha256:78070c4ca3e160eaaf9ae2d62ef3c11b09bded6094e35a9ad75a608dc71cd299", size = 120073 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/bc/a6aec4793df4f8033bdef364488fdbbb1355a0d666ec3764b06aeeb4d4fd/langgraph-0.3.19-py3-none-any.whl", hash = "sha256:d3cdece5bd8055a68eb76c327554cae2ccd7e5ecd6aa2e8ed26bd466b40059d3", size = 137924 },
+    { url = "https://files.pythonhosted.org/packages/08/b0/8ef9b31ea6de4a903e15ebab0a9e416a0b2a426c4d24be96c2d261c5cfce/langgraph-0.3.25-py3-none-any.whl", hash = "sha256:771fb4507aa9564e8eb31e96c4e7ad254dde33ac757188eb1d79f5b1fbdb05af", size = 142412 },
 ]
 
 [[package]]
@@ -1620,7 +1579,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "1.68.2"
+version = "1.70.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1632,9 +1591,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3f/6b/6b002d5d38794645437ae3ddb42083059d556558493408d39a0fcea608bc/openai-1.68.2.tar.gz", hash = "sha256:b720f0a95a1dbe1429c0d9bb62096a0d98057bcda82516f6e8af10284bdd5b19", size = 413429 }
+sdist = { url = "https://files.pythonhosted.org/packages/87/f5/ae0f3cd226c2993b4ac1cc4b5f6ca099764689f403c14922c9356accec66/openai-1.70.0.tar.gz", hash = "sha256:e52a8d54c3efeb08cf58539b5b21a5abef25368b5432965e4de88cdf4e091b2b", size = 409640 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/34/cebce15f64eb4a3d609a83ac3568d43005cc9a1cba9d7fde5590fd415423/openai-1.68.2-py3-none-any.whl", hash = "sha256:24484cb5c9a33b58576fdc5acf0e5f92603024a4e39d0b99793dfa1eb14c2b36", size = 606073 },
+    { url = "https://files.pythonhosted.org/packages/e2/39/c4b38317d2c702c4bc763957735aaeaf30dfc43b5b824121c49a4ba7ba0f/openai-1.70.0-py3-none-any.whl", hash = "sha256:f6438d053fd8b2e05fd6bef70871e832d9bbdf55e119d0ac5b92726f1ae6f614", size = 599070 },
 ]
 
 [[package]]
@@ -2496,15 +2455,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.24.0"
+version = "2.25.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fe/c6/61d3d5eecca9f0237251a89043d1bfa3fbeb4e35d48c1cbba2f6dde72664/sentry_sdk-2.24.0.tar.gz", hash = "sha256:4a4a8de31573c8ab14c9b866fd44cf783df062ca7b4a56ed0a108453abbc2a24", size = 317058 }
+sdist = { url = "https://files.pythonhosted.org/packages/85/2f/a0f732270cc7c1834f5ec45539aec87c360d5483a8bd788217a9102ccfbd/sentry_sdk-2.25.1.tar.gz", hash = "sha256:f9041b7054a7cf12d41eadabe6458ce7c6d6eea7a97cfe1b760b6692e9562cf0", size = 322190 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c4/5d/dbfbda95daa8fdb22276513f930269149b338b67efb9ebf24ebf6d62ca9a/sentry_sdk-2.24.0-py2.py3-none-any.whl", hash = "sha256:7150cfe61dfd37d30b33d8d6b153d25e14c69bbcf6f4a98ffc97e92de88be215", size = 336890 },
+    { url = "https://files.pythonhosted.org/packages/96/b6/84049ab0967affbc7cc7590d86ae0170c1b494edb69df8786707100420e5/sentry_sdk-2.25.1-py2.py3-none-any.whl", hash = "sha256:60b016d0772789454dc55a284a6a44212044d4a16d9f8448725effee97aaf7f6", size = 339851 },
 ]
 
 [[package]]
@@ -2934,6 +2893,45 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/d2/19/f5b78616566ea68edd42aacaf645adbf71fbd83fc52281fba555dc27e3f1/uvloop-0.21.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f3df876acd7ec037a3d005b3ab85a7e4110422e4d9c1571d4fc89b0fc41b6816", size = 4701068 },
     { url = "https://files.pythonhosted.org/packages/47/57/66f061ee118f413cd22a656de622925097170b9380b30091b78ea0c6ea75/uvloop-0.21.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:bd53ecc9a0f3d87ab847503c2e1552b690362e005ab54e8a48ba97da3924c0dc", size = 4454428 },
     { url = "https://files.pythonhosted.org/packages/63/9a/0962b05b308494e3202d3f794a6e85abe471fe3cafdbcf95c2e8c713aabd/uvloop-0.21.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:a5c39f217ab3c663dc699c04cbd50c13813e31d917642d459fdcec07555cc553", size = 4660018 },
+]
+
+[[package]]
+name = "wallie-agent"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "asyncpg" },
+    { name = "codegen" },
+    { name = "cryptography" },
+    { name = "fastapi" },
+    { name = "langchain" },
+    { name = "langchain-anthropic" },
+    { name = "langchain-openai" },
+    { name = "langchain-xai" },
+    { name = "langgraph" },
+    { name = "pydantic" },
+    { name = "pyjwt" },
+    { name = "python-dotenv" },
+    { name = "pytz" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "asyncpg", specifier = ">=0.29.0" },
+    { name = "codegen", specifier = "==0.53.0" },
+    { name = "cryptography", specifier = ">=42.0.8" },
+    { name = "fastapi", specifier = ">=0.115.8" },
+    { name = "langchain", specifier = "==0.3.21" },
+    { name = "langchain-anthropic", specifier = ">=0.3.7" },
+    { name = "langchain-openai" },
+    { name = "langchain-xai", specifier = ">=0.2.1" },
+    { name = "langgraph", specifier = "==0.3.25" },
+    { name = "pydantic", specifier = ">=2.10.6" },
+    { name = "pyjwt", specifier = ">=2.10.1" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "pytz", specifier = ">=2024.1" },
+    { name = "uvicorn", specifier = ">=0.27.0" },
 ]
 
 [[package]]
