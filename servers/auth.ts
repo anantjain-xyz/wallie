@@ -102,7 +102,6 @@ export async function getWorkspaceIdFromUser(userId: string): Promise<string | n
           NOW()
         )
         ON CONFLICT (url) DO UPDATE SET
-          allowlisted_domains = array_cat(workspace.allowlisted_domains, ${[domain]}),
           modified = NOW()
         RETURNING *
       `;
