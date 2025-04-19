@@ -61,7 +61,7 @@ const AnthropicApiKey = ({ workspaceId }: AnthropicApiKeyProps) => {
     if (workspaceId) {
       checkKey()
     }
-  }, [workspaceId, getToken])
+  }, [workspaceId, getToken, API_SERVER_URL])
 
   const saveApiKey = async () => {
     if (!apiKey.trim()) {
