@@ -30,7 +30,7 @@ from typing import Optional
 from uuid import UUID
 
 # Get the API server URL from environment variables
-API_SERVER_URL = os.environ.get('API_SERVER_URL', 'http://localhost:3003')
+API_SERVER_URL = os.environ.get('VITE_API_SERVER_URL', 'http://localhost:3003')
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -438,7 +438,7 @@ async def _setup_codebase_and_branch(issue: Issue) -> CodebaseSetupResult:
         )
 
     # Set git config at global level in production only
-    if os.environ.get('ENV') == 'production':
+    if os.environ.get('VITE_ENV') == 'production':
         os.system(f"git config --global user.email '1159871+wallie-labs[bot]@users.noreply.github.com'")
         os.system(f"git config --global user.name 'Wallie'")
 
