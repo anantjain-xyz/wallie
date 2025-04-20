@@ -25,6 +25,7 @@ import DeleteModal from './DeleteModal'
 import UnifiedTimelineView from './UnifiedTimelineView'
 import SubIssuesTable from './SubIssuesTable'
 import SidebarRelationships from './SidebarRelationships'
+import WorkspaceTierAlert from './WorkspaceTierAlert'
 import debounce from 'lodash.debounce'
 import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 import { formatExternalId } from '../../utils/issueUtils'
@@ -768,6 +769,11 @@ function IssuePage() {
           </div>
           
           <div className="flex flex-col md:flex-[3_0_0] md:p-3 border-gray-200 md:border-r min-h-0 min-w-0 overflow-auto">
+            {/* Show tier alert if the workspace has one */}
+            {issue && issue.workspace_id && (
+              <WorkspaceTierAlert workspaceId={issue.workspace_id} />
+            )}
+            
             <div className="flex items-start justify-between">
               <textarea
                 className="flex-1 px-3 py-2 text-3xl font-semibold placeholder-gray-400 border-transparent focus:border-transparent focus:ring-0 rounded resize-none overflow-hidden"

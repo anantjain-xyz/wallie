@@ -142,10 +142,34 @@ async def _run_agent(issue: Issue) -> AgentRunResponse:
             app_user_id = await get_agent_user_id(conn, issue.workspace_id)
             
             # Create a new agent run record
-            agent_run_id = await create_agent_run(
+            agent_run_id, error_info = await create_agent_run(
                 conn, issue.id, app_user_id, issue.workspace_id, 
                 model_provider, model_name
             )
+            
+            # Check if agent run creation failed due to tier limits
+            if agent_run_id is None and error_info:
+                logger.warning(f"Agent run creation failed: {error_info}")
+                
+                # Format a helpful error message for the user
+                if error_info.get("error") == "agent_run_limit_reached":
+                    tier = error_info.get("tier", "free")
+                    count = error_info.get("current_count", 0)
+                    limit = error_info.get("limit", 25)
+                    
+                    upgrade_message = f"⚠️ Monthly Wallie run limit reached: {count}/{limit}. " \
+                                      f"You are currently on the {tier.capitalize()} tier. " \
+                                      f"Please upgrade to the Pro tier for unlimited Wallie runs."
+                    
+                    return AgentRunResponse(
+                        status="error",
+                        message=upgrade_message
+                    )
+                else:
+                    return AgentRunResponse(
+                        status="error",
+                        message=f"Error creating agent run: {error_info.get('message', 'Unknown error')}"
+                    )
             
             # Store the initial prompt as a message
             await store_agent_run_message(conn, agent_run_id, issue.workspace_id, prompt, "prompt")

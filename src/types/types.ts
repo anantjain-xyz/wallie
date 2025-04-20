@@ -201,3 +201,31 @@ export type IssueLink = {
   created: Date
   synced: boolean
 }
+
+export const WorkspaceTier = {
+  FREE: 'free',
+  PRO: 'pro',
+} as const
+
+export type WorkspaceTierValue = (typeof WorkspaceTier)[keyof typeof WorkspaceTier]
+
+export const WorkspaceTierDisplay = {
+  [WorkspaceTier.FREE]: 'Free',
+  [WorkspaceTier.PRO]: 'Pro',
+}
+
+// Get FREE_TIER_AGENT_RUN_LIMIT from environment variables
+export const FREE_TIER_AGENT_RUN_LIMIT = parseInt(import.meta.env.VITE_FREE_TIER_AGENT_RUN_LIMIT || '25', 10)
+
+export type Workspace = {
+  id: string
+  name: string
+  url: string
+  avatar_url?: string | null
+  allowlisted_domains?: string[] | null
+  tier: WorkspaceTierValue
+  current_billing_cycle_start_date: Date
+  successful_agent_runs_this_cycle: number
+  modified: Date
+  created: Date
+}

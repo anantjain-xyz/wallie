@@ -7,7 +7,9 @@ import { uploadFileToS3 } from '../../utils/s3Upload'
 import { showError, showSuccess } from '../../utils/notification'
 import GitHubIntegration from './GitHubIntegration'
 import AnthropicApiKey from './AnthropicApiKey'
+import WorkspaceTierComponent from './WorkspaceTier'
 
+// Component for workspace settings
 const Settings = () => {
   const { user } = useUser()
   const currentUserResult = useCurrentUser(user)
@@ -19,9 +21,13 @@ const Settings = () => {
     name: string, 
     url: string,
     avatar_url: string | null,
-    allowlisted_domains: string[]
+    allowlisted_domains: string[],
+    tier: string,
+    current_billing_cycle_start_date: Date,
+    successful_agent_runs_this_cycle: number
   }>`
-    SELECT id, name, url, avatar_url, allowlisted_domains FROM workspace WHERE id = ${workspaceId}
+    SELECT id, name, url, avatar_url, allowlisted_domains, tier, current_billing_cycle_start_date, successful_agent_runs_this_cycle
+    FROM workspace WHERE id = ${workspaceId}
   `
 
   const workspace = workspaceResults?.rows[0]
@@ -193,6 +199,9 @@ const Settings = () => {
         
         {/* GitHub Integration */}
         {workspaceId && <GitHubIntegration workspaceId={workspaceId} />}
+        
+        {/* Workspace Tier - Display only */}
+        {workspaceId && <WorkspaceTierComponent workspaceId={workspaceId} />}
         
         {/* Anthropic API Key */}
         {workspaceId && <AnthropicApiKey workspaceId={workspaceId} />}
