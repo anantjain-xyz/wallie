@@ -42,15 +42,3 @@ export const proxyRateLimiter = createRateLimiter({
   windowMs: 60 * 1000, // 1 minute
   limit: 200 // 200 requests per minute for proxy server
 })
-
-// GitHub webhook limiter with higher limits (webhooks are sent from GitHub servers)
-export const githubWebhookRateLimiter = createRateLimiter({
-  windowMs: 60 * 1000,
-  limit: 300,
-  keyGenerator: (c: Context) => {
-    // For GitHub webhooks, use the event type as part of the key
-    const event = c.req.header('x-github-event') || 'unknown'
-    const ip = c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || 'unknown'
-    return `github:${ip}:${event}`
-  }
-}) 

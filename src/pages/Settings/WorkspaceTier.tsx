@@ -140,7 +140,7 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
             </p>
           </div>
           <button
-            className="px-4 py-2 mt-4 rounded hover:bg-blue-100 border border-blue-600 text-blue-600 disabled:opacity-50"
+            className="px-4 py-2 mt-4 rounded hover:bg-blue-50 border border-blue-600 text-blue-600 disabled:opacity-50"
             onClick={handleManageSubscription}
             disabled={loadingRedirect}
           >

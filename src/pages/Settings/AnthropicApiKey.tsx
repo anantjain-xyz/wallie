@@ -196,7 +196,7 @@ const AnthropicApiKey = ({ workspaceId }: AnthropicApiKeyProps) => {
               <button
                 type="button"
                 onClick={deleteApiKey}
-                className="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="inline-flex items-center px-3 py-2 border border-red-700 shadow-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
                 Remove Anthropic API Key
               </button>
