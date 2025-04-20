@@ -53,11 +53,11 @@ app.use('/*', async (c, next) => {
 });
 
 // API routes
-app.route('/', githubAuthApp);
-app.route('/webhook', githubWebhookApp);
+app.route('/webhook/github', githubWebhookApp);
 app.route('/webhook/stripe', stripeWebhookApp);
 app.route('/secrets', secretsApp);
 app.route('/subscription', subscriptionApp);
+app.route('/', githubAuthApp);
 
 // Error handling
 app.onError((err, c) => {
