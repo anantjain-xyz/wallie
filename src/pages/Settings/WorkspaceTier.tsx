@@ -9,6 +9,11 @@ interface WorkspaceTierProps {
 const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) => {
   const [error] = useState<string | null>(null)
   const [cycleEndDate, setCycleEndDate] = useState<Date | null>(null)
+  const [loadingRedirect, setLoadingRedirect] = useState(false)
+  
+  const API_SERVER_URL = import.meta.env.VITE_API_SERVER_URL
+    ? new URL(import.meta.env.VITE_API_SERVER_URL).origin
+    : `http://localhost:3003`
   
   const workspaceQuery = useLiveQuery.sql<{
     tier: string
@@ -35,6 +40,28 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
       setCycleEndDate(endDate)
     }
   }, [workspace?.current_billing_cycle_start_date])
+  
+  const handleManageSubscription = async () => {
+    setLoadingRedirect(true)
+    try {
+      const res = await fetch(`${API_SERVER_URL}/subscription/manage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ workspaceId }),
+      })
+      const data = await res.json()
+      if (data.redirect_url) {
+        window.location.href = data.redirect_url
+      } else {
+        alert('No redirect URL returned.')
+      }
+    } catch (err) {
+      alert('Failed to manage subscription.')
+    } finally {
+      setLoadingRedirect(false)
+    }
+  }
   
   if (loading) {
     return <div className="p-4">Loading workspace tier information...</div>
@@ -106,6 +133,15 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
           </p>
         </div>
       )}
+      <div className="flex justify-end mt-4">
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          onClick={handleManageSubscription}
+          disabled={loadingRedirect}
+        >
+          {loadingRedirect ? 'Redirecting...' : 'Manage subscription'}
+        </button>
+      </div>
     </div>
   )
 }

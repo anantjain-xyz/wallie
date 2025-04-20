@@ -8,6 +8,7 @@ import githubAuthApp from './github-auth'
 import githubWebhookApp from './github-webhook'
 import secretsApp from './secrets'
 import { EncryptionService } from './encryption'
+import subscriptionApp from './subscription'
 
 // Check that encryption key is set
 try {
@@ -22,8 +23,13 @@ try {
 
 const app = new Hono()
 
-// Enable CORS
-app.use('*', cors())
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+// Enable CORS with credentials and specific origin
+app.use('*', cors({
+  origin: FRONTEND_URL,
+  credentials: true,
+}))
 
 // Add rate limiting with different limiters based on route
 app.use('/webhook/*', githubWebhookRateLimiter)
@@ -51,6 +57,7 @@ app.use('/*', async (c, next) => {
 app.route('/', githubAuthApp);
 app.route('/webhook', githubWebhookApp);
 app.route('/secrets', secretsApp);
+app.route('/subscription', subscriptionApp);
 
 // Error handling
 app.onError((err, c) => {
