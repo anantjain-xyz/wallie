@@ -173,18 +173,18 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
                   type="button"
                   onClick={handleRefreshRepositories}
                   disabled={isLoading}
-                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  {isLoading ? 'Refreshing...' : 'Refresh Repositories'}
+                  {isLoading ? 'Refreshing...' : 'Refresh repositories'}
                 </button>
                 
                 <button
                   type="button"
                   onClick={handleUninstallGitHub}
                   disabled={isLoading}
-                  className="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  className="inline-flex items-center px-3 py-1.5 border border-red-700 shadow-sm text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
-                  {isLoading ? 'Removing...' : 'Remove Integration'}
+                  {isLoading ? 'Removing...' : 'Remove integration'}
                 </button>
               </div>
             </div>

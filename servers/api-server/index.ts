@@ -3,11 +3,13 @@ import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
 import { authMiddleware } from '../auth'
-import { apiRateLimiter, githubWebhookRateLimiter } from '../middleware/rate-limit'
+import { apiRateLimiter } from '../middleware/rate-limit'
 import githubAuthApp from './github-auth'
 import githubWebhookApp from './github-webhook'
 import secretsApp from './secrets'
 import { EncryptionService } from './encryption'
+import subscriptionApp from './subscription'
+import { stripeWebhookApp } from './stripe-webhook'
 
 // Check that encryption key is set
 try {
@@ -22,13 +24,16 @@ try {
 
 const app = new Hono()
 
-// Enable CORS
-app.use('*', cors())
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-// Add rate limiting with different limiters based on route
-app.use('/webhook/*', githubWebhookRateLimiter)
+// Enable CORS with credentials and specific origin
+app.use('*', cors({
+  origin: FRONTEND_URL,
+  credentials: true,
+}))
+
 app.use('/*', (c, next) => {
-  // Skip rate limiting for webhook routes as they use their own limiter
+  // Skip rate limiting for webhook routes
   if (c.req.path.startsWith('/webhook')) {
     return next();
   }
@@ -37,7 +42,7 @@ app.use('/*', (c, next) => {
 
 // Add auth middleware for non-webhook routes
 app.use('/*', async (c, next) => {
-  // Skip auth for GitHub webhook
+  // Skip auth for webhook routes since we handle it via webhook signing secrets
   if (c.req.path.startsWith('/webhook')) {
     await next();
     return;
@@ -48,9 +53,11 @@ app.use('/*', async (c, next) => {
 });
 
 // API routes
-app.route('/', githubAuthApp);
-app.route('/webhook', githubWebhookApp);
+app.route('/webhook/github', githubWebhookApp);
+app.route('/webhook/stripe', stripeWebhookApp);
 app.route('/secrets', secretsApp);
+app.route('/subscription', subscriptionApp);
+app.route('/', githubAuthApp);
 
 // Error handling
 app.onError((err, c) => {

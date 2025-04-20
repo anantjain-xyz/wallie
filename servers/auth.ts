@@ -178,6 +178,19 @@ export async function getWorkspaceIdFromUser(userId: string): Promise<string | n
   }
 }
 
+export async function getUserIdFromUser(userId: string): Promise<string | null> {
+  const user = await clerk.users.getUser(userId);
+  const email = user?.emailAddresses?.[0]?.emailAddress;
+  if (!email) {
+    console.error('No email found for user');
+    return null;
+  }
+  const dbUser = await sql`
+    SELECT * FROM app_user WHERE email = ${email}
+  `;
+  return dbUser[0].id;
+}
+
 export const authMiddleware = clerkMiddleware({
   publishableKey: process.env.VITE_CLERK_PUBLISHABLE_KEY,
   secretKey: process.env.CLERK_SECRET_KEY,
