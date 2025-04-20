@@ -15,6 +15,10 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
     ? new URL(import.meta.env.VITE_API_SERVER_URL).origin
     : `http://localhost:3003`
   
+  // Stripe env vars
+  const STRIPE_PRICING_TABLE_ID = import.meta.env.VITE_STRIPE_PRICING_TABLE_ID || ''
+  const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ''
+  
   const workspaceQuery = useLiveQuery.sql<{
     tier: string
     name: string
@@ -47,8 +51,7 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
       const res = await fetch(`${API_SERVER_URL}/subscription/manage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ workspaceId }),
+        credentials: 'include'
       })
       const data = await res.json()
       if (data.redirect_url) {
@@ -81,21 +84,18 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
   return (
     <div className="bg-white rounded-lg p-6 mb-4 border border-gray-200">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold">Workspace Tier</h2>
+        <h2 className="text-lg font-semibold">Subscription</h2>
       </div>
-      
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="font-medium">Current tier:</span>
-          <span className={tier === WorkspaceTier.PRO ? 'text-blue-600 font-bold' : ''}>
-            {WorkspaceTierDisplay[tier as keyof typeof WorkspaceTierDisplay] || tier}
-          </span>
-        </div>
-        
-        {tier === WorkspaceTier.FREE && (
+      {tier === WorkspaceTier.FREE && (
+        <>
+          <div className="p-4 bg-gray-50 rounded-md text-gray-700">
+            <p>
+              Your workspace is on the <span className="font-medium">Free tier</span> with a limit of {FREE_TIER_AGENT_RUN_LIMIT} Wallie runs per month.
+          </p>
+          </div>
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-medium">Agent runs this month:</span>
+              <span className="font-medium">Wallie runs this month {daysUntilReset ? `(refreshes in ${daysUntilReset} day${daysUntilReset === 1 ? '' : 's'})` : ''}</span>
               <span className={agentRuns >= FREE_TIER_AGENT_RUN_LIMIT ? 'text-red-500' : ''}>
                 {agentRuns} / {FREE_TIER_AGENT_RUN_LIMIT}
               </span>
@@ -107,41 +107,47 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
                 style={{ width: `${Math.min(100, (agentRuns / FREE_TIER_AGENT_RUN_LIMIT) * 100)}%` }}
               ></div>
             </div>
+
+            {/* Stripe Pricing Table */}
+            <div className="mt-6" ref={el => {
+              if (el && !el.querySelector('stripe-pricing-table')) {
+                const scriptId = 'stripe-pricing-table-script';
+                if (!document.getElementById(scriptId)) {
+                  const script = document.createElement('script');
+                  script.id = scriptId;
+                  script.src = 'https://js.stripe.com/v3/pricing-table.js';
+                  script.async = true;
+                  document.body.appendChild(script);
+                }
+                if (STRIPE_PRICING_TABLE_ID && STRIPE_PUBLISHABLE_KEY) {
+                  const pricingTable = document.createElement('stripe-pricing-table');
+                  pricingTable.setAttribute('pricing-table-id', STRIPE_PRICING_TABLE_ID);
+                  pricingTable.setAttribute('publishable-key', STRIPE_PUBLISHABLE_KEY);
+                  pricingTable.setAttribute('client-reference-id', workspaceId);
+                  el.appendChild(pricingTable);
+                }
+              }
+            }} />
           </div>
-        )}
-        
-        {daysUntilReset && (
-          <div className="text-sm text-gray-500 mt-2">
-            Agent runs will reset in {daysUntilReset} day{daysUntilReset === 1 ? '' : 's'}
-          </div>
-        )}
-      </div>
-      
-      {tier === WorkspaceTier.FREE && (
-        <div className="p-4 bg-gray-50 border border-gray-200 rounded-md text-gray-700">
-          <p>
-            You are on the <span className="font-medium">Free tier</span> with a limit of {FREE_TIER_AGENT_RUN_LIMIT} agent runs per month.
-            Tier management is currently disabled. Please contact support for more information.
-          </p>
-        </div>
+        </>
       )}
       
       {tier === WorkspaceTier.PRO && (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-md text-blue-700">
-          <p>
-            You are on the <span className="font-medium">Pro tier</span> with unlimited agent runs. Thank you for your support!
-          </p>
-        </div>
+        <>
+          <div className="p-4 bg-gray-50 rounded-md text-gray-700">
+            <p>
+              Your workspace is on the <span className="font-medium">Pro tier</span> with unlimited Wallie runs.
+            </p>
+          </div>
+          <button
+            className="px-4 py-2 mt-4 rounded hover:bg-blue-100 border border-blue-600 text-blue-600 disabled:opacity-50"
+            onClick={handleManageSubscription}
+            disabled={loadingRedirect}
+          >
+            {loadingRedirect ? 'Redirecting...' : 'Manage subscription'}
+          </button>
+        </>
       )}
-      <div className="flex justify-end mt-4">
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-          onClick={handleManageSubscription}
-          disabled={loadingRedirect}
-        >
-          {loadingRedirect ? 'Redirecting...' : 'Manage subscription'}
-        </button>
-      </div>
     </div>
   )
 }
