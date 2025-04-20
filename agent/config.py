@@ -28,3 +28,6 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 # Issue monitoring settings
 POLLING_INTERVAL_SECONDS = 2  # Check for new issues every 10 seconds
 ERROR_RETRY_SECONDS = 30  # Wait longer after an error 
+
+# Workspace tier settings
+FREE_TIER_AGENT_RUN_LIMIT = int(os.environ.get("FREE_TIER_AGENT_RUN_LIMIT", 25))

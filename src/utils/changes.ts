@@ -50,6 +50,8 @@ export const workspaceChangeSchema = z.object({
   modified_columns: z.array(z.string()).nullable().optional(),
   deleted: z.boolean().nullable().optional(),
   new: z.boolean().nullable().optional(),
+  // Note that tier, current_billing_cycle_start_date, and successful_agent_runs_this_cycle
+  // are not synced because client should never be able to update them directly.
 })
 
 export type WorkspaceChange = z.infer<typeof workspaceChangeSchema>

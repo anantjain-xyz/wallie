@@ -136,3 +136,6 @@ dist
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# Aider
+.aider*
