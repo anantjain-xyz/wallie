@@ -439,8 +439,8 @@ async def _setup_codebase_and_branch(issue: Issue) -> CodebaseSetupResult:
 
     # Set git config at global level in production only
     if os.environ.get('VITE_ENV') == 'production':
-        os.system(f"git config --global user.email '1159871+wallie-labs[bot]@users.noreply.github.com'")
-        os.system(f"git config --global user.name 'Wallie'")
+        os.system(f"git config --global user.email '201032149+wallie-labs[bot]@users.noreply.github.com'")
+        os.system(f"git config --global user.name 'wallie-labs[bot]'")
 
     # Create codebase instance with the workspace token
     codebase = Codebase.from_repo(
