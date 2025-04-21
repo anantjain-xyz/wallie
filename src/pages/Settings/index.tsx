@@ -111,32 +111,32 @@ const Settings = () => {
   })
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-50">
+    <div className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-8">Settings</h1>
+        <h1 className="text-3xl font-semibold text-gray-900 mb-6">Settings</h1>
         
-        <div className="bg-white shadow rounded-lg mb-6">
-          <div className="px-6 py-5 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Workspace</h2>
+        <div className="bg-white shadow-md rounded-lg mb-6 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <h2 className="text-xl font-medium text-gray-900">Workspace Settings</h2>
           </div>
           
-          <div className="px-6 py-5">
+          <div className="px-6 py-6">
             <div className="grid grid-cols-1 gap-6">
               {/* Logo */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Logo
                 </label>
                 <div className="flex items-center">
                   <div 
                     {...getRootProps()} 
-                    className={`h-12 w-12 rounded overflow-hidden bg-gray-100 flex items-center justify-center cursor-pointer border-2 ${
-                      isDragActive ? 'border-blue-500 border-dashed' : 'border-transparent'
-                    } hover:border-gray-300 transition-colors`}
+                    className={`h-16 w-16 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center cursor-pointer border-2 ${
+                      isDragActive ? 'border-blue-500 border-dashed' : 'border-gray-200'
+                    } hover:border-blue-400 transition-colors`}
                   >
                     <input {...getInputProps()} />
                     {isUploading ? (
-                      <div className="animate-spin rounded-full h-6 w-6 border-2 border-t-blue-500 border-gray-300"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-blue-500 border-gray-300"></div>
                     ) : workspaceAvatarUrl ? (
                       <img 
                         src={workspaceAvatarUrl} 
@@ -148,8 +148,11 @@ const Settings = () => {
                     )}
                   </div>
                   <div className="ml-5">
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="text-sm text-gray-600">
                       Click or drag and drop to upload
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      JPG, PNG, SVG, GIF up to 5MB
                     </p>
                   </div>
                 </div>
@@ -157,8 +160,8 @@ const Settings = () => {
               
               {/* Name */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Name
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Workspace Name
                 </label>
                 <input
                   type="text"
@@ -167,17 +170,17 @@ const Settings = () => {
                   value={workspaceName}
                   onChange={(e) => setWorkspaceName(e.target.value)}
                   onBlur={saveWorkspace}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="block w-full border border-gray-300 rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
               
               {/* URL */}
               <div>
-                <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1">
-                  URL
+                <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-2">
+                  Workspace URL
                 </label>
-                <div className="mt-1 flex rounded-md shadow-sm">
-                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
+                <div className="flex rounded-md shadow-sm">
+                  <span className="inline-flex items-center px-4 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-600 sm:text-sm">
                     wallie.app/
                   </span>
                   <input
@@ -187,13 +190,11 @@ const Settings = () => {
                     value={workspaceUrl}
                     onChange={(e) => setWorkspaceUrl(e.target.value)}
                     onBlur={saveWorkspace}
-                    className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="flex-1 min-w-0 block w-full px-3 py-2.5 rounded-none rounded-r-md border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
               </div>
             </div>
-            
-
           </div>
         </div>
         
@@ -210,4 +211,4 @@ const Settings = () => {
   )
 }
 
-export default Settings 
+export default Settings

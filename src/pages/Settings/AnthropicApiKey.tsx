@@ -152,12 +152,12 @@ const AnthropicApiKey = ({ workspaceId }: AnthropicApiKeyProps) => {
   }
 
   return (
-    <div className="bg-white shadow rounded-lg mb-6">
-      <div className="px-6 py-5 border-b border-gray-200">
+    <div className="bg-white shadow-md rounded-lg mb-6 overflow-hidden">
+      <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
         <h2 className="text-lg font-medium text-gray-900">Anthropic API Key</h2>
       </div>
       
-      <div className="px-6 py-5 space-y-6">
+      <div className="px-6 py-6 space-y-6">
         <p className="text-sm text-gray-500">
           Wallie uses Anthropic's models under the hood. You will need to provide your own API key for usage with this workspace. 
         </p>
@@ -196,7 +196,7 @@ const AnthropicApiKey = ({ workspaceId }: AnthropicApiKeyProps) => {
               <button
                 type="button"
                 onClick={deleteApiKey}
-                className="inline-flex items-center px-3 py-2 border border-red-700 shadow-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="inline-flex items-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
                 Remove Anthropic API Key
               </button>
@@ -213,7 +213,7 @@ const AnthropicApiKey = ({ workspaceId }: AnthropicApiKeyProps) => {
                   type={showKey ? "text" : "password"}
                   name="apiKey"
                   id="apiKey"
-                  className="block w-full pr-10 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm border-gray-300 rounded-md"
+                  className="block w-full pr-10 border border-gray-300 rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="sk-ant-..."
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
@@ -245,7 +245,7 @@ const AnthropicApiKey = ({ workspaceId }: AnthropicApiKeyProps) => {
                 type="button"
                 onClick={saveApiKey}
                 disabled={isSaving}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? (
                   <>

@@ -82,13 +82,14 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
   const agentRuns = workspace.successful_agent_runs_this_cycle || 0
   const daysUntilReset = cycleEndDate ? Math.ceil((cycleEndDate?.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null
   return (
-    <div className="bg-white rounded-lg p-6 mb-4 border border-gray-200">
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold">Subscription</h2>
+    <div className="bg-white shadow-md rounded-lg mb-6 overflow-hidden">
+      <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+        <h2 className="text-xl font-medium text-gray-900">Subscription</h2>
       </div>
-      {tier === WorkspaceTier.FREE && (
+      <div className="px-6 py-6">
+        {tier === WorkspaceTier.FREE && (
         <>
-          <div className="p-4 bg-gray-50 rounded-md text-gray-700">
+          <div className="p-4 bg-gray-50 rounded-md text-gray-700 mb-4">
             <p>
               Your workspace is on the <span className="font-medium">Free tier</span> with a limit of {FREE_TIER_AGENT_RUN_LIMIT} Wallie runs per month.
           </p>
@@ -140,7 +141,7 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
             </p>
           </div>
           <button
-            className="px-4 py-2 mt-4 rounded hover:bg-blue-50 border border-blue-600 text-blue-600 disabled:opacity-50"
+            className="inline-flex items-center px-4 py-2 border border-blue-600 shadow-sm text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 mt-4"
             onClick={handleManageSubscription}
             disabled={loadingRedirect}
           >
@@ -148,6 +149,7 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
           </button>
         </>
       )}
+      </div>
     </div>
   )
 }

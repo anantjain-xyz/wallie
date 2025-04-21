@@ -149,15 +149,15 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
   }
   
   return (
-    <div className="bg-white shadow rounded-lg mb-6">
-      <div className="px-6 py-5 border-b border-gray-200">
-        <h2 className="text-lg font-medium text-gray-900">GitHub Integration</h2>
+    <div className="bg-white shadow-md rounded-lg mb-8 overflow-hidden">
+      <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+        <h2 className="text-xl font-medium text-gray-900">GitHub Integration</h2>
       </div>
       
-      <div className="px-6 py-5">
+      <div className="px-6 py-6">
         {installation ? (
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-6">
               <div>
                 <p className="text-sm font-medium text-gray-900">
                   Connected to {installation.target_type === 'Organization' ? 'organization' : 'account'}: 
@@ -168,12 +168,12 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
                 </p>
               </div>
               
-              <div className="flex space-x-2">
+              <div className="flex space-x-3">
                 <button
                   type="button"
                   onClick={handleRefreshRepositories}
                   disabled={isLoading}
-                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   {isLoading ? 'Refreshing...' : 'Refresh repositories'}
                 </button>
@@ -182,7 +182,7 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
                   type="button"
                   onClick={handleUninstallGitHub}
                   disabled={isLoading}
-                  className="inline-flex items-center px-3 py-1.5 border border-red-700 shadow-sm text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  className="inline-flex items-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
                   {isLoading ? 'Removing...' : 'Remove integration'}
                 </button>
@@ -190,22 +190,22 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
             </div>
             
             <div className="mt-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Available Repositories</h3>
+              <h3 className="text-base font-medium text-gray-900 mb-3">Available Repositories</h3>
               
               {repositories.length === 0 ? (
-                <p className="text-sm text-gray-500">No repositories found. Click "Refresh Repositories" to fetch the latest list.</p>
+                <p className="text-sm text-gray-500 py-4">No repositories found. Click "Refresh Repositories" to fetch the latest list.</p>
               ) : (
-                <div className="bg-gray-50 rounded-md p-4 max-h-60 overflow-y-auto">
+                <div className="bg-gray-50 rounded-md border border-gray-200 max-h-60 overflow-y-auto">
                   <ul className="divide-y divide-gray-200">
                     {repositories.map(repo => (
-                      <li key={repo.id} className="py-2">
+                      <li key={repo.id} className="px-4 py-3 hover:bg-gray-100">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <a 
                               href={repo.html_url} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                              className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
                             >
                               {repo.full_name}
                             </a>
@@ -221,10 +221,10 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
                               button={
                                 <button
                                   type="button"
-                                  className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                                  className="inline-flex items-center h-7 px-3 text-gray-600 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors"
                                 >
-                                  {getLanguageIcon(repo.default_programming_language)({ className: "mr-1 h-4 w-4" })}
-                                  <span>{repo.default_programming_language ? repo.default_programming_language.charAt(0) + repo.default_programming_language.slice(1).toLowerCase() : 'Auto-detect'}</span>
+                                  {getLanguageIcon(repo.default_programming_language)({ className: "mr-1.5 h-4 w-4" })}
+                                  <span>{repo.default_programming_language ? repo.default_programming_language.charAt(0).toUpperCase() + repo.default_programming_language.slice(1).toLowerCase() : 'Auto-detect'}</span>
                                 </button>
                               }
                               onSelect={(language) => handleLanguageChange(repo.id, language)}
@@ -239,12 +239,12 @@ const GitHubIntegration = ({ workspaceId }: { workspaceId: string }) => {
             </div>
           </div>
         ) : (
-          <div className="text-center py-6">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="text-center py-8">
+            <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No GitHub integration</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <h3 className="mt-4 text-lg font-medium text-gray-900">No GitHub integration</h3>
+            <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
               Connect your GitHub account or organization to create PRs automatically.
             </p>
             <div className="mt-6">
