@@ -209,11 +209,6 @@ export const WorkspaceTier = {
 
 export type WorkspaceTierValue = (typeof WorkspaceTier)[keyof typeof WorkspaceTier]
 
-export const WorkspaceTierDisplay = {
-  [WorkspaceTier.FREE]: 'Free',
-  [WorkspaceTier.PRO]: 'Pro',
-}
-
 // Get FREE_TIER_AGENT_RUN_LIMIT from environment variables
 export const FREE_TIER_AGENT_RUN_LIMIT = parseInt(import.meta.env.VITE_FREE_TIER_AGENT_RUN_LIMIT || '25', 10)
 

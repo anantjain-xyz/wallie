@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useLiveQuery } from '@electric-sql/pglite-react'
-import { FREE_TIER_AGENT_RUN_LIMIT, WorkspaceTier, WorkspaceTierDisplay } from '../../types/types'
+import { FREE_TIER_AGENT_RUN_LIMIT, WorkspaceTier } from '../../types/types'
 
 interface WorkspaceTierProps {
   workspaceId: string
