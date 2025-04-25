@@ -14,6 +14,7 @@ import React from 'react'
 import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 import EstimateMenu from '../../components/contextmenu/EstimateMenu'
 import { formatExternalId } from '../../utils/issueUtils'
+import { IoSync as SyncIcon } from "react-icons/io5";
 
 interface Props {
   issue: Issue | undefined
@@ -189,6 +190,11 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
           onSelect={handleChangeEstimate}
         />
       </div>
+      {!issue.synced ? (
+        <div className="flex-shrink-0 animate-spin" title="Issue is syncing">
+          <SyncIcon />
+        </div>) : <div className="flex-shrink-0 w-3" title="Issue is synced" />
+      }
     </div>
   )
 }

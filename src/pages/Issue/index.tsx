@@ -33,6 +33,7 @@ import { useHotkeys } from 'react-hotkeys-hook'
 import Tooltip from '../../components/Tooltip'
 import { showInfo, showError } from '../../utils/notification.tsx'
 import CollapsibleSection from '../../components/CollapsibleSection'
+import { IoSync as SyncIcon } from "react-icons/io5";
 import { v4 as uuidv4 } from 'uuid'
 const debounceTime = 500
 
@@ -528,6 +529,11 @@ function IssuePage() {
                   )}
                   {issue.external_id !== null && (
                     <span className="text-gray-600 font-mono">{formatExternalId(workspaceName, issue.external_id)}</span>
+                  )}
+                  {!issue.synced && (
+                    <div className="flex-shrink-0 ml-2 animate-spin" title="Issue is syncing">
+                      <SyncIcon />
+                    </div>
                   )}
                 </div>
               </div>
