@@ -4,12 +4,20 @@ import { FREE_TIER_AGENT_RUN_LIMIT, WorkspaceTier } from '../../types/types'
 
 interface WorkspaceTierProps {
   workspaceId: string
+  forceRefresh?: boolean
 }
 
-const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) => {
-  const [error] = useState<string | null>(null)
+const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId, forceRefresh = false }) => {
+  const [error, setError] = useState<string | null>(null)
   const [cycleEndDate, setCycleEndDate] = useState<Date | null>(null)
   const [loadingRedirect, setLoadingRedirect] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [serverWorkspaceData, setServerWorkspaceData] = useState<{
+    tier: string
+    name: string
+    successful_agent_runs_this_cycle: number
+    current_billing_cycle_start_date: string
+  } | null>(null)
   
   const API_SERVER_URL = import.meta.env.VITE_API_SERVER_URL
     ? new URL(import.meta.env.VITE_API_SERVER_URL).origin
@@ -30,8 +38,40 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
     WHERE id = ${workspaceId}
   `
   
-  const loading = !workspaceQuery
-  const workspace = workspaceQuery?.rows[0]
+  useEffect(() => {
+    if (forceRefresh && !isRefreshing) {
+      const fetchWorkspaceFromServer = async () => {
+        setIsRefreshing(true);
+        try {
+          const response = await fetch(`${API_SERVER_URL}/workspace/${workspaceId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache'
+            },
+            credentials: 'include'
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch workspace data: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          setServerWorkspaceData(data);
+        } catch (err) {
+          console.error('Error fetching workspace data:', err);
+          setError(err instanceof Error ? err.message : 'Unknown error');
+        } finally {
+          setIsRefreshing(false);
+        }
+      };
+      
+      fetchWorkspaceFromServer();
+    }
+  }, [forceRefresh, workspaceId, API_SERVER_URL, isRefreshing]);
+  
+  const loading = !workspaceQuery && !serverWorkspaceData
+  const workspace = serverWorkspaceData || workspaceQuery?.rows[0]
   
   // Set the cycle end date whenever the start date changes
   useEffect(() => {
@@ -72,6 +112,10 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
   
   if (error) {
     return <div className="p-4 text-red-500">{error}</div>
+  }
+  
+  if (isRefreshing) {
+    return <div className="p-4">Refreshing workspace tier information...</div>
   }
 
   if (!workspace) {
