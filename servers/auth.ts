@@ -47,6 +47,110 @@ async function addWorkspaceToRequest(userId: string, c: Context): Promise<Respon
   }
 }
 
+async function _createWorkspace(domain: string, userId?: string): Promise<any | null> {
+  try {
+    console.log('Creating new workspace for domain:', domain);
+    const workspaceId = uuidv4();
+    
+    const newWorkspaces = await sql`
+      INSERT INTO workspace (
+        id,
+        name,
+        url,
+        allowlisted_domains,
+        created,
+        modified
+      ) VALUES (
+        ${workspaceId},
+        ${`${domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1).toLowerCase()}`},
+        ${`${domain.split('.')[0]}`},
+        ${[domain]},
+        NOW(),
+        NOW()
+      )
+      ON CONFLICT (url) DO UPDATE SET
+        modified = NOW()
+      RETURNING *
+    `;
+    
+    if (!newWorkspaces?.length) {
+      console.error('Failed to create workspace for domain:', domain);
+      return null;
+    }
+    
+    // Create the system Wallie user for the new workspace
+    await _createWallieUser(newWorkspaces[0].id);
+    
+    return newWorkspaces[0];
+  } catch (error) {
+    console.error('Failed to create workspace:', error);
+    return null;
+  }
+}
+
+async function _createWallieUser(workspaceId: string): Promise<void> {
+  try {
+    console.log("Creating Wallie user for workspace:", workspaceId);
+    await sql`
+      INSERT INTO app_user (
+        id,
+        email,
+        username,
+        full_name,
+        profile_picture,
+        workspace_id,
+        created,
+        modified
+      ) VALUES (
+        ${uuidv4()},
+        ${'agent@wallie.app'},
+        ${'wallie'},
+        ${'Wallie'},
+        ${'https://wallie.sfo2.digitaloceanspaces.com/production/workspace-avatars/4ddf8d2f-fce0-433f-af07-c970b43db995.png'},
+        ${workspaceId},
+        NOW(),
+        NOW()
+      )
+      ON CONFLICT (email, workspace_id) DO UPDATE SET
+        modified = NOW()
+    `;
+  } catch (error) {
+    console.error('Failed to create Wallie user:', error);
+  }
+}
+
+async function _createOrUpdateUser(email: string, user: any, workspaceId: string): Promise<void> {
+  try {
+    await sql`
+      INSERT INTO app_user (
+        id,
+        email,
+        username,
+        full_name,
+        profile_picture,
+        workspace_id,
+        created,
+        modified
+      ) VALUES (
+        ${uuidv4()},
+        ${email},
+        ${null},
+        ${user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || null},
+        ${user.imageUrl || null},
+        ${workspaceId},
+        NOW(),
+        NOW()
+      )
+      ON CONFLICT (email, workspace_id) DO UPDATE SET
+        full_name = COALESCE(app_user.full_name, EXCLUDED.full_name),
+        profile_picture = COALESCE(app_user.profile_picture, EXCLUDED.profile_picture)
+      RETURNING *
+    `;
+  } catch (error) {
+    console.error('Failed to create or update user:', error);
+  }
+}
+
 export async function getWorkspaceIdFromUser(userId: string): Promise<string | null> {
   try {
     const user = await clerk.users.getUser(userId);
@@ -83,93 +187,17 @@ export async function getWorkspaceIdFromUser(userId: string): Promise<string | n
     
     // If no workspace allows this domain, create a new workspace
     if (!workspaces?.length) {
-      console.log('Creating new workspace for domain:', domain);
-      const workspaceId = uuidv4();
-      const newWorkspaces = await sql`
-        INSERT INTO workspace (
-          id,
-          name,
-          url,
-          allowlisted_domains,
-          created,
-          modified
-        ) VALUES (
-          ${workspaceId},
-          ${`${domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1).toLowerCase()}`},
-          ${`${domain.split('.')[0]}`},
-          ${[domain]},
-          NOW(),
-          NOW()
-        )
-        ON CONFLICT (url) DO UPDATE SET
-          modified = NOW()
-        RETURNING *
-      `;
-      
-      if (!newWorkspaces?.length) {
-        console.error('Failed to create workspace for domain:', domain);
+      workspace = await _createWorkspace(domain, userId);
+      if (!workspace) {
         return null;
       }
-
-      console.log("Creating Wallie user for domain:", domain);
-      await sql`
-        INSERT INTO app_user (
-          id,
-          email,
-          username,
-          full_name,
-          profile_picture,
-          workspace_id,
-          created,
-          modified
-        ) VALUES (
-          ${uuidv4()},
-          ${'agent@wallie.app'},
-          ${'wallie'},
-          ${'Wallie'},
-          ${'https://wallie.sfo2.digitaloceanspaces.com/production/workspace-avatars/4ddf8d2f-fce0-433f-af07-c970b43db995.png'},
-          ${workspaceId},
-          NOW(),
-          NOW()
-        )
-        ON CONFLICT (email, workspace_id) DO UPDATE SET
-          modified = NOW()
-      `;
-      
-      workspace = newWorkspaces[0];
     } else {
       // Pick the first workspace that allows the domain
       workspace = workspaces[0];
     }
 
-
-    // Insert the user if they don't exist, or get the existing user
-    // This handles race conditions where another thread might have inserted the user
-    const upsertedUser = await sql`
-      INSERT INTO app_user (
-        id,
-        email,
-        username,
-        full_name,
-        profile_picture,
-        workspace_id,
-        created,
-        modified
-      ) VALUES (
-        ${uuidv4()},
-        ${email},
-        ${null},
-        ${user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || null},
-        ${user.imageUrl || null},
-        ${workspace.id},
-        NOW(),
-        NOW()
-      )
-      ON CONFLICT (email, workspace_id) DO UPDATE SET
-        full_name = COALESCE(app_user.full_name, EXCLUDED.full_name),
-        profile_picture = COALESCE(app_user.profile_picture, EXCLUDED.profile_picture)
-      RETURNING *
-    `;
+    // Insert the user if they don't exist, or update existing user
+    await _createOrUpdateUser(email, user, workspace.id);
     
     return workspace.id;
   } catch (error) {
