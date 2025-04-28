@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useLiveQuery } from '@electric-sql/pglite-react'
+import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
 import { FREE_TIER_AGENT_RUN_LIMIT, WorkspaceTier } from '../../types/types'
 
 interface WorkspaceTierProps {
@@ -12,20 +12,15 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId, for
   const [cycleEndDate, setCycleEndDate] = useState<Date | null>(null)
   const [loadingRedirect, setLoadingRedirect] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [serverWorkspaceData, setServerWorkspaceData] = useState<{
-    tier: string
-    name: string
-    successful_agent_runs_this_cycle: number
-    current_billing_cycle_start_date: string
-  } | null>(null)
-  
-  const API_SERVER_URL = import.meta.env.VITE_API_SERVER_URL
-    ? new URL(import.meta.env.VITE_API_SERVER_URL).origin
-    : `http://localhost:3003`
+  const pg = usePGlite()
   
   // Stripe env vars
   const STRIPE_PRICING_TABLE_ID = import.meta.env.VITE_STRIPE_PRICING_TABLE_ID || ''
   const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ''
+  
+  const API_SERVER_URL = import.meta.env.VITE_API_SERVER_URL
+    ? new URL(import.meta.env.VITE_API_SERVER_URL).origin
+    : `http://localhost:3003`
   
   const workspaceQuery = useLiveQuery.sql<{
     tier: string
@@ -39,39 +34,32 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId, for
   `
   
   useEffect(() => {
-    if (forceRefresh && !isRefreshing) {
-      const fetchWorkspaceFromServer = async () => {
+    if (forceRefresh && !isRefreshing && pg) {
+      const refreshWorkspaceData = async () => {
         setIsRefreshing(true);
         try {
-          const response = await fetch(`${API_SERVER_URL}/workspace/${workspaceId}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache'
-            },
-            credentials: 'include'
-          });
+          await pg.query(`
+            UPDATE workspace 
+            SET synced = false 
+            WHERE id = $1
+          `, [workspaceId]);
           
-          if (!response.ok) {
-            throw new Error(`Failed to fetch workspace data: ${response.status}`);
-          }
+          await new Promise(resolve => setTimeout(resolve, 2000));
           
-          const data = await response.json();
-          setServerWorkspaceData(data);
         } catch (err) {
-          console.error('Error fetching workspace data:', err);
+          console.error('Error refreshing workspace data:', err);
           setError(err instanceof Error ? err.message : 'Unknown error');
         } finally {
           setIsRefreshing(false);
         }
       };
       
-      fetchWorkspaceFromServer();
+      refreshWorkspaceData();
     }
-  }, [forceRefresh, workspaceId, API_SERVER_URL, isRefreshing]);
+  }, [forceRefresh, workspaceId, isRefreshing, pg]);
   
-  const loading = !workspaceQuery && !serverWorkspaceData
-  const workspace = serverWorkspaceData || workspaceQuery?.rows[0]
+  const loading = !workspaceQuery
+  const workspace = workspaceQuery?.rows[0]
   
   // Set the cycle end date whenever the start date changes
   useEffect(() => {
