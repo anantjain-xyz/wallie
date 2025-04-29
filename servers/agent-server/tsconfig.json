@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/agent-server",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "*": ["*"]
+    }
+  },
+  "include": ["./**/*.ts"],
+  "references": [
+    { "path": "../../" }
+  ]
+}
