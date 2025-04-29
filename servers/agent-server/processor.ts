@@ -32,7 +32,6 @@ export async function processIssue(issue: DatabaseIssue): Promise<ProcessIssueRe
 
     await sandbox.runCode('print("Processing issue")')
 
-    await sandbox.close()
 
     await updateIssueProcessingStatus(issue.id, 'processed')
 
