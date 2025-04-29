@@ -6,7 +6,7 @@ import postgres from 'postgres'
 import { HealthCheckResponse } from './types'
 import agentRoutes from './routes'
 
-const AGENT_SERVER_PORT = process.env.AGENT_SERVER_PORT ?? '3004'
+const AGENT_SERVER_PORT = process.env.AGENT_SERVER_PORT ?? '3005'
 const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://postgres:password@localhost:54321/wallie'
 const E2B_API_KEY = process.env.E2B_API_KEY
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
