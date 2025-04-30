@@ -28,4 +28,5 @@ export interface HealthCheckResponse {
   };
   e2b_configured: boolean;
   message?: string;
+  last_checked_timestamp?: string;
 }

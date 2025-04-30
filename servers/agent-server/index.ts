@@ -1,15 +1,13 @@
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
-import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
 import postgres from 'postgres'
 import { HealthCheckResponse } from './types'
-import agentRoutes from './routes'
+import { startIssueMonitor, getLastCheckedTimestamp } from './monitor'
 
 const AGENT_SERVER_PORT = process.env.AGENT_SERVER_PORT ?? '3005'
 const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://postgres:password@localhost:54321/wallie'
 const E2B_API_KEY = process.env.E2B_API_KEY
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
 
 if (!E2B_API_KEY) {
   console.warn('E2B_API_KEY is not set. Agent functionality will be limited.')
@@ -19,12 +17,7 @@ const sql = postgres(DATABASE_URL)
 
 const app = new Hono()
 
-app.use('*', cors({
-  origin: FRONTEND_URL,
-  credentials: true,
-}))
-
-app.get('/', async (c) => {
+app.get('/health', async (c) => {
   try {
     const result = await sql`
       SELECT 'ok' as status, version() as postgres_version, now() as server_time
@@ -37,7 +30,8 @@ app.get('/', async (c) => {
         postgres_version: result[0].postgres_version,
         server_time: result[0].server_time
       },
-      e2b_configured: !!E2B_API_KEY
+      e2b_configured: !!E2B_API_KEY,
+      last_checked_timestamp: getLastCheckedTimestamp()
     }
     
     return c.json(response)
@@ -47,14 +41,13 @@ app.get('/', async (c) => {
     const response: HealthCheckResponse = {
       status: 'error',
       message: 'Database connection failed',
-      e2b_configured: !!E2B_API_KEY
+      e2b_configured: !!E2B_API_KEY,
+      last_checked_timestamp: getLastCheckedTimestamp()
     }
     
     return c.json(response, 500)
   }
 })
-
-app.route('/agent', agentRoutes)
 
 app.onError((err, c) => {
   console.error('Error:', err)
@@ -67,6 +60,8 @@ app.onError((err, c) => {
     error: 'Internal Server Error'
   }, 500)
 })
+
+startIssueMonitor()
 
 const port = parseInt(AGENT_SERVER_PORT, 10)
 console.log(`Agent Server is running on port ${port}`)

@@ -20,7 +20,7 @@ export async function processIssue(issue: DatabaseIssue): Promise<ProcessIssueRe
   }
 
   try {
-    await updateIssueProcessingStatus(issue.id, 'processing')
+    await updateIssueProcessingStatus(issue.id, 'started')
 
     const sandbox = await Sandbox.create({
       apiKey: E2B_API_KEY
