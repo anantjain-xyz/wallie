@@ -1,8 +1,4 @@
 
-export interface AgentConfig {
-  e2bApiKey: string;
-}
-
 export interface DatabaseIssue {
   id: string;
   title: string;
