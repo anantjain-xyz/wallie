@@ -31,7 +31,7 @@ app.get('/health', async (c) => {
         server_time: result[0].server_time
       },
       e2b_configured: !!E2B_API_KEY,
-      last_checked_timestamp: getLastCheckedTimestamp()
+      last_checked_timestamp: getLastCheckedTimestamp() || undefined
     }
     
     return c.json(response)
@@ -42,7 +42,7 @@ app.get('/health', async (c) => {
       status: 'error',
       message: 'Database connection failed',
       e2b_configured: !!E2B_API_KEY,
-      last_checked_timestamp: getLastCheckedTimestamp()
+      last_checked_timestamp: getLastCheckedTimestamp() || undefined
     }
     
     return c.json(response, 500)
