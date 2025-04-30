@@ -129,47 +129,27 @@ async function isWallieUser(userId: string): Promise<boolean> {
 async function getNewIssues(timestamp: string | null): Promise<DatabaseIssue[]> {
   try {
     let issues: DatabaseIssue[];
+
+    if (!timestamp) return []
     
-    if (timestamp) {
-      // If we have a timestamp, use it in the query
-      issues = await sql<DatabaseIssue[]>`
-        SELECT 
-          i.id, 
-          i.title, 
-          i.description, 
-          i.status, 
-          i.workspace_id, 
-          i.created, 
-          i.modified,
-          i.github_repository_id,
-          i.assignee_id,
-          i.estimate,
-          i.external_id
-        FROM issue i
-        WHERE i.modified > ${new Date(timestamp)}
-        ORDER BY i.modified ASC
-      `;
-    } else {
-      // If timestamp is null, get all issues
-      issues = await sql<DatabaseIssue[]>`
-        SELECT 
-          i.id, 
-          i.title, 
-          i.description, 
-          i.status, 
-          i.workspace_id, 
-          i.created, 
-          i.modified,
-          i.github_repository_id,
-          i.assignee_id,
-          i.estimate,
-          i.external_id
-        FROM issue i
-        ORDER BY i.modified ASC
-      `;
-    }
+    return await sql<DatabaseIssue[]>`
+      SELECT 
+        i.id, 
+        i.title, 
+        i.description, 
+        i.status, 
+        i.workspace_id, 
+        i.created, 
+        i.modified,
+        i.github_repository_id,
+        i.assignee_id,
+        i.estimate,
+        i.external_id
+      FROM issue i
+      WHERE i.modified > ${new Date(timestamp)}
+      ORDER BY i.modified ASC
+    `;
     
-    return issues;
   } catch (error) {
     console.error('Error fetching new issues:', error);
     return [];
