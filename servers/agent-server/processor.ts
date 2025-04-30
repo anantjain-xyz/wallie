@@ -1,6 +1,6 @@
 import { Sandbox } from '@e2b/code-interpreter'
 import { DatabaseIssue, ProcessIssueResult } from './types'
-import { updateIssueProcessingStatus } from './monitor'
+import { updateIssueStatus } from './monitor'
 
 const E2B_API_KEY = process.env.E2B_API_KEY
 
@@ -20,8 +20,8 @@ export async function processIssue(issue: DatabaseIssue): Promise<ProcessIssueRe
   }
 
   try {
-    await updateIssueProcessingStatus(issue.id, 'started')
-
+    // Status is already set to in_progress by the monitor
+    
     const sandbox = await Sandbox.create({
       apiKey: E2B_API_KEY
     })
@@ -32,9 +32,8 @@ export async function processIssue(issue: DatabaseIssue): Promise<ProcessIssueRe
 
     await sandbox.runCode('print("Processing issue")')
 
-
-    await updateIssueProcessingStatus(issue.id, 'processed')
-
+    // The monitor will update status to in_review after successful return
+    
     return {
       success: true,
       message: 'Issue processed successfully',
@@ -43,7 +42,7 @@ export async function processIssue(issue: DatabaseIssue): Promise<ProcessIssueRe
   } catch (error) {
     console.error(`Error processing issue ${issue.id}:`, error)
     
-    await updateIssueProcessingStatus(issue.id, 'failed')
+    // We leave the issue in in_progress status on error
     
     return {
       success: false,

@@ -19,61 +19,13 @@ export function getLastCheckedTimestamp(): string | null {
 }
 
 /**
- * Fetches issues that need to be processed by the agent
- * @returns Promise<DatabaseIssue[]> Array of issues to be processed
- */
-export async function fetchIssuesToProcess(): Promise<DatabaseIssue[]> {
-  try {
-    const issues = await sql<DatabaseIssue[]>`
-      SELECT 
-        id, 
-        title, 
-        description, 
-        status, 
-        workspace_id, 
-        created_at, 
-        updated_at
-      FROM issue
-      WHERE 
-        status = 'open' AND
-        agent_processing_status IS NULL AND
-        assignee_id IN (SELECT id FROM app_user WHERE username = 'wallie')
-      ORDER BY updated_at ASC
-      LIMIT 10
-    `
-    return issues
-  } catch (error) {
-    console.error('Error fetching issues to process:', error)
-    return []
-  }
-}
-
-/**
- * Updates an issue's processing status
- * @param issueId The ID of the issue to update
- * @param status The new processing status
- */
-export async function updateIssueProcessingStatus(issueId: string, status: string): Promise<void> {
-  try {
-    await sql`
-      UPDATE issue
-      SET agent_processing_status = ${status}, updated_at = now()
-      WHERE id = ${issueId}
-    `
-  } catch (error) {
-    console.error(`Error updating issue ${issueId} processing status:`, error)
-    throw error
-  }
-}
-
-/**
  * Gets the latest issue modification timestamp
  * @returns Promise<string | null> The latest timestamp or null if no issues
  */
 async function getLastModifiedIssueTimestamp(): Promise<string | null> {
   try {
     const result = await sql`
-      SELECT MAX(updated_at) as latest_timestamp FROM issue
+      SELECT MAX(modified) as latest_timestamp FROM issue
     `
     return result[0]?.latest_timestamp ? new Date(result[0].latest_timestamp).toISOString() : null
   } catch (error) {
@@ -83,40 +35,279 @@ async function getLastModifiedIssueTimestamp(): Promise<string | null> {
 }
 
 /**
+ * Checks if the last comment is from wallie user
+ * @param issueId ID of the issue to check
+ * @returns Promise<boolean> True if last comment is from wallie
+ */
+async function isLastCommentFromWallie(issueId: string): Promise<boolean> {
+  try {
+    const result = await sql`
+      SELECT u.username
+      FROM comment c
+      JOIN app_user u ON c.creator_id = u.id
+      WHERE c.issue_id = ${issueId}
+      ORDER BY c.created DESC
+      LIMIT 1
+    `
+    return result[0]?.username === 'wallie'
+  } catch (error) {
+    console.error(`Error checking if last comment is from wallie for issue ${issueId}:`, error)
+    return false
+  }
+}
+
+/**
+ * Checks if the last comment contains a retry request
+ * @param issueId ID of the issue to check
+ * @returns Promise<boolean> True if last comment contains retry keywords
+ */
+async function isLastCommentRetryRequest(issueId: string): Promise<boolean> {
+  try {
+    const result = await sql`
+      SELECT c.body
+      FROM comment c
+      WHERE c.issue_id = ${issueId}
+      ORDER BY c.created DESC
+      LIMIT 1
+    `
+    
+    if (result[0]?.body) {
+      const retryKeywords = ['retry', 'try again', 'reprocess', 'redo', 're-do', 're-process']
+      return retryKeywords.some(keyword => 
+        result[0].body.toLowerCase().includes(keyword)
+      )
+    }
+    return false
+  } catch (error) {
+    console.error(`Error checking if last comment is retry request for issue ${issueId}:`, error)
+    return false
+  }
+}
+
+/**
+ * Check if issue has comments
+ * @param issueId ID of the issue to check
+ * @returns Promise<boolean> True if issue has any comments
+ */
+async function hasComments(issueId: string): Promise<boolean> {
+  try {
+    const result = await sql`
+      SELECT COUNT(*) as count
+      FROM comment
+      WHERE issue_id = ${issueId}
+    `
+    return result[0]?.count > 0
+  } catch (error) {
+    console.error(`Error checking if issue ${issueId} has comments:`, error)
+    return false
+  }
+}
+
+/**
+ * Checks if user is wallie
+ * @param userId ID of the user to check
+ * @returns Promise<boolean> True if user is wallie
+ */
+async function isWallieUser(userId: string): Promise<boolean> {
+  try {
+    const result = await sql`
+      SELECT COUNT(*) as count
+      FROM app_user
+      WHERE id = ${userId} AND username = 'wallie'
+    `
+    return result[0]?.count > 0
+  } catch (error) {
+    console.error(`Error checking if user ${userId} is wallie:`, error)
+    return false
+  }
+}
+
+/**
+ * Fetches issues that were modified since the last check
+ * @returns Promise<DatabaseIssue[]> Array of modified issues
+ */
+async function getNewIssues(timestamp: string | null): Promise<DatabaseIssue[]> {
+  try {
+    let issues: DatabaseIssue[];
+    
+    if (timestamp) {
+      // If we have a timestamp, use it in the query
+      issues = await sql<DatabaseIssue[]>`
+        SELECT 
+          i.id, 
+          i.title, 
+          i.description, 
+          i.status, 
+          i.workspace_id, 
+          i.created, 
+          i.modified,
+          i.github_repository_id,
+          i.assignee_id,
+          i.estimate,
+          i.external_id
+        FROM issue i
+        WHERE i.modified > ${new Date(timestamp)}
+        ORDER BY i.modified ASC
+      `;
+    } else {
+      // If timestamp is null, get all issues
+      issues = await sql<DatabaseIssue[]>`
+        SELECT 
+          i.id, 
+          i.title, 
+          i.description, 
+          i.status, 
+          i.workspace_id, 
+          i.created, 
+          i.modified,
+          i.github_repository_id,
+          i.assignee_id,
+          i.estimate,
+          i.external_id
+        FROM issue i
+        ORDER BY i.modified ASC
+      `;
+    }
+    
+    return issues;
+  } catch (error) {
+    console.error('Error fetching new issues:', error);
+    return [];
+  }
+}
+
+/**
+ * Updates an issue's status
+ * @param issueId The ID of the issue to update
+ * @param status The new status
+ */
+export async function updateIssueStatus(issueId: string, status: string): Promise<void> {
+  try {
+    await sql`
+      UPDATE issue
+      SET status = ${status}, modified = now()
+      WHERE id = ${issueId}
+    `
+  } catch (error) {
+    console.error(`Error updating issue ${issueId} status:`, error)
+    throw error
+  }
+}
+
+/**
+ * Adds an error comment to an issue
+ * @param issueId ID of the issue
+ * @param workspaceId ID of the workspace
+ * @param message Error message
+ */
+async function addErrorComment(issueId: string, workspaceId: string, message: string): Promise<void> {
+  try {
+    await sql`
+      INSERT INTO comment (id, issue_id, workspace_id, body, creator_id)
+      VALUES (gen_random_uuid(), ${issueId}, ${workspaceId}, ${message}, (SELECT id FROM app_user WHERE username = 'wallie'))
+    `
+  } catch (error) {
+    console.error(`Failed to add error comment for issue ${issueId}:`, error)
+    throw error
+  }
+}
+
+/**
  * Checks for new issues and processes them
  */
 async function checkForNewIssues(): Promise<void> {
   try {
     console.log('Checking for new issues...')
-    const issues = await fetchIssuesToProcess()
+    const issues = await getNewIssues(lastCheckedTimestamp)
     
-    if (issues.length > 0) {
-      console.log(`Found ${issues.length} issues to process`)
+    console.log(`Found ${issues.length} modified issues`)
+    
+    for (const issue of issues) {
+      // Check if issue is in 'done' status
+      if (issue.status === 'done') {
+        console.log(`Issue ${issue.id} is in 'done' status, skipping`)
+        continue
+      }
+
+      // Check if GitHub repository is set
+      if (!issue.github_repository_id) {
+        console.log(`Issue ${issue.id} has no GitHub repository ID, skipping`)
+        continue
+      }
       
-      for (const issue of issues) {
-        console.log(`Processing issue ${issue.id}: ${issue.title}`)
-        
-        try {
-          await updateIssueProcessingStatus(issue.id, 'started')
-          
-          await processIssue(issue)
-          
-          const timestamp = new Date(issue.updated_at).toISOString()
-          if (!lastCheckedTimestamp || timestamp > lastCheckedTimestamp) {
-            lastCheckedTimestamp = timestamp
+      // Check if there is an assignee
+      if (!issue.assignee_id) {
+        console.log(`Issue ${issue.id} has no assignee, skipping`)
+        continue
+      }
+      
+      // Verify the assignee is 'wallie'
+      const isWallieAssignee = await isWallieUser(issue.assignee_id)
+      if (!isWallieAssignee) {
+        console.log(`Issue ${issue.id} is not assigned to 'wallie', skipping`)
+        continue
+      }
+
+      // Check comments
+      const issueHasComments = await hasComments(issue.id)
+      
+      if (issueHasComments) {
+        // Check if the last comment is from 'wallie'
+        const isLastFromWallie = await isLastCommentFromWallie(issue.id)
+        if (isLastFromWallie) {
+          // If the last comment is from wallie, check if it's a retry request
+          const isRetryRequest = await isLastCommentRetryRequest(issue.id)
+          if (!isRetryRequest) {
+            console.log(`Issue ${issue.id} last comment is from wallie and not a retry request, skipping`)
+            continue
           }
-        } catch (error) {
-          console.error(`Error processing issue ${issue.id}:`, error)
-          await updateIssueProcessingStatus(issue.id, 'failed')
         }
       }
-    } else {
-      console.log('No new issues to process')
+      
+      // Update the last checked timestamp for this issue
+      const timestamp = new Date(issue.modified).toISOString()
+      if (!lastCheckedTimestamp || timestamp > lastCheckedTimestamp) {
+        lastCheckedTimestamp = timestamp
+      }
+      
+      // Process the issue
+      console.log(`Processing issue ${issue.id}: ${issue.title}`)
+      
+      try {
+        // Update status to in_progress
+        await updateIssueStatus(issue.id, 'in_progress')
+        
+        // Process the issue
+        await processIssue({
+          ...issue,
+          is_project_mode: issue.estimate !== undefined && issue.estimate !== null && issue.estimate >= 5
+        })
+        
+        // Update status to in_review on success
+        await updateIssueStatus(issue.id, 'in_review')
+        
+      } catch (error) {
+        console.error(`Error processing issue ${issue.id}:`, error)
+        // Leave issue in in_progress status and add error comment
+        try {
+          await addErrorComment(
+            issue.id, 
+            issue.workspace_id, 
+            `⛔ Error processing this issue: ${error}`
+          )
+        } catch (commentError) {
+          console.error(`Failed to add error comment for issue ${issue.id}:`, commentError)
+        }
+      }
     }
     
-    const latestTimestamp = await getLastModifiedIssueTimestamp()
-    if (latestTimestamp && (!lastCheckedTimestamp || latestTimestamp > lastCheckedTimestamp)) {
-      lastCheckedTimestamp = latestTimestamp
+    // If we processed issues, update the lastCheckedTimestamp to the latest modified time
+    if (issues.length > 0) {
+      const maxModifiedDate = new Date(Math.max(...issues.map(i => new Date(i.modified).getTime())))
+      const latestTimestamp = maxModifiedDate.toISOString()
+      if (!lastCheckedTimestamp || latestTimestamp > lastCheckedTimestamp) {
+        lastCheckedTimestamp = latestTimestamp
+      }
     }
   } catch (error) {
     console.error('Error checking for new issues:', error)
