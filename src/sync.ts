@@ -126,6 +126,10 @@ async function startSyncToDatabase(pg: PGliteWithExtensions, getAuthHeaders: () 
     },
     table: 'workspace',
     primaryKey: ['id'],
+    // When shapeKey is null, the shape subscription state is not persisted.
+    // This means it doesn't store additional metadata about the sync process 
+    // in the database. If we don't set this as null, we run into an issue where
+    // the initial sync gets stuck in a "pending" state.
     shapeKey: null,
     useCopy: true,
     onInitialSync: async () => {
