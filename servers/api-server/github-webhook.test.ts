@@ -195,43 +195,31 @@ function createSignature(secret, body) {
 
 // Function to simulate a webhook event
 async function simulateWebhook() {
-  try {
-    // Use the correct webhook URL based on the API server configuration
-    const port = process.env.API_SERVER_PORT || '3003';
-    const webhookUrl = `http://localhost:${port}/webhook`;
-    
-    // Convert payload to string once
-    const payloadString = JSON.stringify(payload);
-    
-    // Create a valid signature using the webhook secret
-    const signature = createSignature(webhookSecret, payloadString);
-    
-    console.log('Sending webhook request to:', webhookUrl);
-    console.log('Using signature:', signature.substring(0, 20) + '...');
-    
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-GitHub-Event': 'pull_request',
-        'X-Hub-Signature-256': signature
-      },
-      body: payloadString
-    });
-    
-    if (!response.ok) {
-      console.error(`Server responded with status: ${response.status} ${response.statusText}`);
-      const text = await response.text();
-      console.error('Response body:', text);
-      return;
-    }
-    
-    const data = await response.json();
-    console.log('Response:', data);
-  } catch (error) {
-    console.error('Error simulating webhook:', error);
-  }
+  const port = process.env.API_SERVER_PORT || '3003';
+  const webhookUrl = `http://localhost:${port}/webhook/github`;
+
+  const payloadString = JSON.stringify(payload);
+  const signature = createSignature(webhookSecret, payloadString);
+
+  const response = await fetch(webhookUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-GitHub-Event': 'pull_request',
+      'X-Hub-Signature-256': signature
+    },
+    body: payloadString
+  });
+
+  return response;
 }
 
-// Run the simulation
-simulateWebhook(); 
+import { describe, test, expect } from 'vitest';
+
+describe('GitHub Webhook Handler', () => {
+  test('should accept a valid webhook event and return 200', async () => {
+    const response = await simulateWebhook();
+    expect(response.status).toBe(200);
+    // Optionally, add more assertions based on the response body
+  });
+});
