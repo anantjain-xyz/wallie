@@ -5,6 +5,7 @@ import { BsSearch as SearchIcon } from 'react-icons/bs'
 import StatusIcon from '../components/StatusIcon'
 import { formatExternalId } from '../utils/issueUtils'
 import Modal from './Modal'
+import { renderInlineCode } from '../utils/renderInlineCode'
 
 interface Props {
   isOpen: boolean
@@ -111,7 +112,7 @@ export default function IssueSelector({ isOpen, linkType, currentIssueId, onDism
                           ? formatExternalId(workspaceName, issue.external_id)
                           : ''}
                       </span>
-                      <span className="font-medium">{issue.title}</span>
+                      <span className="font-medium">{renderInlineCode(issue.title)}</span>
                     </div>
                   </div>
                 </button>
@@ -144,4 +145,4 @@ export default function IssueSelector({ isOpen, linkType, currentIssueId, onDism
       </div>
     </Modal>
   )
-} 
+}

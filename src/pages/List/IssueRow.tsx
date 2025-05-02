@@ -15,6 +15,7 @@ import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 import EstimateMenu from '../../components/contextmenu/EstimateMenu'
 import { formatExternalId } from '../../utils/issueUtils'
 import { IoSync as SyncIcon } from "react-icons/io5";
+import { renderInlineCode } from '../../utils/renderInlineCode'
 
 interface Props {
   issue: Issue | undefined
@@ -144,7 +145,7 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
         {issue.external_id !== null && (
           <div className="text-gray-400 mr-4 font-mono w-16">{formatExternalId(workspaceName, issue.external_id)}</div>
         )}
-        <div className="overflow-hidden line-clamp-1 overflow-ellipsis">{issue.title || ``}</div>
+        <div className="overflow-hidden line-clamp-1 overflow-ellipsis">{renderInlineCode(issue.title || '')}</div>
       </div>
       <div className="flex-shrink-0 hidden w-15 ml-auto font-normal text-gray-500 sm:block whitespace-nowrap">
         {formatDate(issue.created)}

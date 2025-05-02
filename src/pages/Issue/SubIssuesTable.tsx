@@ -8,6 +8,7 @@ import { formatExternalId } from '../../utils/issueUtils'
 import { LinkType } from '../../types/types'
 import AvatarImg from '../../assets/icons/avatar.svg'
 import CloseIcon from '../../assets/icons/close.svg'
+import { renderInlineCode } from '../../utils/renderInlineCode'
 
 interface SubIssuesTableProps {
   issueId: string
@@ -91,7 +92,7 @@ export default function SubIssuesTable({ issueId, workspaceName }: SubIssuesTabl
                     ? formatExternalId(workspaceName, subIssue.external_id)
                     : subIssue.id.substring(0, 8)}
                 </span>
-                <span className="text-gray-900 font-medium text-sm truncate">{subIssue.title}</span>
+                <span className="text-gray-900 font-medium text-sm truncate">{renderInlineCode(subIssue.title)}</span>
               </div>
               
               <div className="ml-4 flex-shrink-0 flex items-center">
@@ -126,4 +127,4 @@ export default function SubIssuesTable({ issueId, workspaceName }: SubIssuesTabl
       </CollapsibleSection>
     </div>
   )
-} 
+}
