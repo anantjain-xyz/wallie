@@ -12,6 +12,7 @@ import { ReactComponent as AssigneeIcon } from '../../assets/icons/assignee.svg'
 import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
 import { Issue } from '../../types/types'
 import { formatExternalId } from '../../utils/issueUtils'
+import { renderInlineCode } from '../../utils/renderInlineCode'
 
 interface IssueProps {
   issue: Issue
@@ -130,7 +131,7 @@ const IssueItem = ({ issue, style, isDragging, provided, workspaceName }: IssueP
       <div className="flex justify-between items-center w-full cursor-default">
         <div className="flex flex-col">
           <span className="mt-1 text-sm font-medium text-gray-700 line-clamp-2 overflow-ellipsis">
-            {issue.title}
+            {renderInlineCode(issue.title)}
           </span>
         </div>
         <div className="flex items-center">
