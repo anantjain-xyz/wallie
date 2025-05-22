@@ -64,21 +64,136 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
     }
 
     try {
-      // Get the selected text
-      const selectedText = editor.state.doc.textBetween(
-        editor.state.selection.from,
-        editor.state.selection.to,
-        '\n'
-      )
+      // Get the selected content as JSON
+      const selectionJSON = editor.state.selection.content().content.toJSON ? editor.state.selection.content().content.toJSON() : editor.state.selection.content().toJSON();
+      // Normalize to array of nodes
+      let nodes: any[] = [];
+      if (Array.isArray(selectionJSON)) {
+        nodes = selectionJSON;
+      } else if (selectionJSON && Array.isArray(selectionJSON.content)) {
+        nodes = selectionJSON.content;
+      } else if (selectionJSON) {
+        nodes = [selectionJSON];
+      }
 
-      // Split by newlines to get individual issues
-      const issueTexts = selectedText.split('\n').filter(text => text.trim() !== '')
-      
-      if (issueTexts.length === 0) {
+      // Helper to recursively collect nested list items as markdown, with only the very first sub-item as plain text
+      const collectNestedListMarkdown = (node: any, indent: number = 0, isFirstAtTopLevel: boolean = false): string[] => {
+        let lines: string[] = [];
+        if (node.type === 'listItem') {
+          // Find the paragraph text for this list item
+          let text = '';
+          if (node.content) {
+            for (const contentNode of node.content) {
+              if (contentNode.type === 'paragraph') {
+                text = contentNode.content?.map((n: any) => n.text || '').join('') || '';
+              }
+            }
+          }
+          if (text) {
+            if (isFirstAtTopLevel && indent === 0) {
+              lines.push(`${'  '.repeat(indent)}${text}`);
+            } else {
+              lines.push(`${'  '.repeat(indent)}- ${text}`);
+            }
+          }
+          // Now process any nested lists
+          if (node.content) {
+            for (const contentNode of node.content) {
+              if (contentNode.type === 'bulletList' || contentNode.type === 'orderedList') {
+                let isFirst = true;
+                for (const nestedItem of contentNode.content || []) {
+                  lines = lines.concat(collectNestedListMarkdown(nestedItem, indent + 1, false));
+                  isFirst = false;
+                }
+              }
+            }
+          }
+        }
+        return lines;
+      };
+
+      // Helper to process list items
+      const processListItems = (content: any[]): { title: string; description: string; estimate: number | null }[] => {
+        const issues: { title: string; description: string; estimate: number | null }[] = [];
+        for (const node of content) {
+          if (node.type === 'listItem') {
+            let title = '';
+            let estimate: number | null = null;
+            // Find the first paragraph for the title/estimate
+            if (node.content) {
+              for (const contentNode of node.content) {
+                if (contentNode.type === 'paragraph') {
+                  const text = contentNode.content?.map((n: any) => n.text || '').join('') || '';
+                  const estimateRegex = /^(.*?)\s*\((\d+)\s*points?\)\s*$/i;
+                  const match = text.match(estimateRegex);
+                  if (match) {
+                    title = match[1].trim();
+                    estimate = parseInt(match[2], 10);
+                  } else {
+                    title = text.trim();
+                  }
+                  break; // Only use the first paragraph for the title
+                }
+              }
+            }
+            // For description, collect all nested list items (excluding the first paragraph)
+            let description = '';
+            if (node.content) {
+              for (const contentNode of node.content) {
+                if (contentNode.type === 'bulletList' || contentNode.type === 'orderedList') {
+                  // Collect all nested list items as markdown, only the very first sub-item as plain text
+                  const nestedLines: string[] = [];
+                  let isFirst = true;
+                  for (const nestedItem of contentNode.content || []) {
+                    nestedLines.push(...collectNestedListMarkdown(nestedItem, 0, isFirst));
+                    isFirst = false;
+                  }
+                  if (nestedLines.length > 0) {
+                    description += nestedLines.join('\n');
+                  }
+                }
+              }
+            }
+            if (title) {
+              issues.push({ title, description, estimate });
+            }
+          }
+          // Recursively process nested lists at the top level
+          if ((node.type === 'bulletList' || node.type === 'orderedList') && node.content) {
+            issues.push(...processListItems(node.content));
+          }
+        }
+        return issues;
+      };
+
+      let issues = processListItems(nodes);
+
+      // Fallback: if no list items found, treat as plain text (original behavior)
+      if (issues.length === 0) {
+        // Get the selected text
+        const selectedText = editor.state.doc.textBetween(
+          editor.state.selection.from,
+          editor.state.selection.to,
+          '\n'
+        );
+        const issueTexts = selectedText.split('\n').filter(text => text.trim() !== '');
+        issues = issueTexts.map(text => {
+          let title = text.trim();
+          let estimate: number | null = null;
+          const estimateRegex = /^(.*?)\s*\((\d+)\s*points?\)\s*$/i;
+          const match = title.match(estimateRegex);
+          if (match) {
+            title = match[1].trim();
+            estimate = parseInt(match[2], 10);
+          }
+          return { title, description: '', estimate };
+        });
+      }
+
+      if (issues.length === 0) {
         showWarning('No valid text selected', 'Please select text to create issues')
         return
       }
-
 
       // Get the last issue for kanbanorder
       const lastIssue = (
@@ -94,26 +209,9 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
       // Store created issues to replace text with links
       const createdIssues: { id: string; title: string; externalId: number }[] = []
 
-      // Create an issue for each line
+      // Create an issue for each processed item
       let createdCount = 0
-      for (const issueText of issueTexts) {
-        if (issueText.trim() === '') continue
-
-        // Parse the issue text to extract title and estimate
-        // Format: "issue description (2 points)" -> title: "issue description", estimate: 2
-        let title = issueText.trim()
-        let estimate: number | null = null
-        
-        // Regular expression to match the pattern: text (number points)
-        const estimateRegex = /^(.*?)\s*\((\d+)\s*points?\)\s*$/i
-        const match = title.match(estimateRegex)
-        
-        if (match) {
-          // Extract the title and estimate
-          title = match[1].trim()
-          estimate = parseInt(match[2], 10)
-        }
-
+      for (const issue of issues) {
         // Generate a new kanbanorder
         const kanbanorder = generateKeyBetween(lastKanbanOrder, null)
         lastKanbanOrder = kanbanorder
@@ -144,18 +242,18 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
           )
           VALUES (
             ${issueId},
-            ${title},
+            ${issue.title},
             ${currentUser.id},
             ${Priority.NONE},
             ${Status.BACKLOG},
-            ${''},
+            ${issue.description},
             ${date},
             ${date},
             ${kanbanorder},
             ${currentUser.workspace_id},
             ${null},
             ${null},
-            ${estimate},
+            ${issue.estimate},
             ${externalId}
           )
         `
@@ -164,7 +262,7 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
         // Store the created issue information for linking
         createdIssues.push({
           id: issueId,
-          title,
+          title: issue.title,
           externalId
         })
       }
