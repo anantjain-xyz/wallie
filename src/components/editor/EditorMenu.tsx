@@ -1,4 +1,5 @@
 import type { Editor as TipTapEditor } from '@tiptap/react'
+import type { Image as ImageExtension } from '@tiptap/extension-image'
 import classNames from 'classnames'
 
 import { BsTypeBold as BoldIcon } from 'react-icons/bs'
@@ -11,6 +12,7 @@ import { BsCodeSlash as CodeBlockIcon } from 'react-icons/bs'
 import { BsChatQuote as BlockquoteIcon } from 'react-icons/bs'
 import { BsLink45Deg as LinkIcon } from 'react-icons/bs'
 import { BsListTask as IssueIcon } from 'react-icons/bs'
+import { BsImage as ImageIcon } from 'react-icons/bs'
 import { usePGlite } from '@electric-sql/pglite-react'
 import { generateKeyBetween } from 'fractional-indexing'
 import { Priority, Status, Issue } from '../../types/types'
@@ -19,8 +21,14 @@ import { useCurrentUser } from '../../utils/userUtils'
 import { useUser } from '@clerk/clerk-react'
 import { getNextExternalId, formatExternalId } from '../../utils/issueUtils'
 import { useLiveQuery } from '@electric-sql/pglite-react'
+import { uploadFileToS3 } from '../../utils/s3Upload'
+
 export interface EditorMenuProps {
-  editor: TipTapEditor
+  editor: TipTapEditor & {
+    commands: {
+      setImage: (options: { src: string }) => boolean
+    }
+  }
 }
 
 const EditorMenu = ({ editor }: EditorMenuProps) => {
@@ -311,6 +319,39 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
     }
   }
 
+  const addImage = async () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    
+    input.onchange = async () => {
+      if (!input.files?.length) return
+      
+      const file = input.files[0]
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showError('File size should be less than 5MB', 'File Too Large')
+        return
+      }
+
+      try {
+        // Upload file to DigitalOcean Spaces
+        const uploadedUrl = await uploadFileToS3(file, `${import.meta.env.VITE_ENV}/editor-images`)
+        
+        // Insert image into editor
+        editor.chain().focus().setImage({ src: uploadedUrl }).run()
+        
+        showInfo('Image uploaded successfully', 'Success')
+      } catch (error) {
+        console.error('Error uploading image:', error)
+        showError('Failed to upload image', 'Error')
+      }
+    }
+    
+    input.click()
+  }
+
   return (
     <div className="bg-white flex shadow-md rounded border p-1">
       <button
@@ -425,6 +466,14 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
         )}
       >
         <BlockquoteIcon className="w-4 h-4" />
+      </button>
+      <button
+        type="button"
+        onClick={addImage}
+        className="me-1 px-1 py-1 rounded color text-gray-500 hover:text-black"
+        title="Insert image"
+      >
+        <ImageIcon className="w-4 h-4" />
       </button>
       {editor.state.selection.content().content && (
         <>
