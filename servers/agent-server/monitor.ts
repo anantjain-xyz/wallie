@@ -1,9 +1,10 @@
 import postgres from 'postgres'
 import { DatabaseIssue } from './types'
 import { processIssue } from './processor'
+import { addComment } from './issue'
 
 const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://postgres:password@localhost:54321/wallie'
-const POLLING_INTERVAL_SECONDS = parseInt(process.env.POLLING_INTERVAL_SECONDS ?? '30', 10) * 1000
+const POLLING_INTERVAL_SECONDS = parseInt(process.env.POLLING_INTERVAL_SECONDS ?? '5', 10) * 1000
 const ERROR_RETRY_SECONDS = parseInt(process.env.ERROR_RETRY_SECONDS ?? '60', 10) * 1000
 
 const sql = postgres(DATABASE_URL)
@@ -175,24 +176,6 @@ export async function updateIssueStatus(issueId: string, status: string): Promis
 }
 
 /**
- * Adds an error comment to an issue
- * @param issueId ID of the issue
- * @param workspaceId ID of the workspace
- * @param message Error message
- */
-async function addErrorComment(issueId: string, workspaceId: string, message: string): Promise<void> {
-  try {
-    await sql`
-      INSERT INTO comment (id, issue_id, workspace_id, body, creator_id)
-      VALUES (gen_random_uuid(), ${issueId}, ${workspaceId}, ${message}, (SELECT id FROM app_user WHERE username = 'wallie'))
-    `
-  } catch (error) {
-    console.error(`Failed to add error comment for issue ${issueId}:`, error)
-    throw error
-  }
-}
-
-/**
  * Checks for new issues and processes them
  */
 async function checkForNewIssues(): Promise<void> {
@@ -256,6 +239,9 @@ async function checkForNewIssues(): Promise<void> {
       try {
         // Update status to in_progress
         await updateIssueStatus(issue.id, 'in_progress')
+
+        // Add a comment to the issue
+        await addComment(issue.id, issue.workspace_id, 'Processing issue...')
         
         // Process the issue
         await processIssue({
@@ -270,10 +256,11 @@ async function checkForNewIssues(): Promise<void> {
         console.error(`Error processing issue ${issue.id}:`, error)
         // Leave issue in in_progress status and add error comment
         try {
-          await addErrorComment(
+          await addComment(
             issue.id, 
             issue.workspace_id, 
-            `⛔ Error processing this issue: ${error}`
+            `Error processing this issue: ${error}`,
+            true
           )
         } catch (commentError) {
           console.error(`Failed to add error comment for issue ${issue.id}:`, commentError)

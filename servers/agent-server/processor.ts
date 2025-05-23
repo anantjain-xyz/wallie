@@ -1,6 +1,7 @@
 import { Sandbox } from '@e2b/code-interpreter'
 import { DatabaseIssue, ProcessIssueResult } from './types'
 import { updateIssueStatus } from './monitor'
+import { addComment } from './issue'
 
 const E2B_API_KEY = process.env.E2B_API_KEY
 
@@ -30,7 +31,12 @@ export async function processIssue(issue: DatabaseIssue): Promise<ProcessIssueRe
 
     // 2. Use Claude Code to analyze and process the issue
 
-    await sandbox.runCode('print("Processing issue")')
+    const result = await sandbox.runCode('print("Hello, world!")')
+
+    // Add result as issue comment
+    await addComment(issue.id, issue.workspace_id, result.results[0]?.text ?? 'No result')
+    await addComment(issue.id, issue.workspace_id, 'stdout: ' + result.logs.stdout.join('\n'))
+    await addComment(issue.id, issue.workspace_id, 'stderr: ' + result.logs.stderr.join('\n'))
 
     // The monitor will update status to in_review after successful return
     
