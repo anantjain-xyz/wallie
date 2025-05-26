@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useLiveQuery } from '@electric-sql/pglite-react'
 import { FREE_TIER_AGENT_RUN_LIMIT, WorkspaceTier } from '../../types/types'
+import { useAuth } from '@clerk/clerk-react'
 
 interface WorkspaceTierProps {
   workspaceId: string
@@ -32,6 +33,7 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
   
   const loading = !workspaceQuery
   const workspace = workspaceQuery?.rows[0]
+  const { getToken } = useAuth()
   
   // Set the cycle end date whenever the start date changes
   useEffect(() => {
@@ -47,11 +49,11 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
   
   const handleManageSubscription = async () => {
     setLoadingRedirect(true)
+    const token = await getToken()
     try {
       const res = await fetch(`${API_SERVER_URL}/subscription/manage`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       })
       const data = await res.json()
       if (data.redirect_url) {
