@@ -61,7 +61,7 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
       } else {
         alert('No redirect URL returned.')
       }
-    } catch (err) {
+    } catch (_err) {
       alert('Failed to manage subscription.')
     } finally {
       setLoadingRedirect(false)
@@ -143,6 +143,7 @@ const WorkspaceTierComponent: React.FC<WorkspaceTierProps> = ({ workspaceId }) =
             </p>
           </div>
           <button
+            type="button"
             className="inline-flex items-center px-4 py-2 border border-blue-600 shadow-sm text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 mt-4"
             onClick={handleManageSubscription}
             disabled={loadingRedirect}

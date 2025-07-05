@@ -1,5 +1,4 @@
 import type { Editor as TipTapEditor } from '@tiptap/react'
-import type { Image as ImageExtension } from '@tiptap/extension-image'
 import classNames from 'classnames'
 
 import { BsTypeBold as BoldIcon } from 'react-icons/bs'
@@ -75,7 +74,7 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
       // Get the selected content as JSON
       const selectionJSON = editor.state.selection.content().content.toJSON ? editor.state.selection.content().content.toJSON() : editor.state.selection.content().toJSON();
       // Normalize to array of nodes
-      let nodes: any[] = [];
+      let nodes: unknown[] = [];
       if (Array.isArray(selectionJSON)) {
         nodes = selectionJSON;
       } else if (selectionJSON && Array.isArray(selectionJSON.content)) {
@@ -85,7 +84,7 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
       }
 
       // Helper to recursively collect nested list items as markdown, with only the very first sub-item as plain text
-      const collectNestedListMarkdown = (node: any, indent: number = 0, isFirstAtTopLevel: boolean = false): string[] => {
+      const collectNestedListMarkdown = (node: unknown, indent: number = 0, isFirstAtTopLevel: boolean = false): string[] => {
         let lines: string[] = [];
         if (node.type === 'listItem') {
           // Find the paragraph text for this list item
@@ -93,7 +92,7 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
           if (node.content) {
             for (const contentNode of node.content) {
               if (contentNode.type === 'paragraph') {
-                text = contentNode.content?.map((n: any) => n.text || '').join('') || '';
+                text = contentNode.content?.map((n: { text?: string }) => n.text || '').join('') || '';
               }
             }
           }
@@ -108,10 +107,8 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
           if (node.content) {
             for (const contentNode of node.content) {
               if (contentNode.type === 'bulletList' || contentNode.type === 'orderedList') {
-                let isFirst = true;
                 for (const nestedItem of contentNode.content || []) {
                   lines = lines.concat(collectNestedListMarkdown(nestedItem, indent + 1, false));
-                  isFirst = false;
                 }
               }
             }
@@ -121,7 +118,7 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
       };
 
       // Helper to process list items
-      const processListItems = (content: any[]): { title: string; description: string; estimate: number | null }[] => {
+      const processListItems = (content: unknown[]): { title: string; description: string; estimate: number | null }[] => {
         const issues: { title: string; description: string; estimate: number | null }[] = [];
         for (const node of content) {
           if (node.type === 'listItem') {
@@ -131,7 +128,7 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
             if (node.content) {
               for (const contentNode of node.content) {
                 if (contentNode.type === 'paragraph') {
-                  const text = contentNode.content?.map((n: any) => n.text || '').join('') || '';
+                  const text = contentNode.content?.map((n: { text?: string }) => n.text || '').join('') || '';
                   const estimateRegex = /^(.*?)\s*\((\d+)\s*points?\)\s*$/i;
                   const match = text.match(estimateRegex);
                   if (match) {
