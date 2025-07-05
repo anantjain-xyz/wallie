@@ -68,7 +68,7 @@ const Editor = ({
     extensions,
     editorProps: {
       ...editorProps,
-      handleDrop: (view, event, slice, moved) => {
+      handleDrop: (view, event, _slice, moved) => {
         if (!moved && event.dataTransfer?.files?.length) {
           const file = event.dataTransfer.files[0]
           

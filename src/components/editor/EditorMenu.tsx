@@ -84,7 +84,7 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
       }
 
       // Helper to recursively collect nested list items as markdown, with only the very first sub-item as plain text
-      const collectNestedListMarkdown = (node: unknown, indent: number = 0, isFirstAtTopLevel: boolean = false): string[] => {
+      const collectNestedListMarkdown = (node: any, indent: number = 0, isFirstAtTopLevel: boolean = false): string[] => {
         let lines: string[] = [];
         if (node.type === 'listItem') {
           // Find the paragraph text for this list item
@@ -118,7 +118,7 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
       };
 
       // Helper to process list items
-      const processListItems = (content: unknown[]): { title: string; description: string; estimate: number | null }[] => {
+      const processListItems = (content: any[]): { title: string; description: string; estimate: number | null }[] => {
         const issues: { title: string; description: string; estimate: number | null }[] = [];
         for (const node of content) {
           if (node.type === 'listItem') {
