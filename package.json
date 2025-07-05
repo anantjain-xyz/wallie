@@ -12,7 +12,6 @@
     "proxy-server": "dotenv -- tsx servers/proxy-server.ts",
     "api-server": "dotenv -- tsx servers/api-server/index.ts",
     "cron-server": "dotenv -- tsx servers/cron-server.ts",
-    "agent-server": "dotenv -- tsx servers/agent-server/index.ts",
     "test:webhook": "dotenv -- tsx servers/api-server/test-webhook.ts",
     "dev": "vite",
     "build": "vite build",
