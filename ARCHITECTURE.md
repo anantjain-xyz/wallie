@@ -38,7 +38,6 @@ graph TB
         ST[Stripe]
         CL[Clerk Auth]
         AG[Python Agent]
-        E2B[E2B Sandbox]
     end
     
     subgraph "Infrastructure"
@@ -56,7 +55,6 @@ graph TB
     AS <--> ST
     AS <--> CL
     AG <--> DB
-    AG <--> E2B
     
     %% Infrastructure
     DC -.->|Manages| DB
@@ -73,7 +71,7 @@ graph TB
     class FE,PG,EP clientLayer
     class PS,WS,AS,CS,ES serverLayer
     class DB databaseLayer
-    class GA,ST,CL,AG,E2B externalLayer
+    class GA,ST,CL,AG externalLayer
     class DC,TS infraLayer
 ```
 
@@ -273,8 +271,6 @@ sequenceDiagram
     DB-->>AG: Return new issue
     AG->>AS: Get GitHub token
     AS-->>AG: Return token
-    AG->>E2B: Execute code
-    E2B-->>AG: Return results
     AG->>GitHub: Create PR
     GitHub-->>AG: PR created
     AG->>DB: Update issue status
@@ -322,9 +318,8 @@ flowchart TD
     subgraph "Agent Workflow"
         A1[Issue Created] --> A2[Agent Monitors DB]
         A2 --> A3[Process Issue]
-        A3 --> A4[Execute Code in E2B]
-        A4 --> A5[Create GitHub PR]
-        A5 --> A6[Update Issue Status]
+        A3 --> A4[Create GitHub PR]
+        A4 --> A5[Update Issue Status]
     end
     
     %% Styling
@@ -338,7 +333,7 @@ flowchart TD
     class R1,R2,R3 readFlow
     class S1,S2,S3,S4,S5 syncFlow
     class C1,C2,C3,C4,C5,C6 conflictFlow
-    class A1,A2,A3,A4,A5,A6 agentFlow
+    class A1,A2,A3,A4,A5 agentFlow
 ```
 
 ## Key Features
@@ -357,7 +352,6 @@ flowchart TD
 
 ### AI Agent System
 - **Python Agent**: Autonomous issue processing
-- **E2B Integration**: Secure code execution environment
 - **Multi-model Support**: Configurable AI model providers
 - **Workspace Isolation**: Tenant-specific agent runs
 
@@ -395,7 +389,6 @@ flowchart TD
 
 ### AI/ML
 - **Python Agent**: Custom AI processing
-- **E2B**: Code execution sandbox
 - **Multi-provider**: Support for various LLM providers
 
 This architecture provides a robust, scalable foundation for a local-first collaborative issue tracking system with advanced AI capabilities.
