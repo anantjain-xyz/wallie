@@ -44,22 +44,21 @@ Start the example backend services using [Docker Compose](https://docs.docker.co
 pnpm backend:up
 ```
 
-Start the write path server (also authorizes requests):
-
-```shell
-pnpm run write-server
-```
-
-Start the proxy server that sits in front of Electric and authorizes requests:
+Start all the required server processes:
 
 ```shell
 pnpm run proxy-server
+pnpm run write-server
+pnpm run api-server
+pnpm run cron-server
 ```
 
-Start the api server that handles external API requests (eg., Github auth)
+### Webhook Configuration
+
+For webhooks to work properly, you need to expose port 3003 using Tailscale:
 
 ```shell
-pnpm run api-server
+tailscale funnel 3003
 ```
 
 Now start the dev server for the frontend app:
