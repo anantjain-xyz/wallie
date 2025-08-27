@@ -5,9 +5,8 @@
   "type": "module",
   "scripts": {
     "backend:down": "docker compose down",
-    "backend:up": "docker compose up -d && pnpm db:migrate",
-    "db:migrate": "dotenv -- pnpm exec pg-migrations apply --directory ./db/migrations-server",
-    "reset": "pnpm backend:down && pnpm backend:up && pnpm db:migrate",
+    "backend:up": "docker compose up -d",
+    "reset": "pnpm backend:down && pnpm backend:up",
     "write-server": "dotenv -- tsx servers/write-server.ts",
     "proxy-server": "dotenv -- tsx servers/proxy-server.ts",
     "api-server": "dotenv -- tsx servers/api-server/index.ts",
