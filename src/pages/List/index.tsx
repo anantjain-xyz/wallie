@@ -9,6 +9,7 @@ import IssueBoard from "../Board/IssueBoard";
 import BulkActionBar from "../../components/BulkActionBar";
 import { Issue } from "../../types/types";
 import { FilterState } from "../../utils/filterState";
+import { useRealtimeQuery } from "../../hooks/useRealtimeQuery";
 // Pagination helpers removed in Supabase mode
 
 function List({ showSearch = false }) {
@@ -51,10 +52,49 @@ function List({ showSearch = false }) {
     loadWs();
   }, []);
 
-  const filledItems: (Issue | undefined)[] = useMemo(
-    () => (loaderData?.issues as Issue[]) || [],
-    [loaderData],
+  // Live issues using realtime subscription (fallback to loader on first paint)
+  const liveKey = JSON.stringify(filterState || {});
+  const liveIssuesRes = useRealtimeQuery<Issue>(
+    "issue",
+    async () => {
+      let query = supabase.from("issue").select("*");
+      if (filterState.status && filterState.status.length) {
+        query = query.in("status", filterState.status as string[]);
+      }
+      if (filterState.priority && filterState.priority.length) {
+        query = query.in("priority", filterState.priority as string[]);
+      }
+      if (filterState.estimate && filterState.estimate.length) {
+        const includesNull = filterState.estimate.includes(null);
+        const nums = filterState.estimate.filter((e) => e !== null) as number[];
+        if (includesNull && nums.length > 0) {
+          query = query.or(`estimate.is.null,estimate.in.(${nums.join(",")})`);
+        } else if (includesNull) {
+          query = query.is("estimate", null);
+        } else if (nums.length > 0) {
+          query = query.in("estimate", nums);
+        }
+      }
+      if (filterState.query) {
+        const q = filterState.query;
+        query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+      }
+      if (filterState.orderBy) {
+        query = query.order(filterState.orderBy as string, {
+          ascending: (filterState.orderDirection || "desc") === "asc",
+          nullsFirst: false,
+        });
+      }
+      const { data, error } = await query.limit(100);
+      return { data: (data as Issue[]) || [], error };
+    },
+    liveKey,
   );
+
+  const filledItems: (Issue | undefined)[] = useMemo(() => {
+    if (!liveIssuesRes.loading && liveIssuesRes.data) return liveIssuesRes.data;
+    return (loaderData?.issues as Issue[]) || [];
+  }, [liveIssuesRes.loading, liveIssuesRes.data, loaderData]);
   const issuesTotalCount = filledItems.length;
 
   // Set viewMode to list when `showSearch` is set to true

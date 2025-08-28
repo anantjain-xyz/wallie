@@ -240,7 +240,20 @@ export default function IssueBoard({ filterState }: IssueBoardProps) {
     //   // time.
     //   nextKanbanOrder = fixKanbanOrder(issueAfter, issueBefore)
     // }
-    return generateKeyBetween(prevKanbanOrder, nextKanbanOrder);
+    try {
+      return generateKeyBetween(prevKanbanOrder, nextKanbanOrder);
+    } catch (_e) {
+      // If legacy/invalid keys slip through, try relaxed bounds then seed fresh
+      try {
+        return generateKeyBetween(null, nextKanbanOrder ?? null);
+      } catch {
+        try {
+          return generateKeyBetween(prevKanbanOrder ?? null, null);
+        } catch {
+          return generateKeyBetween(null, null);
+        }
+      }
+    }
   };
 
   const onDragEnd = ({ source, destination, draggableId }: DropResult) => {

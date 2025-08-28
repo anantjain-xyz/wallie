@@ -158,7 +158,15 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           .order("kanbanorder", { ascending: false })
           .limit(1);
         const lastKanban = lastIssueRows && lastIssueRows[0]?.kanbanorder;
-        const kanbanorder = generateKeyBetween(lastKanban || null, null);
+        // Generate a new kanban order key. If the last key in the DB was created
+        // with a different scheme, fall back to a fresh key.
+        let kanbanorder: string;
+        try {
+          kanbanorder = generateKeyBetween(lastKanban || null, null);
+        } catch (_e) {
+          // Fallback: seed a fresh key to avoid crashes on legacy/invalid keys
+          kanbanorder = generateKeyBetween(null, null);
+        }
 
         // Get the next external_id for this workspace
         const externalId = await getNextExternalId(currentUser.workspace_id);
