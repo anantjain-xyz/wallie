@@ -1,5 +1,5 @@
 import "animate.css/animate.min.css";
-import { useState, createContext, useMemo, useContext } from "react";
+import { useState, createContext, useMemo, useContext, useEffect } from "react";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -16,7 +16,7 @@ const Issue = lazy(() => import("./pages/Issue"));
 const Settings = lazy(() => import("./pages/Settings"));
 import { getFilterStateFromSearchParams } from "./utils/filterState";
 import { ImSpinner8 } from "react-icons/im";
-import { supabase } from "./supabase";
+import { supabase, setSupabaseAuthToken } from "./supabase";
 import { useAuth } from "@clerk/clerk-react";
 import SignInPage from "./components/SignInPage";
 import CommandBarWrapper from "./components/CommandBarWrapper";
@@ -151,6 +151,7 @@ const App = () => {
   const [showMenu, setShowMenu] = useState(false);
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [showCommandBar, setShowCommandBar] = useState(false);
+  // No external auth bridge to Supabase; requests use anon key.
 
   const menuContextValue = useMemo(
     () => ({ showMenu, setShowMenu }),
@@ -208,7 +209,28 @@ const App = () => {
     [],
   );
 
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, getToken } = useAuth();
+
+  // Forward Clerk token to Supabase (trusted third-party auth)
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        if (!isSignedIn) {
+          setSupabaseAuthToken(null);
+          return;
+        }
+        const token = await getToken();
+        if (!cancelled) setSupabaseAuthToken(token || null);
+      } catch (_e) {
+        if (!cancelled) setSupabaseAuthToken(null);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [getToken, isSignedIn]);
 
   if (!isLoaded) {
     return <LoadingScreen>Signing in...</LoadingScreen>;
