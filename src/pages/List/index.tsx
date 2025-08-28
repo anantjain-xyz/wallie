@@ -26,10 +26,10 @@ function calculateWindow(
 }
 
 function List({ showSearch = false }) {
-  const { liveIssues, filterState } = useLoaderData() as {
-    liveIssues: LiveQuery<Issue>
-    filterState: FilterState
-  }
+  const loaderData = useLoaderData() as any
+  const isSupabase = !!loaderData?.issues
+  const filterState: FilterState = loaderData?.filterState
+  const liveIssues: LiveQuery<Issue> | null = loaderData?.liveIssues || null
 
   // State for view mode (list or board)
   const [viewMode, setViewMode] = useState<'list' | 'board'>('list')
@@ -50,17 +50,27 @@ function List({ showSearch = false }) {
   const workspaceId = workspaceResults?.rows[0]?.id || ''
   const workspaceName = workspaceResults?.rows[0]?.name || ''
 
-  const issuesRes = useLiveQuery(liveIssues)
-  const offset = liveIssues.initialResults.offset ?? issuesRes.offset ?? 0
-  const limit = liveIssues.initialResults.limit ?? issuesRes.limit ?? CHUNK_SIZE
-  const issues = issuesRes?.rows
+  let filledItems: (Issue | undefined)[] = []
+  let issuesTotalCount = 0
+  let offset = 0
+  let limit = CHUNK_SIZE
 
-  const currentTotalCount = issuesRes.totalCount ?? issuesRes.rows.length
-  const currentOffset = issuesRes.offset ?? 0
-  const filledItems = new Array(currentTotalCount).fill(null)
-  issues.forEach((issue, index) => {
-    filledItems[index + currentOffset] = issue
-  })
+  if (!isSupabase && liveIssues) {
+    const issuesRes = useLiveQuery(liveIssues)
+    offset = liveIssues.initialResults.offset ?? issuesRes.offset ?? 0
+    limit = liveIssues.initialResults.limit ?? issuesRes.limit ?? CHUNK_SIZE
+    const issues = issuesRes?.rows
+    const currentTotalCount = issuesRes.totalCount ?? issuesRes.rows.length
+    const currentOffset = issuesRes.offset ?? 0
+    filledItems = new Array(currentTotalCount).fill(undefined)
+    issues.forEach((issue, index) => {
+      filledItems[index + currentOffset] = issue
+    })
+    issuesTotalCount = currentTotalCount
+  } else {
+    filledItems = (loaderData?.issues as Issue[]) || []
+    issuesTotalCount = filledItems.length
+  }
 
   // Set viewMode to list when `showSearch` is set to true
   useEffect(() => {
@@ -71,8 +81,10 @@ function List({ showSearch = false }) {
 
   // Refresh the issues query when the component mounts
   useEffect(() => {
-    liveIssues.refresh({ offset: 0, limit: CHUNK_SIZE })
-  }, [liveIssues])
+    if (!isSupabase && liveIssues) {
+      liveIssues.refresh({ offset: 0, limit: CHUNK_SIZE })
+    }
+  }, [isSupabase, liveIssues])
 
   // Load board data when view mode is 'board'
   useEffect(() => {
@@ -127,12 +139,14 @@ function List({ showSearch = false }) {
   }, [viewMode, pg, filterState])
 
   const updateOffsetAndLimit = (itemsRendered: ListOnItemsRenderedProps) => {
-    const { offset: newOffset, limit: newLimit } = calculateWindow(
-      itemsRendered.overscanStartIndex,
-      itemsRendered.overscanStopIndex
-    )
-    if (newOffset !== offset || newLimit !== limit) {
-      liveIssues.refresh({ offset: newOffset, limit: newLimit })
+    if (!isSupabase && liveIssues) {
+      const { offset: newOffset, limit: newLimit } = calculateWindow(
+        itemsRendered.overscanStartIndex,
+        itemsRendered.overscanStopIndex
+      )
+      if (newOffset !== offset || newLimit !== limit) {
+        liveIssues.refresh({ offset: newOffset, limit: newLimit })
+      }
     }
   }
 
@@ -216,7 +230,7 @@ function List({ showSearch = false }) {
       <div className="flex justify-between items-center w-full">
         <TopBar
           filterState={filterState}
-          filteredIssuesCount={issuesRes.totalCount ?? issuesRes.rows.length}
+          filteredIssuesCount={issuesTotalCount}
           showSearch={showSearch}
           title={viewMode === 'board' ? 'Board' : undefined}
           onViewModeChange={setViewMode}
@@ -236,7 +250,8 @@ function List({ showSearch = false }) {
           filterState={filterState}
         />
       ) : (
-        Object.keys(columnsLiveIssues).length > 0 && (
+        // Disable board view in Supabase mode for now
+        !isSupabase && Object.keys(columnsLiveIssues).length > 0 && (
           <IssueBoard columnsLiveIssues={columnsLiveIssues} />
         )
       )}

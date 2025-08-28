@@ -249,12 +249,12 @@ const App = () => {
         {
           path: `/`,
           element: <List />,
-          loader: issueListLoader,
+          loader: issueListLoaderSupabase,
         },
         {
           path: `/search`,
           element: <List showSearch={true} />,
-          loader: issueListLoader,
+          loader: issueListLoaderSupabase,
         },
         {
           path: `/issue/:formattedExternalId`,
