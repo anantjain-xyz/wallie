@@ -26,6 +26,7 @@ import { startSync, useSyncStatus, waitForInitialSyncDone } from './sync'
 import { electricSync } from '@electric-sql/pglite-sync'
 import { ImSpinner8 } from 'react-icons/im'
 import { useElectricAuth } from './auth'
+import { supabase } from './supabase'
 import type { PGliteWithExtensions } from './sync'
 import { useAuth } from '@clerk/clerk-react'
 import SignInPage from './components/SignInPage'
@@ -307,3 +308,55 @@ const App = () => {
 }
 
 export default App
+
+export async function issueListLoaderSupabase({ request }: { request: Request }) {
+  const url = new URL(request.url)
+  const filterState = getFilterStateFromSearchParams(url.searchParams)
+  let query = supabase.from('issue').select('*', { count: 'exact' }).eq('deleted', false)
+
+  if (filterState.status && filterState.status.length) {
+    query = query.in('status', filterState.status as string[])
+  }
+  if (filterState.priority && filterState.priority.length) {
+    query = query.in('priority', filterState.priority as string[])
+  }
+  if (filterState.estimate && filterState.estimate.length) {
+    const estimates = filterState.estimate.map((v: any) => (v === null ? null : Number(v)))
+    query = query.in('estimate', estimates as (number | null)[])
+  }
+  if (filterState.query) {
+    const q = filterState.query
+    query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`)
+  }
+  if (filterState.orderBy) {
+    query = query.order(filterState.orderBy as string, {
+      ascending: (filterState.orderDirection || 'desc') === 'asc',
+      nullsFirst: false,
+    })
+  }
+
+  const { data, error, count } = await query.limit(100)
+  if (error) throw error
+  return { issues: data || [], count, filterState }
+}
+
+export async function issueLoaderSupabase({
+  params,
+}: {
+  params: Params
+  request: Request
+}) {
+  const formattedId = params.formattedExternalId || ''
+  const match = formattedId.match(/-(\d+)$/)
+  const externalId = match ? parseInt(match[1], 10) : null
+  if (!externalId) {
+    throw new Error('Invalid issue identifier')
+  }
+  const { data, error } = await supabase
+    .from('issue')
+    .select('*')
+    .eq('external_id', externalId)
+    .limit(1)
+  if (error) throw error
+  return { issue: data?.[0] ?? null }
+}
