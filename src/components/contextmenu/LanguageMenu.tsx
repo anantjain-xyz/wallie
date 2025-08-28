@@ -1,28 +1,28 @@
-import { Portal } from '../Portal'
-import { ReactNode, useState } from 'react'
-import { ContextMenuTrigger } from '@firefox-devtools/react-contextmenu'
-import { Menu } from './menu'
+import { Portal } from "../Portal";
+import { ReactNode, useState } from "react";
+import { ContextMenuTrigger } from "@firefox-devtools/react-contextmenu";
+import { Menu } from "./menu";
 import { BiLogoPython, BiLogoTypescript, BiCode } from "react-icons/bi";
 
 const PROGRAMMING_LANGUAGES = [
-  ['', 'Auto-detect'],
-  ['TYPESCRIPT', 'TypeScript'],
-  ['PYTHON', 'Python'],
-]
+  ["", "Auto-detect"],
+  ["TYPESCRIPT", "TypeScript"],
+  ["PYTHON", "Python"],
+];
 
 interface Props {
-  id: string
-  button: ReactNode
-  filterKeyword?: boolean
-  className?: string
-  onSelect?: (language: string) => void
+  id: string;
+  button: ReactNode;
+  filterKeyword?: boolean;
+  className?: string;
+  onSelect?: (language: string) => void;
 }
 
 export const getLanguageIcon = (language: string | null) => {
   switch (language) {
-    case 'TYPESCRIPT':
+    case "TYPESCRIPT":
       return BiLogoTypescript;
-    case 'PYTHON':
+    case "PYTHON":
       return BiLogoPython;
     default:
       return BiCode;
@@ -36,19 +36,20 @@ function LanguageMenu({
   className,
   onSelect,
 }: Props) {
-  const [keyword, setKeyword] = useState(``)
+  const [keyword, setKeyword] = useState(``);
 
   const handleSelect = (language: string) => {
-    setKeyword(``)
-    if (onSelect) onSelect(language)
-  }
+    setKeyword(``);
+    if (onSelect) onSelect(language);
+  };
 
-  let languages = PROGRAMMING_LANGUAGES
+  let languages = PROGRAMMING_LANGUAGES;
   if (keyword !== ``) {
-    const normalizedKeyword = keyword.toLowerCase().trim()
+    const normalizedKeyword = keyword.toLowerCase().trim();
     languages = languages.filter(
-      ([_value, label]) => label.toLowerCase().indexOf(normalizedKeyword) !== -1
-    )
+      ([_value, label]) =>
+        label.toLowerCase().indexOf(normalizedKeyword) !== -1,
+    );
   }
 
   const options = languages.map(([value, label]) => {
@@ -58,7 +59,7 @@ function LanguageMenu({
         <IconComponent className="mr-3" /> <span>{label}</span>
       </Menu.Item>
     );
-  })
+  });
 
   return (
     <>
@@ -79,7 +80,7 @@ function LanguageMenu({
         </Menu>
       </Portal>
     </>
-  )
+  );
 }
 
-export default LanguageMenu 
+export default LanguageMenu;

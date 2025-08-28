@@ -1,7 +1,7 @@
-import React, { useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import CommandBar from './CommandBar';
-import { CommandBarContext, IssueModalContext } from '../App';
+import React, { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import CommandBar from "./CommandBar";
+import { CommandBarContext, IssueModalContext } from "../App";
 
 const CommandBarWrapper: React.FC = () => {
   const navigate = useNavigate();
@@ -22,4 +22,4 @@ const CommandBarWrapper: React.FC = () => {
   );
 };
 
-export default CommandBarWrapper; 
+export default CommandBarWrapper;

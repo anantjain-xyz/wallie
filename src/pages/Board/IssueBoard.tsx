@@ -1,114 +1,167 @@
-import { DragDropContext, DropResult } from 'react-beautiful-dnd'
-import { useState, useEffect } from 'react'
-import { generateKeyBetween } from 'fractional-indexing'
-import { Issue, Status, StatusDisplay, StatusValue } from '../../types/types'
-import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
-import IssueCol from './IssueCol'
-import { LiveQuery, LiveQueryResults } from '@electric-sql/pglite/live'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { DragDropContext, DropResult } from "react-beautiful-dnd";
+import { useState, useEffect } from "react";
+import { generateKeyBetween } from "fractional-indexing";
+import { Issue, Status, StatusDisplay, StatusValue } from "../../types/types";
+import { supabase } from "../../supabase";
+import { useRealtimeQuery } from "../../hooks/useRealtimeQuery";
+import IssueCol from "./IssueCol";
+import { FilterState } from "../../utils/filterState";
 
 export interface IssueBoardProps {
-  columnsLiveIssues: Record<StatusValue, LiveQuery<Issue>>
+  filterState?: FilterState;
 }
 
 interface MovedIssues {
   [id: string]: {
-    status?: StatusValue
-    kanbanorder?: string
-  }
+    status?: StatusValue;
+    kanbanorder?: string;
+  };
 }
 
-export default function IssueBoard({ columnsLiveIssues }: IssueBoardProps) {
-  const pg = usePGlite()
-  const workspaceResults = useLiveQuery.sql`SELECT * FROM workspace LIMIT 1`
-  const workspaceName: string = (workspaceResults?.rows[0]?.name as string) || ''
-  const [movedIssues, setMovedIssues] = useState<MovedIssues>({})
+export default function IssueBoard({ filterState }: IssueBoardProps) {
+  const { data: workspaceRows = [] } = useRealtimeQuery<{ name: string }>(
+    "workspace",
+    async () => {
+      const { data, error } = await supabase
+        .from("workspace")
+        .select("name")
+        .limit(1);
+      return { data, error };
+    },
+    "",
+  );
+  const workspaceName: string = workspaceRows?.[0]?.name || "";
+  const [movedIssues, setMovedIssues] = useState<MovedIssues>({});
 
   // Issues are coming from a live query, this may not have updated before we rerender
   // after a drag and drop. So we keep track of moved issues and use that to override
   // the status of the issue when sorting the issues into columns.
 
+  // Reset moves when underlying issues changed across columns
   useEffect(() => {
-    // Reset moved issues when issues change
-    // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
-    setMovedIssues({})
-  }, [columnsLiveIssues])
+    setMovedIssues({});
+  }, []);
 
-  const issuesByStatus: Record<string, Issue[]> = {}
-  const issuesResByStatus: Record<string, LiveQueryResults<Issue>> = {}
-  Object.entries(columnsLiveIssues).forEach(([status, liveQuery]) => {
-    // eslint-disable-next-line react-compiler/react-compiler
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const issuesRes = useLiveQuery(liveQuery)
-    issuesResByStatus[status] = issuesRes
-    issuesRes.rows.forEach((issue) => {
-      // If the issue has been moved, patch with new status and kanbanorder for sorting
-      if (movedIssues[issue.id]) {
-        issue = {
-          ...issue,
-          ...movedIssues[issue.id],
-        }
-      }
+  const statusesFilter: StatusValue[] = filterState?.status?.length
+    ? (filterState.status as StatusValue[])
+    : (Object.values(Status) as StatusValue[]);
 
-      const status = issue.status.toLowerCase()
-      if (!issuesByStatus[status]) {
-        issuesByStatus[status] = []
-      }
-      issuesByStatus[status].push(issue)
-    })
-  })
+  const issuesByStatus: Record<string, Issue[]> = {};
+  (Object.values(Status) as StatusValue[]).forEach((status) => {
+    issuesByStatus[status] = [];
+  });
+
+  const makeQuery = (status: StatusValue) => async () => {
+    let query = supabase
+      .from("issue")
+      .select(
+        "id,title,status,priority,estimate,external_id,assignee_id,workspace_id,kanbanorder, app_user:assignee_id(full_name, profile_picture)",
+      )
+      .eq("status", status)
+      .eq("deleted", false)
+      .order("kanbanorder", { ascending: true });
+    if (filterState?.priority?.length)
+      query = query.in("priority", filterState.priority as string[]);
+    if (filterState?.estimate?.length)
+      query = query.in("estimate", filterState.estimate as (number | null)[]);
+    if (filterState?.query) {
+      const q = filterState.query;
+      query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+    }
+    const { data, error } = await query;
+    return { data, error };
+  };
+
+  const key = JSON.stringify(filterState || {});
+  const backlogRes = useRealtimeQuery<any>(
+    "issue",
+    makeQuery(Status.BACKLOG),
+    key,
+  );
+  const todoRes = useRealtimeQuery<any>("issue", makeQuery(Status.TODO), key);
+  const inProgressRes = useRealtimeQuery<any>(
+    "issue",
+    makeQuery(Status.IN_PROGRESS),
+    key,
+  );
+  const inReviewRes = useRealtimeQuery<any>(
+    "issue",
+    makeQuery(Status.IN_REVIEW),
+    key,
+  );
+  const doneRes = useRealtimeQuery<any>("issue", makeQuery(Status.DONE), key);
+  const canceledRes = useRealtimeQuery<any>(
+    "issue",
+    makeQuery(Status.CANCELED),
+    key,
+  );
+
+  // Build issues per column and overlay moved/unsynced changes
+  (
+    [
+      [Status.BACKLOG, backlogRes],
+      [Status.TODO, todoRes],
+      [Status.IN_PROGRESS, inProgressRes],
+      [Status.IN_REVIEW, inReviewRes],
+      [Status.DONE, doneRes],
+      [Status.CANCELED, canceledRes],
+    ] as Array<[StatusValue, { data?: any[] }]>
+  ).forEach(([status, res]) => {
+    if (!statusesFilter.includes(status)) return;
+    const rows = res.data || [];
+    rows.forEach((issue) => {
+      const patch = movedIssues[issue.id];
+      const patched = patch ? { ...issue, ...patch } : issue;
+      const key = patched.status.toLowerCase();
+      if (!issuesByStatus[key]) issuesByStatus[key] = [];
+      issuesByStatus[key].push(patched as any);
+    });
+  });
 
   // Sort issues in each column by kanbanorder and issue id
   Object.keys(issuesByStatus).forEach((status) => {
     issuesByStatus[status].sort((a, b) => {
       if (a.kanbanorder < b.kanbanorder) {
-        return -1
+        return -1;
       }
       if (a.kanbanorder > b.kanbanorder) {
-        return 1
+        return 1;
       }
       // Use unique issue id to break ties
       if (a.id < b.id) {
-        return -1
+        return -1;
       } else {
-        return 1
+        return 1;
       }
-    })
-  })
+    });
+  });
 
-  // Fill in undefined to create the leader and tail for the offset and limit
-  Object.keys(issuesByStatus).forEach((status) => {
-    // new array of lenth issuesResByStatus[status].total_count
-    const issues = new Array(issuesResByStatus[status]?.totalCount || 0)
-    const offset = issuesResByStatus[status]?.offset || 0
-    issuesByStatus[status].forEach((issue, index) => {
-      issues[index + offset] = issue
-    })
-    issuesByStatus[status] = issues
-  })
+  // No pagination; issues array is final per column
 
   const adjacentIssues = (
     column: string,
     index: number,
     sameColumn = true,
-    currentIndex: number
+    currentIndex: number,
   ) => {
-    const columnIssues = issuesByStatus[column] || []
-    let prevIssue: Issue | undefined
-    let nextIssue: Issue | undefined
+    const columnIssues = issuesByStatus[column] || [];
+    let prevIssue: Issue | undefined;
+    let nextIssue: Issue | undefined;
     if (sameColumn) {
       if (currentIndex < index) {
-        prevIssue = columnIssues[index]
-        nextIssue = columnIssues[index + 1]
+        prevIssue = columnIssues[index];
+        nextIssue = columnIssues[index + 1];
       } else {
-        prevIssue = columnIssues[index - 1]
-        nextIssue = columnIssues[index]
+        prevIssue = columnIssues[index - 1];
+        nextIssue = columnIssues[index];
       }
     } else {
-      prevIssue = columnIssues[index - 1]
-      nextIssue = columnIssues[index]
+      prevIssue = columnIssues[index - 1];
+      nextIssue = columnIssues[index];
     }
-    return { prevIssue, nextIssue }
-  }
+    return { prevIssue, nextIssue };
+  };
 
   // /**
   //  * Fix duplicate kanbanorder, this is recursive so we can fix multiple consecutive
@@ -165,9 +218,9 @@ export default function IssueBoard({ columnsLiveIssues }: IssueBoardProps) {
    * @returns The new kanbanorder
    */
   const getNewKanbanOrder = (issueBefore: Issue, issueAfter: Issue) => {
-    const prevKanbanOrder = issueBefore?.kanbanorder
+    const prevKanbanOrder = issueBefore?.kanbanorder;
     // eslint-disable-next-line prefer-const
-    let nextKanbanOrder = issueAfter?.kanbanorder
+    let nextKanbanOrder = issueAfter?.kanbanorder;
     // if (nextKanbanOrder && nextKanbanOrder === prevKanbanOrder) {
     //   // If the next issue has the same kanbanorder as the previous issue,
     //   // we need to fix the kanbanorder of the next issue.
@@ -175,8 +228,8 @@ export default function IssueBoard({ columnsLiveIssues }: IssueBoardProps) {
     //   // time.
     //   nextKanbanOrder = fixKanbanOrder(issueAfter, issueBefore)
     // }
-    return generateKeyBetween(prevKanbanOrder, nextKanbanOrder)
-  }
+    return generateKeyBetween(prevKanbanOrder, nextKanbanOrder);
+  };
 
   const onDragEnd = ({ source, destination, draggableId }: DropResult) => {
     if (destination && destination.droppableId) {
@@ -184,13 +237,13 @@ export default function IssueBoard({ columnsLiveIssues }: IssueBoardProps) {
         destination.droppableId,
         destination.index,
         destination.droppableId === source.droppableId,
-        source.index
-      )
+        source.index,
+      );
       // Get a new kanbanorder between the previous and next issues
-      const kanbanorder = getNewKanbanOrder(prevIssue, nextIssue)
+      const kanbanorder = getNewKanbanOrder(prevIssue, nextIssue);
       // Keep track of moved issues so we can override the status and kanbanorder when
       // sorting issues into columns.
-      const modified = new Date()
+      const modified = new Date();
       setMovedIssues((prev) => ({
         ...prev,
         [draggableId]: {
@@ -198,61 +251,70 @@ export default function IssueBoard({ columnsLiveIssues }: IssueBoardProps) {
           kanbanorder,
           modified,
         },
-      }))
-      pg.sql`
-        UPDATE issue
-        SET status = ${destination.droppableId}, kanbanorder = ${kanbanorder}, modified = NOW()
-        WHERE id = ${draggableId}
-      `
+      }));
+      supabase
+        .from("issue")
+        .update({
+          status: destination.droppableId,
+          kanbanorder,
+          modified: new Date().toISOString(),
+        })
+        .eq("id", draggableId);
     }
-  }
+  };
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex flex-1 pt-6 pl-8 overflow-scroll bg-gray-100">
-        <IssueCol
-          title={StatusDisplay[Status.BACKLOG]}
-          status={Status.BACKLOG}
-          issues={issuesByStatus[Status.BACKLOG]}
-          liveQuery={columnsLiveIssues[Status.BACKLOG]}
-          workspaceName={workspaceName}
-        />
-        <IssueCol
-          title={StatusDisplay[Status.TODO]}
-          status={Status.TODO}
-          issues={issuesByStatus[Status.TODO]}
-          liveQuery={columnsLiveIssues[Status.TODO]}
-          workspaceName={workspaceName}
-        />
-        <IssueCol
-          title={StatusDisplay[Status.IN_PROGRESS]}
-          status={Status.IN_PROGRESS}
-          issues={issuesByStatus[Status.IN_PROGRESS]}
-          liveQuery={columnsLiveIssues[Status.IN_PROGRESS]}
-          workspaceName={workspaceName}
-        />
-        <IssueCol
-          title={StatusDisplay[Status.IN_REVIEW]}
-          status={Status.IN_REVIEW}
-          issues={issuesByStatus[Status.IN_REVIEW]}
-          liveQuery={columnsLiveIssues[Status.IN_REVIEW]}
-          workspaceName={workspaceName}
-        />
-        <IssueCol
-          title={StatusDisplay[Status.DONE]}
-          status={Status.DONE}
-          issues={issuesByStatus[Status.DONE]}
-          liveQuery={columnsLiveIssues[Status.DONE]}
-          workspaceName={workspaceName}
-        />
-        <IssueCol
-          title={StatusDisplay[Status.CANCELED]}
-          status={Status.CANCELED}
-          issues={issuesByStatus[Status.CANCELED]}
-          liveQuery={columnsLiveIssues[Status.CANCELED]}
-          workspaceName={workspaceName}
-        />
+        {statuses.includes(Status.BACKLOG) && (
+          <IssueCol
+            title={StatusDisplay[Status.BACKLOG]}
+            status={Status.BACKLOG}
+            issues={issuesByStatus[Status.BACKLOG]}
+            workspaceName={workspaceName}
+          />
+        )}
+        {statuses.includes(Status.TODO) && (
+          <IssueCol
+            title={StatusDisplay[Status.TODO]}
+            status={Status.TODO}
+            issues={issuesByStatus[Status.TODO]}
+            workspaceName={workspaceName}
+          />
+        )}
+        {statuses.includes(Status.IN_PROGRESS) && (
+          <IssueCol
+            title={StatusDisplay[Status.IN_PROGRESS]}
+            status={Status.IN_PROGRESS}
+            issues={issuesByStatus[Status.IN_PROGRESS]}
+            workspaceName={workspaceName}
+          />
+        )}
+        {statuses.includes(Status.IN_REVIEW) && (
+          <IssueCol
+            title={StatusDisplay[Status.IN_REVIEW]}
+            status={Status.IN_REVIEW}
+            issues={issuesByStatus[Status.IN_REVIEW]}
+            workspaceName={workspaceName}
+          />
+        )}
+        {statuses.includes(Status.DONE) && (
+          <IssueCol
+            title={StatusDisplay[Status.DONE]}
+            status={Status.DONE}
+            issues={issuesByStatus[Status.DONE]}
+            workspaceName={workspaceName}
+          />
+        )}
+        {statuses.includes(Status.CANCELED) && (
+          <IssueCol
+            title={StatusDisplay[Status.CANCELED]}
+            status={Status.CANCELED}
+            issues={issuesByStatus[Status.CANCELED]}
+            workspaceName={workspaceName}
+          />
+        )}
       </div>
     </DragDropContext>
-  )
+  );
 }

@@ -1,69 +1,71 @@
-import { Transition } from '@headlessui/react'
-import { useClickOutside } from '../hooks/useClickOutside'
-import { useRef, useState, useEffect } from 'react'
-import { BsGrid3X3Gap, BsListUl } from 'react-icons/bs'
-import Select from './Select'
-import { useFilterState } from '../utils/filterState'
-import { useUserPreferences } from '../hooks/useUserPreferences'
+import { Transition } from "@headlessui/react";
+import { useClickOutside } from "../hooks/useClickOutside";
+import { useRef, useState, useEffect } from "react";
+import { BsGrid3X3Gap, BsListUl } from "react-icons/bs";
+import Select from "./Select";
+import { useFilterState } from "../utils/filterState";
+import { useUserPreferences } from "../hooks/useUserPreferences";
 
 interface Props {
-  viewMode: 'list' | 'board'
-  onViewModeChange: (mode: 'list' | 'board') => void
+  viewMode: "list" | "board";
+  onViewModeChange: (mode: "list" | "board") => void;
 }
 
 export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
-  const [isOpen, setIsOpen] = useState(false)
-  const ref = useRef(null)
-  const [filterState, setFilterState] = useFilterState()
-  const [userPreferences, updateUserPreferences] = useUserPreferences()
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+  const [filterState, setFilterState] = useFilterState();
+  const [userPreferences, updateUserPreferences] = useUserPreferences();
 
   useClickOutside(ref, () => {
-    if (isOpen) setIsOpen(false)
-  })
+    if (isOpen) setIsOpen(false);
+  });
 
   // Sync view mode with user preferences when they load
   useEffect(() => {
     if (userPreferences.view_mode !== viewMode) {
-      onViewModeChange(userPreferences.view_mode)
+      onViewModeChange(userPreferences.view_mode);
     }
-  }, [userPreferences, onViewModeChange, viewMode])
+  }, [userPreferences, onViewModeChange, viewMode]);
 
   // Sync filter state with user preferences when they load
   useEffect(() => {
-    if (userPreferences.order_by !== filterState.orderBy || 
-        userPreferences.order_direction !== filterState.orderDirection) {
+    if (
+      userPreferences.order_by !== filterState.orderBy ||
+      userPreferences.order_direction !== filterState.orderDirection
+    ) {
       setFilterState({
         ...filterState,
         orderBy: userPreferences.order_by,
-        orderDirection: userPreferences.order_direction as 'asc' | 'desc'
-      })
+        orderDirection: userPreferences.order_direction as "asc" | "desc",
+      });
     }
-  }, [userPreferences, setFilterState, filterState])
+  }, [userPreferences, setFilterState, filterState]);
 
-  const handleViewModeChange = (mode: 'list' | 'board') => {
-    onViewModeChange(mode)
-    updateUserPreferences({ view_mode: mode })
-  }
+  const handleViewModeChange = (mode: "list" | "board") => {
+    onViewModeChange(mode);
+    updateUserPreferences({ view_mode: mode });
+  };
 
   const handleOrderByChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newOrderBy = e.target.value
+    const newOrderBy = e.target.value;
     setFilterState({
       ...filterState,
       orderBy: newOrderBy,
-    })
-    updateUserPreferences({ order_by: newOrderBy })
-  }
+    });
+    updateUserPreferences({ order_by: newOrderBy });
+  };
 
   const handleOrderDirectionChange = (
-    e: React.ChangeEvent<HTMLSelectElement>
+    e: React.ChangeEvent<HTMLSelectElement>,
   ) => {
-    const newOrderDirection = e.target.value as 'asc' | 'desc'
+    const newOrderDirection = e.target.value as "asc" | "desc";
     setFilterState({
       ...filterState,
       orderDirection: newOrderDirection,
-    })
-    updateUserPreferences({ order_direction: newOrderDirection })
-  }
+    });
+    updateUserPreferences({ order_direction: newOrderDirection });
+  };
 
   return (
     <div ref={ref} className="relative">
@@ -72,7 +74,7 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
         className="flex items-center px-2 py-1 font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="mr-1">Display</span>  
+        <span className="mr-1">Display</span>
       </button>
 
       <Transition
@@ -92,10 +94,12 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
               <button
                 type="button"
                 className={`flex items-center justify-center px-3 py-2 rounded border ${
-                  viewMode === 'list' ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'
+                  viewMode === "list"
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-50"
                 }`}
                 onClick={() => {
-                  handleViewModeChange('list')
+                  handleViewModeChange("list");
                 }}
               >
                 <BsListUl className="w-4 h-4 mr-2" />
@@ -104,10 +108,12 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
               <button
                 type="button"
                 className={`flex items-center justify-center px-3 py-2 rounded border ${
-                  viewMode === 'board' ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'
+                  viewMode === "board"
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-50"
                 }`}
                 onClick={() => {
-                  handleViewModeChange('board')
+                  handleViewModeChange("board");
                 }}
               >
                 <BsGrid3X3Gap className="w-4 h-4 mr-2" />
@@ -117,7 +123,7 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
           </div>
 
           {/* Ordering Section */}
-          {viewMode === 'list' && (
+          {viewMode === "list" && (
             <div className="pt-4 font-medium text-gray-700 border-t border-gray-200">
               <div className="flex items-center justify-between mb-2">
                 <span>Ordering</span>
@@ -147,5 +153,5 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
         </div>
       </Transition>
     </div>
-  )
+  );
 }

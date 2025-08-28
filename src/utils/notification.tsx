@@ -1,5 +1,5 @@
-import { toast } from 'react-toastify'
-import { ReactNode } from 'react'
+import { toast } from "react-toastify";
+import { ReactNode } from "react";
 
 export function showInfo(msg: ReactNode, title: string = ``) {
   //TODO: make notification showing from bottom
@@ -19,10 +19,10 @@ export function showInfo(msg: ReactNode, title: string = ``) {
       )}
       <div className="w-full mt-2 text-xs font-normal text-gray-500">{msg}</div>
     </div>
-  )
+  );
   toast(content, {
     position: `bottom-right`,
-  })
+  });
 }
 
 export function showSuccess(msg: ReactNode, title: string = ``) {
@@ -42,10 +42,10 @@ export function showSuccess(msg: ReactNode, title: string = ``) {
       )}
       <div className="w-full mt-2 text-xs font-normal text-gray-500">{msg}</div>
     </div>
-  )
+  );
   toast(content, {
     position: `bottom-right`,
-  })
+  });
 }
 
 export function showWarning(msg: ReactNode, title: string = ``) {
@@ -66,10 +66,10 @@ export function showWarning(msg: ReactNode, title: string = ``) {
       )}
       <div className="w-full mt-2 text-xs font-normal text-gray-500">{msg}</div>
     </div>
-  )
+  );
   toast(content, {
     position: `bottom-right`,
-  })
+  });
 }
 
 export function showError(msg: ReactNode, title: string = ``) {
@@ -90,8 +90,8 @@ export function showError(msg: ReactNode, title: string = ``) {
       )}
       <div className="w-full mt-2 text-xs font-normal text-gray-500">{msg}</div>
     </div>
-  )
+  );
   toast(content, {
     position: `bottom-right`,
-  })
+  });
 }

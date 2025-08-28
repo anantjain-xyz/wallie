@@ -1,21 +1,21 @@
-import { Portal } from '../Portal'
-import { ReactNode, useState } from 'react'
-import { ContextMenuTrigger } from '@firefox-devtools/react-contextmenu'
-import { Menu } from './menu'
-import { FaGithub } from 'react-icons/fa'
+import { Portal } from "../Portal";
+import { ReactNode, useState } from "react";
+import { ContextMenuTrigger } from "@firefox-devtools/react-contextmenu";
+import { Menu } from "./menu";
+import { FaGithub } from "react-icons/fa";
 
 interface Repository {
-  id: string
-  full_name: string
+  id: string;
+  full_name: string;
 }
 
 interface Props {
-  id: string
-  button: ReactNode
-  repositories: Repository[]
-  filterKeyword?: boolean
-  className?: string
-  onSelect?: (repoId: string | null) => void
+  id: string;
+  button: ReactNode;
+  repositories: Repository[];
+  filterKeyword?: boolean;
+  className?: string;
+  onSelect?: (repoId: string | null) => void;
 }
 
 function GithubRepoMenu({
@@ -26,19 +26,19 @@ function GithubRepoMenu({
   className,
   onSelect,
 }: Props) {
-  const [keyword, setKeyword] = useState(``)
+  const [keyword, setKeyword] = useState(``);
 
   const handleSelect = (repoId: string | null) => {
-    setKeyword(``)
-    if (onSelect) onSelect(repoId)
-  }
+    setKeyword(``);
+    if (onSelect) onSelect(repoId);
+  };
 
-  let filteredRepos = repositories
+  let filteredRepos = repositories;
   if (keyword !== ``) {
-    const normalizedKeyword = keyword.toLowerCase().trim()
+    const normalizedKeyword = keyword.toLowerCase().trim();
     filteredRepos = repositories.filter(
-      (repo) => repo.full_name.toLowerCase().indexOf(normalizedKeyword) !== -1
-    )
+      (repo) => repo.full_name.toLowerCase().indexOf(normalizedKeyword) !== -1,
+    );
   }
 
   const options = [
@@ -49,8 +49,8 @@ function GithubRepoMenu({
       <Menu.Item key={repo.id} onClick={() => handleSelect(repo.id)}>
         <FaGithub className="mr-3" /> <span>{repo.full_name}</span>
       </Menu.Item>
-    ))
-  ]
+    )),
+  ];
 
   return (
     <>
@@ -71,7 +71,7 @@ function GithubRepoMenu({
         </Menu>
       </Portal>
     </>
-  )
+  );
 }
 
-export default GithubRepoMenu 
+export default GithubRepoMenu;
