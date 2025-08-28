@@ -11,9 +11,7 @@ export function useRealtimeQuery<T>(
   const [error, setError] = useState<Error | null>(null);
 
   // Generate a stable unique id only once per hook instance
-  const channelIdRef = useRef<string>(
-    Math.random().toString(36).slice(2, 10),
-  );
+  const channelIdRef = useRef<string>(Math.random().toString(36).slice(2, 10));
 
   // Hold latest getQuery without forcing re-subscribe on every render
   const getQueryRef = useRef(getQuery);
@@ -42,13 +40,9 @@ export function useRealtimeQuery<T>(
 
     const channel = supabase
       .channel(`${table}_changes_${uid}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table },
-        () => {
-          fetchData();
-        },
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table }, () => {
+        fetchData();
+      })
       .subscribe();
 
     return () => {

@@ -15,7 +15,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // so we forward the Clerk JWT in the Authorization header so PostgREST
 // can evaluate RLS using request.jwt.claims. Always fetch a fresh token per request.
 let tokenProvider: (() => Promise<string | null>) | null = null;
-export function setSupabaseTokenProvider(provider: (() => Promise<string | null>) | null) {
+export function setSupabaseTokenProvider(
+  provider: (() => Promise<string | null>) | null,
+) {
   tokenProvider = provider;
 }
 

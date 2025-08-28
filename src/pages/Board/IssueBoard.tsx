@@ -65,7 +65,7 @@ export default function IssueBoard({ filterState }: IssueBoardProps) {
       query = query.in("priority", filterState.priority as string[]);
     if (filterState?.estimate?.length) {
       const includesNull = filterState.estimate.includes(null);
-      const nums = (filterState.estimate.filter((e) => e !== null) as number[]);
+      const nums = filterState.estimate.filter((e) => e !== null) as number[];
       if (includesNull && nums.length > 0) {
         query = query.or(`estimate.is.null,estimate.in.(${nums.join(",")})`);
       } else if (includesNull) {
@@ -226,10 +226,7 @@ export default function IssueBoard({ filterState }: IssueBoardProps) {
    * @param issueAfter The issue immediately after the issue being moved
    * @returns The new kanbanorder
    */
-  const getNewKanbanOrder = (
-    issueBefore?: Issue,
-    issueAfter?: Issue,
-  ) => {
+  const getNewKanbanOrder = (issueBefore?: Issue, issueAfter?: Issue) => {
     const prevKanbanOrder = issueBefore?.kanbanorder;
     // eslint-disable-next-line prefer-const
     let nextKanbanOrder = issueAfter?.kanbanorder;
