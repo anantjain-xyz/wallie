@@ -6,20 +6,45 @@ const hoistedGetAuth = vi.hoisted(() => vi.fn((c: any) => c.var?.mockAuth ?? { u
 
 vi.mock('@hono/clerk-auth', () => ({
   getAuth: hoistedGetAuth,
+  clerkMiddleware: vi.fn(() => vi.fn()),
 }))
 
 // Mock supabase module before importing auth to avoid env checks
-vi.mock('./supabase', () => ({
-  supabaseAdmin: {
-    from: () => ({
-      select: () => ({ data: [], error: null }),
-      upsert: () => ({ select: () => ({ single: () => ({ data: null, error: null }) }) }),
+vi.mock('./supabase', () => {
+  const buildSelect = (table: string) => ({
+    eq: (_col: string, _val: any) => ({
+      data: table === 'app_user' ? [{ workspace_id: 'ws_1' }] : [],
+      error: null,
     }),
-  },
+    contains: (_col: string, _val: any) => ({ data: [], error: null }),
+    maybeSingle: () => ({ data: null, error: null }),
+    single: () => ({ data: null, error: null }),
+  }) as any
+
+  const from = (table: string) => ({
+    select: (_cols?: string) => buildSelect(table),
+    upsert: (_val: any, _opts?: any) => ({ select: () => ({ single: () => ({ data: null, error: null }) }) }),
+  })
+
+  return { supabaseAdmin: { from } }
+})
+
+// Mock Clerk backend to prevent real network calls
+vi.mock('@clerk/backend', () => ({
+  createClerkClient: () => ({
+    users: {
+      getUser: vi.fn().mockResolvedValue({
+        id: 'user_1',
+        emailAddresses: [{ emailAddress: 'test@example.com', verified: true, id: 'email_1' }],
+        firstName: 'Test',
+        lastName: 'User',
+      }),
+    },
+  }),
 }))
 
 let validateWriteAuth: (c: Context) => Promise<Response | null>
-let getWorkspaceIdFromUser: (userId: string) => Promise<string | null>
+let getWorkspaceIdFromUserSpy: ReturnType<typeof vi.spyOn>
 
 function createCtx(body: unknown, auth: any = { userId: 'user_1' }): Context {
   const req = new Request('http://localhost/write', {
@@ -40,12 +65,12 @@ describe('validateWriteAuth', () => {
   beforeAll(async () => {
     const mod = await import('./auth')
     validateWriteAuth = mod.validateWriteAuth
-    getWorkspaceIdFromUser = mod.getWorkspaceIdFromUser
+    getWorkspaceIdFromUserSpy = vi.spyOn(mod, 'getWorkspaceIdFromUser')
   })
 
   beforeEach(() => {
     vi.clearAllMocks()
-    ;(getWorkspaceIdFromUser as unknown as vi.Mock).mockResolvedValue('ws_1')
+    getWorkspaceIdFromUserSpy.mockResolvedValue('ws_1')
   })
 
   it('returns 401 when not authenticated', async () => {
