@@ -64,15 +64,6 @@ Now start the dev server for the frontend app:
 pnpm dev
 ```
 
-Finally start the agent:
-
-```shell
-cd agent
-uv venv
-uv sync --dev
-cd ..
-python -m agent.main
-```
 
 When you're done, stop Supabase:
 
@@ -103,18 +94,17 @@ Wallie includes a GitHub App integration that allows users to create pull reques
    - `/api/github/callback`: Handles the callback from GitHub after installation
    - `/api/github/webhook`: Handles webhook events from GitHub
    - `/api/github/refresh-repos`: Refreshes the list of repositories for an installation
-   - `/api/github/token`: Provides installation tokens for the agent
+   - `/api/github/token`: Provides installation tokens
 
 4. **UI Components**:
    - GitHub integration settings in the Settings page
    - Repository selection dropdown in the Issue creation modal
 
-5. **Agent Integration**:
-   - The Python agent uses workspace-specific GitHub tokens to create PRs
+5. **Token Management**:
    - Tokens are automatically refreshed when they expire
 
 ### User Flow
 
 1. User installs the GitHub App from the Settings page
 2. User selects a repository when creating an issue
-3. When the agent processes the issue, it uses the GitHub App installation token to create a PR in the selected repository
+3. The system uses the GitHub App installation token to create a PR in the selected repository

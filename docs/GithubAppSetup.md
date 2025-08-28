@@ -13,7 +13,6 @@ The implementation includes:
 1. **Database Schema**: New tables for GitHub installations and repositories
 2. **API Server**: Dedicated server for GitHub App installation, webhooks, and token management
 3. **Frontend UI**: Settings page for GitHub integration and repository selection in issues
-4. **Agent Integration**: Updated Python agent to use workspace-specific GitHub tokens
 
 ## Setup Instructions
 
@@ -100,7 +99,7 @@ tailscale funnel 3003
 3. They are redirected to GitHub to authorize the installation
 4. After installation, they are redirected back to the Settings page
 5. The GitHub repositories are now available for selection when creating issues
-6. When an issue is created with a GitHub repository selected, the agent can create PRs using the GitHub App installation token
+6. When an issue is created with a GitHub repository selected, the app can create PRs using the GitHub App installation token
 
 ## Troubleshooting
 

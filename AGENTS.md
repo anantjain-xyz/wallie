@@ -3,7 +3,6 @@
 ## Project Structure & Module Organization
 - `src/`: React + TypeScript app (components, pages, hooks, utils). Entry: `src/main.tsx`.
 - `servers/`: Node/TS services (Hono API, cron jobs, middleware) and tests.
-- `agent/`: Python FastAPI agent service (see `agent/main.py`).
 - `public/` static assets; `supabase/` SQL/config; `docs/` docs; `dist/` build output.
 
 ## Build, Test, and Development Commands
@@ -15,7 +14,7 @@
 - `pnpm test`: Run Vitest suite.
 - `pnpm typecheck`: TypeScript checks (no emit).
 - `pnpm lint` / `pnpm format`: ESLint and Prettier on `src/`.
-- Python agent (from `agent/`): `uvicorn agent.main:app --reload` (requires Python 3.12 and `.env`).
+
 
 ## Coding Style & Naming Conventions
 - TypeScript strict mode; React function components, hooks rules enforced.
