@@ -35,11 +35,7 @@ export async function updateIssue(
 }
 
 export async function deleteIssue(id: string) {
-  // Soft delete for consistency with queries filtering deleted=false
-  const { error } = await supabase
-    .from("issue")
-    .update({ deleted: true, modified: new Date().toISOString() })
-    .eq("id", id);
-
+  // Hard delete in Supabase
+  const { error } = await supabase.from("issue").delete().eq("id", id);
   if (error) throw error;
 }

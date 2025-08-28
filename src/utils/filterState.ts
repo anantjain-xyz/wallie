@@ -163,8 +163,7 @@ export function filterStateToSql(filterState: FilterState) {
     SELECT *
     FROM issue
     WHERE
-      ${sqlWhere.length ? `${sqlWhere.join(" AND ")} AND ` : ""}
-      deleted = false
+      ${sqlWhere.length ? `${sqlWhere.join(" AND ")}` : "TRUE"}
     ORDER BY
       ${orderByClause} ${filterState.orderDirection},
       id ASC

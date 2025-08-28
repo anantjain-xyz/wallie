@@ -45,7 +45,6 @@ export default function AssigneeMenu({
         .from("app_user")
         .select("id, username, full_name, profile_picture")
         .eq("workspace_id", workspaceId)
-        .eq("deleted", false)
         .order("full_name", { nullsFirst: false })
         .order("username");
       return { data, error };

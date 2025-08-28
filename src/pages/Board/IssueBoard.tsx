@@ -16,6 +16,7 @@ interface MovedIssues {
   [id: string]: {
     status?: StatusValue;
     kanbanorder?: string;
+    modified?: Date | string;
   };
 }
 
@@ -59,12 +60,20 @@ export default function IssueBoard({ filterState }: IssueBoardProps) {
         "id,title,status,priority,estimate,external_id,assignee_id,workspace_id,kanbanorder, app_user:assignee_id(full_name, profile_picture)",
       )
       .eq("status", status)
-      .eq("deleted", false)
       .order("kanbanorder", { ascending: true });
     if (filterState?.priority?.length)
       query = query.in("priority", filterState.priority as string[]);
-    if (filterState?.estimate?.length)
-      query = query.in("estimate", filterState.estimate as (number | null)[]);
+    if (filterState?.estimate?.length) {
+      const includesNull = filterState.estimate.includes(null);
+      const nums = (filterState.estimate.filter((e) => e !== null) as number[]);
+      if (includesNull && nums.length > 0) {
+        query = query.or(`estimate.is.null,estimate.in.(${nums.join(",")})`);
+      } else if (includesNull) {
+        query = query.is("estimate", null);
+      } else if (nums.length > 0) {
+        query = query.in("estimate", nums);
+      }
+    }
     if (filterState?.query) {
       const q = filterState.query;
       query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
@@ -217,7 +226,10 @@ export default function IssueBoard({ filterState }: IssueBoardProps) {
    * @param issueAfter The issue immediately after the issue being moved
    * @returns The new kanbanorder
    */
-  const getNewKanbanOrder = (issueBefore: Issue, issueAfter: Issue) => {
+  const getNewKanbanOrder = (
+    issueBefore?: Issue,
+    issueAfter?: Issue,
+  ) => {
     const prevKanbanOrder = issueBefore?.kanbanorder;
     // eslint-disable-next-line prefer-const
     let nextKanbanOrder = issueAfter?.kanbanorder;
@@ -266,7 +278,7 @@ export default function IssueBoard({ filterState }: IssueBoardProps) {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex flex-1 pt-6 pl-8 overflow-scroll bg-gray-100">
-        {statuses.includes(Status.BACKLOG) && (
+        {statusesFilter.includes(Status.BACKLOG) && (
           <IssueCol
             title={StatusDisplay[Status.BACKLOG]}
             status={Status.BACKLOG}
@@ -274,7 +286,7 @@ export default function IssueBoard({ filterState }: IssueBoardProps) {
             workspaceName={workspaceName}
           />
         )}
-        {statuses.includes(Status.TODO) && (
+        {statusesFilter.includes(Status.TODO) && (
           <IssueCol
             title={StatusDisplay[Status.TODO]}
             status={Status.TODO}
@@ -282,7 +294,7 @@ export default function IssueBoard({ filterState }: IssueBoardProps) {
             workspaceName={workspaceName}
           />
         )}
-        {statuses.includes(Status.IN_PROGRESS) && (
+        {statusesFilter.includes(Status.IN_PROGRESS) && (
           <IssueCol
             title={StatusDisplay[Status.IN_PROGRESS]}
             status={Status.IN_PROGRESS}
@@ -290,7 +302,7 @@ export default function IssueBoard({ filterState }: IssueBoardProps) {
             workspaceName={workspaceName}
           />
         )}
-        {statuses.includes(Status.IN_REVIEW) && (
+        {statusesFilter.includes(Status.IN_REVIEW) && (
           <IssueCol
             title={StatusDisplay[Status.IN_REVIEW]}
             status={Status.IN_REVIEW}
@@ -298,7 +310,7 @@ export default function IssueBoard({ filterState }: IssueBoardProps) {
             workspaceName={workspaceName}
           />
         )}
-        {statuses.includes(Status.DONE) && (
+        {statusesFilter.includes(Status.DONE) && (
           <IssueCol
             title={StatusDisplay[Status.DONE]}
             status={Status.DONE}
@@ -306,7 +318,7 @@ export default function IssueBoard({ filterState }: IssueBoardProps) {
             workspaceName={workspaceName}
           />
         )}
-        {statuses.includes(Status.CANCELED) && (
+        {statusesFilter.includes(Status.CANCELED) && (
           <IssueCol
             title={StatusDisplay[Status.CANCELED]}
             status={Status.CANCELED}

@@ -143,7 +143,6 @@ function IssuePage() {
         .from("github_repository")
         .select("id, full_name")
         .eq("workspace_id", workspaceId)
-        .eq("deleted", false)
         .order("full_name");
       return { data, error };
     },
@@ -484,11 +483,8 @@ function IssuePage() {
   };
 
   const handleDelete = () => {
-    // Soft delete the issue
-    supabase
-      .from("issue")
-      .update({ deleted: true, modified: new Date().toISOString() })
-      .eq("id", issue.id);
+    // Hard delete the issue in Supabase
+    supabase.from("issue").delete().eq("id", issue.id);
     handleClose();
   };
 

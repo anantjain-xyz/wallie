@@ -245,10 +245,7 @@ export async function issueListLoaderSupabase({
 }) {
   const url = new URL(request.url);
   const filterState = getFilterStateFromSearchParams(url.searchParams);
-  let query = supabase
-    .from("issue")
-    .select("*", { count: "exact" })
-    .eq("deleted", false);
+  let query = supabase.from("issue").select("*", { count: "exact" });
 
   if (filterState.status && filterState.status.length) {
     query = query.in("status", filterState.status as string[]);
@@ -257,7 +254,17 @@ export async function issueListLoaderSupabase({
     query = query.in("priority", filterState.priority as string[]);
   }
   if (filterState.estimate && filterState.estimate.length) {
-    query = query.in("estimate", filterState.estimate as (number | null)[]);
+    const includesNull = filterState.estimate.includes(null);
+    const nums = (filterState.estimate.filter((e) => e !== null) as number[]);
+    if (includesNull && nums.length > 0) {
+      query = query.or(
+        `estimate.is.null,estimate.in.(${nums.join(",")})`,
+      );
+    } else if (includesNull) {
+      query = query.is("estimate", null);
+    } else if (nums.length > 0) {
+      query = query.in("estimate", nums);
+    }
   }
   if (filterState.query) {
     const q = filterState.query;

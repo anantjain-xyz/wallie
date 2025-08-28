@@ -24,7 +24,7 @@ const WorkspaceTierAlert: React.FC<WorkspaceTierAlertProps> = ({
         .limit(1);
       return { data, error };
     },
-    [workspaceId],
+    workspaceId || "",
   );
 
   const workspace = workspaceRows?.[0];

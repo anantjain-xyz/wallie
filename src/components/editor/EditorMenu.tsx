@@ -287,7 +287,6 @@ const EditorMenu = ({ editor }: EditorMenuProps) => {
           assignee_id: null,
           estimate: issue.estimate,
           external_id: externalId,
-          deleted: false,
         });
         createdIds.push(issueId);
         createdCount++;

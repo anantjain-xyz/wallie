@@ -64,7 +64,7 @@ function List({ showSearch = false }) {
     }
   }, [showSearch]);
 
-  // Refresh the issues query when the component mounts
+  // No extra refresh needed; IssueBoard and list loader handle fetching
   useEffect(() => {}, []);
 
   // Board view is driven by IssueBoard component using Supabase realtime

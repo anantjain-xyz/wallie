@@ -92,7 +92,6 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         .from("github_repository")
         .select("id, name, full_name, private")
         .eq("workspace_id", workspaceId)
-        .eq("deleted", false)
         .order("name");
       return { data, error };
     },
@@ -113,7 +112,6 @@ function IssueModal({ isOpen, onDismiss }: Props) {
         .from("app_user")
         .select("id, username, full_name, profile_picture")
         .eq("workspace_id", workspaceId)
-        .eq("deleted", false)
         .order("full_name", { nullsFirst: false })
         .order("username");
       return { data, error };
@@ -183,7 +181,6 @@ function IssueModal({ isOpen, onDismiss }: Props) {
           external_id: externalId,
           plan,
           design,
-          deleted: false,
         });
         if (error) throw error;
 

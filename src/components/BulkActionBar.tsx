@@ -178,11 +178,8 @@ export default function BulkActionBar({
   const handleBulkDelete = async () => {
     try {
       const issueIds = Array.from(selectedIssues);
-      // Soft delete issues by setting deleted=true
-      await supabase
-        .from("issue")
-        .update({ deleted: true, modified: new Date().toISOString() })
-        .in("id", issueIds);
+      // Hard delete issues in Supabase
+      await supabase.from("issue").delete().in("id", issueIds);
       onClearSelection();
     } catch (error) {
       console.error("Error deleting issues:", error);
