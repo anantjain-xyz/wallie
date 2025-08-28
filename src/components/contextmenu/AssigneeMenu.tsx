@@ -1,66 +1,71 @@
-import { Portal } from '../Portal'
-import { ReactNode, useState } from 'react'
-import { ContextMenuTrigger } from '@firefox-devtools/react-contextmenu'
-import { Menu } from './menu'
-import { useLiveQuery } from '@electric-sql/pglite-react'
-import { ReactComponent as AssigneeIcon } from '../../assets/icons/assignee.svg'
-import Avatar from '../Avatar'
+import { Portal } from "../Portal";
+import { ReactNode, useState } from "react";
+import { ContextMenuTrigger } from "@firefox-devtools/react-contextmenu";
+import { Menu } from "./menu";
+import { useRealtimeQuery } from "../../hooks/useRealtimeQuery";
+import { supabase } from "../../supabase";
+import { ReactComponent as AssigneeIcon } from "../../assets/icons/assignee.svg";
+import Avatar from "../Avatar";
 
 interface User {
-  id: string
-  username: string
-  full_name: string | null
-  profile_picture: string | null
+  id: string;
+  username: string;
+  full_name: string | null;
+  profile_picture: string | null;
 }
 
 interface Props {
-  id: string
-  button: ReactNode
-  workspaceId: string
-  filterKeyword?: boolean
-  className?: string
-  onSelect?: (userId: string | null) => void
+  id: string;
+  button: ReactNode;
+  workspaceId: string;
+  filterKeyword?: boolean;
+  className?: string;
+  onSelect?: (userId: string | null) => void;
 }
 
-export default function AssigneeMenu({ 
-  id, 
-  button, 
+export default function AssigneeMenu({
+  id,
+  button,
   workspaceId,
-  filterKeyword = false, 
-  className, 
+  filterKeyword = false,
+  className,
   onSelect,
 }: Props) {
-  const [keyword, setKeyword] = useState(``)
-  
+  const [keyword, setKeyword] = useState(``);
+
   const handleSelect = (userId: string | null) => {
-    if (onSelect) onSelect(userId)
-  }
+    if (onSelect) onSelect(userId);
+  };
 
   // Query users from the workspace
-  const usersResult = useLiveQuery.sql<User>`
-    SELECT id, username, full_name, profile_picture
-    FROM app_user
-    WHERE workspace_id = ${workspaceId}
-    AND deleted = false
-    ORDER BY full_name, username
-  `
-  
-  const users = usersResult?.rows || []
-  
-  let filteredUsers = users
+  const { data: users = [] } = useRealtimeQuery<User>(
+    "app_user",
+    async () => {
+      const { data, error } = await supabase
+        .from("app_user")
+        .select("id, username, full_name, profile_picture")
+        .eq("workspace_id", workspaceId)
+        .order("full_name", { nullsFirst: false })
+        .order("username");
+      return { data, error };
+    },
+    workspaceId,
+  );
+
+  let filteredUsers = users;
   if (keyword !== ``) {
-    const normalizedKeyword = keyword.toLowerCase().trim()
+    const normalizedKeyword = keyword.toLowerCase().trim();
     filteredUsers = users.filter(
-      (user) => 
-        (user.full_name?.toLowerCase().includes(normalizedKeyword) || 
-        user.username.toLowerCase().includes(normalizedKeyword))
-    )
+      (user) =>
+        user.full_name?.toLowerCase().includes(normalizedKeyword) ||
+        user.username.toLowerCase().includes(normalizedKeyword),
+    );
   }
 
   const options = [
     // Add "Unassigned" option
     <Menu.Item key="unassigned" onClick={() => handleSelect(null)}>
-      <div className='flex flex-row items-center'>
+      <div className="flex flex-row items-center">
         <AssigneeIcon className="mr-1 w-4 h-4" />
         <div className="flex-1 overflow-hidden">No assignee</div>
       </div>
@@ -69,10 +74,7 @@ export default function AssigneeMenu({
     users.length > 0 ? <Menu.Divider key="divider" /> : null,
     // Add user options
     ...filteredUsers.map((user) => (
-      <Menu.Item
-        key={`user-${user.id}`}
-        onClick={() => handleSelect(user.id)}
-      >
+      <Menu.Item key={`user-${user.id}`} onClick={() => handleSelect(user.id)}>
         <Avatar
           avatarUrl={user.profile_picture || undefined}
           name={user.full_name || user.username}
@@ -81,8 +83,8 @@ export default function AssigneeMenu({
           {user.full_name || user.username}
         </div>
       </Menu.Item>
-    ))
-  ]
+    )),
+  ];
 
   return (
     <>
@@ -100,9 +102,9 @@ export default function AssigneeMenu({
           onKeywordChange={(kw) => setKeyword(kw)}
           onSelect={(index) => {
             if (index === 0) {
-              handleSelect(null) // Unassigned
+              handleSelect(null); // Unassigned
             } else if (index > 1 && index - 2 < filteredUsers.length) {
-              handleSelect(filteredUsers[index - 2].id) // User from the list
+              handleSelect(filteredUsers[index - 2].id); // User from the list
             }
           }}
         >
@@ -110,5 +112,5 @@ export default function AssigneeMenu({
         </Menu>
       </Portal>
     </>
-  )
+  );
 }

@@ -1,88 +1,120 @@
-import type { CSSProperties } from 'react'
-import { usePGlite } from '@electric-sql/pglite-react'
-import PriorityMenu from '../../components/contextmenu/PriorityMenu'
-import StatusMenu from '../../components/contextmenu/StatusMenu'
-import AssigneeMenu from '../../components/contextmenu/AssigneeMenu'
-import PriorityIcon from '../../components/PriorityIcon'
-import StatusIcon from '../../components/StatusIcon'
-import Avatar from '../../components/Avatar'
-import { memo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { formatDate } from '../../utils/date'
-import { Issue } from '../../types/types'
-import React from 'react'
-import { ReactComponent as EstimateIcon } from '../../assets/icons/estimate.svg'
-import EstimateMenu from '../../components/contextmenu/EstimateMenu'
-import { formatExternalId } from '../../utils/issueUtils'
-import { IoSync as SyncIcon } from "react-icons/io5";
-import { renderInlineCode } from '../../utils/renderInlineCode'
+import type { CSSProperties } from "react";
+import { supabase } from "../../supabase";
+import PriorityMenu from "../../components/contextmenu/PriorityMenu";
+import StatusMenu from "../../components/contextmenu/StatusMenu";
+import AssigneeMenu from "../../components/contextmenu/AssigneeMenu";
+import PriorityIcon from "../../components/PriorityIcon";
+import StatusIcon from "../../components/StatusIcon";
+import Avatar from "../../components/Avatar";
+import { memo } from "react";
+import { useNavigate } from "react-router-dom";
+import { formatDate } from "../../utils/date";
+import { Issue } from "../../types/types";
+import React from "react";
+import { ReactComponent as EstimateIcon } from "../../assets/icons/estimate.svg";
+import EstimateMenu from "../../components/contextmenu/EstimateMenu";
+import { formatExternalId } from "../../utils/issueUtils";
+import { showError } from "../../utils/notification.tsx";
+// import { IoSync as SyncIcon } from "react-icons/io5";
+import { renderInlineCode } from "../../utils/renderInlineCode";
 
 interface Props {
-  issue: Issue | undefined
-  style: CSSProperties
-  isSelected?: boolean
-  onSelect?: (issueId: string, selected: boolean, event?: React.MouseEvent) => void
-  selectionMode?: boolean
-  workspaceId: string
-  workspaceName: string
+  issue: Issue | undefined;
+  style: CSSProperties;
+  isSelected?: boolean;
+  onSelect?: (
+    issueId: string,
+    selected: boolean,
+    event?: React.MouseEvent,
+  ) => void;
+  selectionMode?: boolean;
+  workspaceId: string;
+  workspaceName: string;
 }
 
-function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = false, workspaceId, workspaceName }: Props) {
-  const pg = usePGlite()
-  const navigate = useNavigate()
-  const [assigneeName, setAssigneeName] = React.useState<string | undefined>(undefined)
-  const [assigneeProfilePicture, setAssigneeProfilePicture] = React.useState<string | null>(null)
-  
+function IssueRow({
+  issue,
+  style,
+  isSelected = false,
+  onSelect,
+  selectionMode = false,
+  workspaceId,
+  workspaceName,
+}: Props) {
+  const navigate = useNavigate();
+  const [assigneeName, setAssigneeName] = React.useState<string | undefined>(
+    undefined,
+  );
+  const [assigneeProfilePicture, setAssigneeProfilePicture] = React.useState<
+    string | null
+  >(null);
+
   React.useEffect(() => {
     if (issue?.assignee_id) {
-      pg.sql`
-        SELECT full_name, profile_picture
-        FROM app_user
-        WHERE id = ${issue.assignee_id}
-      `.then((result: { rows: unknown[] }) => {
-        if (result.rows.length > 0) {
-          const row = result.rows[0] as { full_name: string, profile_picture: string | null };
-          setAssigneeName(row.full_name);
-          setAssigneeProfilePicture(row.profile_picture);
-        }
-      })
+      supabase
+        .from("app_user")
+        .select("full_name, profile_picture")
+        .eq("id", issue.assignee_id)
+        .limit(1)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            setAssigneeName(data[0].full_name || undefined);
+            setAssigneeProfilePicture(data[0].profile_picture);
+          }
+        });
     } else {
       setAssigneeName(undefined);
       setAssigneeProfilePicture(null);
     }
-  }, [issue?.assignee_id, pg.sql])
+  }, [issue?.assignee_id]);
 
-  const handleChangeStatus = (status: string) => {
-    pg.sql`
-      UPDATE issue
-      SET status = ${status}, modified = NOW()
-      WHERE id = ${issue!.id}
-    `
-  }
+  const handleChangeStatus = async (status: string) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ status, modified: new Date().toISOString() })
+        .eq("id", issue!.id);
+      if (error) throw error;
+    } catch (err) {
+      showError("Failed to update status", "Save error");
+    }
+  };
 
-  const handleChangePriority = (priority: string) => {
-    pg.sql`
-      UPDATE issue
-      SET priority = ${priority}, modified = NOW()
-      WHERE id = ${issue!.id}
-    `
-  }
-  
-  const handleChangeAssignee = (userId: string | null) => {
-    pg.sql`
-      UPDATE issue
-      SET assignee_id = ${userId}, modified = NOW()
-      WHERE id = ${issue!.id}
-    `
-  }
-  
-  const handleChangeEstimate = (estimate: number | null) => {
-    pg.sql`
-      UPDATE issue
-      SET estimate = ${estimate}, modified = NOW()
-      WHERE id = ${issue!.id}
-    `
-  }
+  const handleChangePriority = async (priority: string) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ priority, modified: new Date().toISOString() })
+        .eq("id", issue!.id);
+      if (error) throw error;
+    } catch (err) {
+      showError("Failed to update priority", "Save error");
+    }
+  };
+
+  const handleChangeAssignee = async (userId: string | null) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ assignee_id: userId, modified: new Date().toISOString() })
+        .eq("id", issue!.id);
+      if (error) throw error;
+    } catch (err) {
+      showError("Failed to update assignee", "Save error");
+    }
+  };
+
+  const handleChangeEstimate = async (estimate: number | null) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ estimate, modified: new Date().toISOString() })
+        .eq("id", issue!.id);
+      if (error) throw error;
+    } catch (err) {
+      showError("Failed to update estimate", "Save error");
+    }
+  };
 
   const handleRowClick = (e: React.MouseEvent) => {
     if (selectionMode && onSelect && issue?.id) {
@@ -92,14 +124,14 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
     } else if (issue?.id) {
       navigate(`/issue/${formatExternalId(workspaceName, issue.external_id)}`);
     }
-  }
+  };
 
   const handleCheckboxClick = (e: React.MouseEvent) => {
     if (onSelect && issue?.id) {
       onSelect(issue.id, !isSelected, e);
       e.stopPropagation();
     }
-  }
+  };
 
   if (!issue?.id) {
     return (
@@ -109,12 +141,12 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
       >
         <div className="w-full h-full" />
       </div>
-    )
+    );
   }
   return (
     <div
       key={issue.id}
-      className={`flex items-center flex-grow w-full min-w-0 pl-2 pr-8 text-sm border-b border-gray-100 hover:bg-gray-100 shrink-0 ${isSelected ? 'bg-blue-50' : ''} ${selectionMode ? 'cursor-pointer' : ''}`}
+      className={`flex items-center flex-grow w-full min-w-0 pl-2 pr-8 text-sm border-b border-gray-100 hover:bg-gray-100 shrink-0 ${isSelected ? "bg-blue-50" : ""} ${selectionMode ? "cursor-pointer" : ""}`}
       id={issue.id}
       onClick={handleRowClick}
       style={style}
@@ -124,28 +156,46 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
           type="checkbox"
           checked={isSelected}
           onChange={() => {}}
-          className={`w-4 h-4 text-blue-600 rounded focus:ring-0 ${selectionMode ? 'border-gray-300' : 'border-gray-200'}`}
+          className={`w-4 h-4 text-blue-600 rounded focus:ring-0 ${selectionMode ? "border-gray-300" : "border-gray-200"}`}
         />
       </div>
       <div className="flex-shrink-0 ml-3">
         <PriorityMenu
           id={`r-priority-` + issue.id}
-          button={<PriorityIcon priority={issue.priority} />}
+          button={
+            <div
+              className="flex items-center hover:bg-gray-100 rounded p-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <PriorityIcon priority={issue.priority} />
+            </div>
+          }
           onSelect={handleChangePriority}
         />
       </div>
       <div className="flex-shrink-0 ml-3">
         <StatusMenu
           id={`r-status-` + issue.id}
-          button={<StatusIcon status={issue.status} />}
+          button={
+            <div
+              className="flex items-center hover:bg-gray-100 rounded p-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <StatusIcon status={issue.status} />
+            </div>
+          }
           onSelect={handleChangeStatus}
         />
       </div>
       <div className="flex-shrink flex ml-3 overflow-hidden font-medium">
         {issue.external_id !== null && (
-          <div className="text-gray-400 mr-4 font-mono w-16">{formatExternalId(workspaceName, issue.external_id)}</div>
+          <div className="text-gray-400 mr-4 font-mono w-16">
+            {formatExternalId(workspaceName, issue.external_id)}
+          </div>
         )}
-        <div className="overflow-hidden line-clamp-1 overflow-ellipsis">{renderInlineCode(issue.title || '')}</div>
+        <div className="overflow-hidden line-clamp-1 overflow-ellipsis">
+          {renderInlineCode(issue.title || "")}
+        </div>
       </div>
       <div className="flex-shrink-0 hidden w-15 ml-auto font-normal text-gray-500 sm:block whitespace-nowrap">
         {formatDate(issue.created)}
@@ -191,13 +241,9 @@ function IssueRow({ issue, style, isSelected = false, onSelect, selectionMode = 
           onSelect={handleChangeEstimate}
         />
       </div>
-      {!issue.synced ? (
-        <div className="flex-shrink-0 animate-spin" title="Issue is syncing">
-          <SyncIcon />
-        </div>) : <div className="flex-shrink-0 w-3" title="Issue is synced" />
-      }
+      <div className="flex-shrink-0 w-3" />
     </div>
-  )
+  );
 }
 
-export default memo(IssueRow)
+export default memo(IssueRow);

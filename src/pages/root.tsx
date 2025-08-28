@@ -1,6 +1,6 @@
-import { Outlet } from 'react-router-dom'
-import LeftMenu from '../components/LeftMenu'
-import { useAuth } from "@clerk/clerk-react"
+import { Outlet } from "react-router-dom";
+import LeftMenu from "../components/LeftMenu";
+import { useAuth } from "@clerk/clerk-react";
 
 export default function Root() {
   const { isLoaded } = useAuth();
@@ -23,5 +23,5 @@ export default function Root() {
       {/* Portal target for CommandBar */}
       <div id="command-bar-portal"></div>
     </>
-  )
+  );
 }

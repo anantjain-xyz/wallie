@@ -1,40 +1,39 @@
-import { usePGlite } from '@electric-sql/pglite-react'
-import AssigneeMenu from './contextmenu/AssigneeMenu'
-import StatusMenu from './contextmenu/StatusMenu'
-import PriorityMenu from './contextmenu/PriorityMenu'
-import Tooltip from './Tooltip'
-import { ReactComponent as AssigneeIcon } from '../assets/icons/assignee.svg'
-import { ReactComponent as CloseIcon } from '../assets/icons/close.svg'
-import PriorityIcon from './PriorityIcon'
-import StatusIcon from './StatusIcon'
-import { Status } from '../types/types'
-import EstimateMenu from './contextmenu/EstimateMenu'
-import { ReactComponent as EstimateIcon } from '../assets/icons/estimate.svg'
-import { BsTrash3 as DeleteIcon } from 'react-icons/bs'
-import { useState, useRef, useEffect } from 'react'
-import BulkDeleteModal from './BulkDeleteModal'
-import { showMenu } from '@firefox-devtools/react-contextmenu'
+import { supabase } from "../supabase";
+import AssigneeMenu from "./contextmenu/AssigneeMenu";
+import StatusMenu from "./contextmenu/StatusMenu";
+import PriorityMenu from "./contextmenu/PriorityMenu";
+import Tooltip from "./Tooltip";
+import { ReactComponent as AssigneeIcon } from "../assets/icons/assignee.svg";
+import { ReactComponent as CloseIcon } from "../assets/icons/close.svg";
+import PriorityIcon from "./PriorityIcon";
+import StatusIcon from "./StatusIcon";
+import { Status } from "../types/types";
+import EstimateMenu from "./contextmenu/EstimateMenu";
+import { ReactComponent as EstimateIcon } from "../assets/icons/estimate.svg";
+import { BsTrash3 as DeleteIcon } from "react-icons/bs";
+import { useState, useRef, useEffect } from "react";
+import BulkDeleteModal from "./BulkDeleteModal";
+import { showMenu } from "@firefox-devtools/react-contextmenu";
 
 interface BulkActionBarProps {
-  selectedIssues: Set<string>
-  workspaceId: string
-  onClearSelection: () => void
+  selectedIssues: Set<string>;
+  workspaceId: string;
+  onClearSelection: () => void;
 }
 
-export default function BulkActionBar({ 
-  selectedIssues, 
-  workspaceId, 
-  onClearSelection 
+export default function BulkActionBar({
+  selectedIssues,
+  workspaceId,
+  onClearSelection,
 }: BulkActionBarProps) {
-  const pg = usePGlite()
-  const selectedCount = selectedIssues.size
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  
+  const selectedCount = selectedIssues.size;
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
   // Refs for menu buttons
-  const statusBtnRef = useRef<HTMLButtonElement>(null)
-  const priorityBtnRef = useRef<HTMLButtonElement>(null)
-  const estimateBtnRef = useRef<HTMLButtonElement>(null)
-  const assigneeBtnRef = useRef<HTMLButtonElement>(null)
+  const statusBtnRef = useRef<HTMLButtonElement>(null);
+  const priorityBtnRef = useRef<HTMLButtonElement>(null);
+  const estimateBtnRef = useRef<HTMLButtonElement>(null);
+  const assigneeBtnRef = useRef<HTMLButtonElement>(null);
 
   // Hotkeys for bulk menu
   useEffect(() => {
@@ -44,120 +43,148 @@ export default function BulkActionBar({
       // Ignore if focus is in input, textarea, or contenteditable
       const active = document.activeElement;
       if (
-        active && (
-          active.tagName === 'INPUT' ||
-          active.tagName === 'TEXTAREA' ||
-          (active as HTMLElement).isContentEditable
-        )
+        active &&
+        (active.tagName === "INPUT" ||
+          active.tagName === "TEXTAREA" ||
+          (active as HTMLElement).isContentEditable)
       ) {
         return;
       }
       // s: status
-      if (e.key === 's' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (
+        e.key === "s" &&
+        !e.shiftKey &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey
+      ) {
         e.preventDefault();
         const btn = statusBtnRef.current;
         if (btn) {
           const rect = btn.getBoundingClientRect();
-          showMenu({ id: 'bulk-status-menu', position: { x: rect.left, y: rect.bottom } });
+          showMenu({
+            id: "bulk-status-menu",
+            position: { x: rect.left, y: rect.bottom },
+          });
         }
       }
       // p: priority
-      if (e.key === 'p' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (
+        e.key === "p" &&
+        !e.shiftKey &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey
+      ) {
         e.preventDefault();
         const btn = priorityBtnRef.current;
         if (btn) {
           const rect = btn.getBoundingClientRect();
-          showMenu({ id: 'bulk-priority-menu', position: { x: rect.left, y: rect.bottom } });
+          showMenu({
+            id: "bulk-priority-menu",
+            position: { x: rect.left, y: rect.bottom },
+          });
         }
       }
       // Shift+e: estimate
-      if ((e.key === 'E' || e.key === 'e') && e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (
+        (e.key === "E" || e.key === "e") &&
+        e.shiftKey &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey
+      ) {
         e.preventDefault();
         const btn = estimateBtnRef.current;
         if (btn) {
           const rect = btn.getBoundingClientRect();
-          showMenu({ id: 'bulk-estimate-menu', position: { x: rect.left, y: rect.bottom } });
+          showMenu({
+            id: "bulk-estimate-menu",
+            position: { x: rect.left, y: rect.bottom },
+          });
         }
       }
       // a: assignee
-      if (e.key === 'a' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (
+        e.key === "a" &&
+        !e.shiftKey &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey
+      ) {
         e.preventDefault();
         const btn = assigneeBtnRef.current;
         if (btn) {
           const rect = btn.getBoundingClientRect();
-          showMenu({ id: 'bulk-assignee-menu', position: { x: rect.left, y: rect.bottom } });
+          showMenu({
+            id: "bulk-assignee-menu",
+            position: { x: rect.left, y: rect.bottom },
+          });
         }
       }
     };
-    document.addEventListener('keydown', handleHotkey);
+    document.addEventListener("keydown", handleHotkey);
     return () => {
-      document.removeEventListener('keydown', handleHotkey);
+      document.removeEventListener("keydown", handleHotkey);
     };
   }, [selectedCount]);
-  
+
   const handleBulkStatusChange = async (status: string) => {
     // Convert Set to Array for SQL query
-    const issueIds = Array.from(selectedIssues)
-    
+    const issueIds = Array.from(selectedIssues);
+
     // Update all selected issues with the new status
-    await pg.sql`
-      UPDATE issue 
-      SET status = ${status}, modified = NOW()
-      WHERE id = ANY(${issueIds})
-    `
-  }
-  
+    await supabase
+      .from("issue")
+      .update({ status, modified: new Date().toISOString() })
+      .in("id", issueIds);
+  };
+
   const handleBulkPriorityChange = async (priority: string) => {
     try {
-      const issueIds = Array.from(selectedIssues)
-      
-      await pg.sql`
-        UPDATE issue 
-        SET priority = ${priority}, modified = NOW()
-        WHERE id = ANY(${issueIds})
-      `
+      const issueIds = Array.from(selectedIssues);
+
+      await supabase
+        .from("issue")
+        .update({ priority, modified: new Date().toISOString() })
+        .in("id", issueIds);
     } catch (error) {
-      console.error('Error updating priorities:', error)
+      console.error("Error updating priorities:", error);
     }
-  }
-  
+  };
+
   const handleBulkAssigneeChange = async (userId: string | null) => {
-    const issueIds = Array.from(selectedIssues)
-    
-    await pg.sql`
-      UPDATE issue
-      SET assignee_id = ${userId}, modified = NOW()
-      WHERE id = ANY(${issueIds})
-    `
-  }
+    const issueIds = Array.from(selectedIssues);
+
+    await supabase
+      .from("issue")
+      .update({ assignee_id: userId, modified: new Date().toISOString() })
+      .in("id", issueIds);
+  };
 
   const handleBulkEstimateChange = async (estimate: number | null) => {
     try {
-      const issueIds = Array.from(selectedIssues)
-      
-      await pg.sql`
-        UPDATE issue 
-        SET estimate = ${estimate}, modified = NOW()
-        WHERE id = ANY(${issueIds})
-      `
+      const issueIds = Array.from(selectedIssues);
+
+      await supabase
+        .from("issue")
+        .update({ estimate, modified: new Date().toISOString() })
+        .in("id", issueIds);
     } catch (error) {
-      console.error('Error updating estimates:', error)
+      console.error("Error updating estimates:", error);
     }
-  }
+  };
 
   const handleBulkDelete = async () => {
     try {
-      const issueIds = Array.from(selectedIssues)
-      
-      await pg.sql`
-        DELETE FROM issue 
-        WHERE id = ANY(${issueIds})
-      `
-      onClearSelection()
+      const issueIds = Array.from(selectedIssues);
+      // Hard delete issues in Supabase
+      await supabase.from("issue").delete().in("id", issueIds);
+      onClearSelection();
     } catch (error) {
-      console.error('Error deleting issues:', error)
+      console.error("Error deleting issues:", error);
     }
-  }
+  };
 
   return (
     <>
@@ -165,7 +192,7 @@ export default function BulkActionBar({
         <div className="flex-shrink-0 mr-4">
           <span className="font-medium">{selectedCount} selected</span>
         </div>
-        
+
         <div className="flex space-x-4">
           <StatusMenu
             id="bulk-status-menu"
@@ -177,7 +204,7 @@ export default function BulkActionBar({
               >
                 <Tooltip content="Change status" shortcut="S" placement="top">
                   <span className="flex items-center">
-                    <StatusIcon className='mr-2 w-4 h-4' status={Status.TODO} />
+                    <StatusIcon className="mr-2 w-4 h-4" status={Status.TODO} />
                     Change Status
                   </span>
                 </Tooltip>
@@ -185,7 +212,7 @@ export default function BulkActionBar({
             }
             onSelect={handleBulkStatusChange}
           />
-          
+
           <PriorityMenu
             id="bulk-priority-menu"
             button={
@@ -196,7 +223,7 @@ export default function BulkActionBar({
               >
                 <Tooltip content="Change priority" shortcut="P" placement="top">
                   <span className="flex items-center">
-                    <PriorityIcon className='mr-2 w-4 h-4' priority='medium' />
+                    <PriorityIcon className="mr-2 w-4 h-4" priority="medium" />
                     Change Priority
                   </span>
                 </Tooltip>
@@ -204,7 +231,7 @@ export default function BulkActionBar({
             }
             onSelect={handleBulkPriorityChange}
           />
-          
+
           <EstimateMenu
             id="bulk-estimate-menu"
             button={
@@ -213,9 +240,13 @@ export default function BulkActionBar({
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 ref={estimateBtnRef}
               >
-                <Tooltip content="Set estimate" shortcut="Shift+E" placement="top">
+                <Tooltip
+                  content="Set estimate"
+                  shortcut="Shift+E"
+                  placement="top"
+                >
                   <span className="flex items-center">
-                    <EstimateIcon className='mr-2 w-4 h-4' />
+                    <EstimateIcon className="mr-2 w-4 h-4" />
                     Set Estimate
                   </span>
                 </Tooltip>
@@ -223,7 +254,7 @@ export default function BulkActionBar({
             }
             onSelect={handleBulkEstimateChange}
           />
-          
+
           <AssigneeMenu
             id="bulk-assignee-menu"
             workspaceId={workspaceId}
@@ -274,5 +305,5 @@ export default function BulkActionBar({
         selectedCount={selectedCount}
       />
     </>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from "zod";
 
 export const issueChangeSchema = z.object({
   id: z.string(),
@@ -13,16 +13,24 @@ export const issueChangeSchema = z.object({
   external_id: z.number().nullable().optional(),
   plan: z.string().nullable().optional(),
   design: z.string().nullable().optional(),
-  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
-  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
+  created: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
   kanbanorder: z.string().nullable().optional(),
   creator_id: z.string().nullable().optional(),
   modified_columns: z.array(z.string()).nullable().optional(),
   deleted: z.boolean().nullable().optional(),
   new: z.boolean().nullable().optional(),
-})
+});
 
-export type IssueChange = z.infer<typeof issueChangeSchema>
+export type IssueChange = z.infer<typeof issueChangeSchema>;
 
 export const commentChangeSchema = z.object({
   id: z.string(),
@@ -30,14 +38,22 @@ export const commentChangeSchema = z.object({
   creator_id: z.string().nullable().optional(),
   issue_id: z.string().nullable().optional(),
   workspace_id: z.string().nullable().optional(),
-  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
-  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
+  created: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
   modified_columns: z.array(z.string()).nullable().optional(),
   deleted: z.boolean().nullable().optional(),
   new: z.boolean().nullable().optional(),
-})
+});
 
-export type CommentChange = z.infer<typeof commentChangeSchema>
+export type CommentChange = z.infer<typeof commentChangeSchema>;
 
 export const workspaceChangeSchema = z.object({
   id: z.string(),
@@ -45,16 +61,24 @@ export const workspaceChangeSchema = z.object({
   url: z.string().nullable().optional(),
   avatar_url: z.string().nullable().optional(),
   allowlisted_domains: z.array(z.string()).nullable().optional(),
-  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
-  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
+  created: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
   modified_columns: z.array(z.string()).nullable().optional(),
   deleted: z.boolean().nullable().optional(),
   new: z.boolean().nullable().optional(),
   // Note that tier, current_billing_cycle_start_date, and successful_agent_runs_this_cycle
   // are not synced because client should never be able to update them directly.
-})
+});
 
-export type WorkspaceChange = z.infer<typeof workspaceChangeSchema>
+export type WorkspaceChange = z.infer<typeof workspaceChangeSchema>;
 
 export const appUserChangeSchema = z.object({
   id: z.string(),
@@ -63,33 +87,57 @@ export const appUserChangeSchema = z.object({
   full_name: z.string().nullable().optional(),
   profile_picture: z.string().nullable().optional(),
   workspace_id: z.string().nullable().optional(),
-  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
-  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
+  created: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
   modified_columns: z.array(z.string()).nullable().optional(),
   deleted: z.boolean().nullable().optional(),
   new: z.boolean().nullable().optional(),
-})
+});
 
-export type AppUserChange = z.infer<typeof appUserChangeSchema>
+export type AppUserChange = z.infer<typeof appUserChangeSchema>;
 
 export const agentRunChangeSchema = z.object({
   id: z.string(),
   issue_id: z.string().nullable().optional(),
   app_user_id: z.string().nullable().optional(),
   workspace_id: z.string().nullable().optional(),
-  start_time: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
-  end_time: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  start_time: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
+  end_time: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
   model_provider: z.string().nullable().optional(),
   model_name: z.string().nullable().optional(),
   status: z.string().nullable().optional(),
-  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
-  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
+  created: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
   modified_columns: z.array(z.string()).nullable().optional(),
   deleted: z.boolean().nullable().optional(),
   new: z.boolean().nullable().optional(),
-})
+});
 
-export type AgentRunChange = z.infer<typeof agentRunChangeSchema>
+export type AgentRunChange = z.infer<typeof agentRunChangeSchema>;
 
 export const githubInstallationChangeSchema = z.object({
   id: z.string(),
@@ -101,16 +149,30 @@ export const githubInstallationChangeSchema = z.object({
   target_name: z.string().nullable().optional(),
   permissions: z.any().nullable().optional(),
   access_token: z.string().nullable().optional(),
-  token_expires_at: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  token_expires_at: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
   suspended: z.boolean().nullable().optional(),
-  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
-  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
+  created: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
   modified_columns: z.array(z.string()).nullable().optional(),
   deleted: z.boolean().nullable().optional(),
   new: z.boolean().nullable().optional(),
-})
+});
 
-export type GithubInstallationChange = z.infer<typeof githubInstallationChangeSchema>
+export type GithubInstallationChange = z.infer<
+  typeof githubInstallationChangeSchema
+>;
 
 export const githubRepositoryChangeSchema = z.object({
   id: z.string(),
@@ -123,14 +185,24 @@ export const githubRepositoryChangeSchema = z.object({
   html_url: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
   default_programming_language: z.string().nullable().optional(),
-  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
-  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
+  created: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
   modified_columns: z.array(z.string()).nullable().optional(),
   deleted: z.boolean().nullable().optional(),
   new: z.boolean().nullable().optional(),
-})
+});
 
-export type GithubRepositoryChange = z.infer<typeof githubRepositoryChangeSchema>
+export type GithubRepositoryChange = z.infer<
+  typeof githubRepositoryChangeSchema
+>;
 
 export const githubBranchChangeSchema = z.object({
   id: z.string(),
@@ -138,14 +210,22 @@ export const githubBranchChangeSchema = z.object({
   workspace_id: z.string().nullable().optional(),
   name: z.string().nullable().optional(),
   pull_request_link: z.string().nullable().optional(),
-  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
-  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
+  created: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
   modified_columns: z.array(z.string()).nullable().optional(),
   deleted: z.boolean().nullable().optional(),
   new: z.boolean().nullable().optional(),
-})
+});
 
-export type GithubBranchChange = z.infer<typeof githubBranchChangeSchema>
+export type GithubBranchChange = z.infer<typeof githubBranchChangeSchema>;
 
 export const agentRunMessageChangeSchema = z.object({
   id: z.string(),
@@ -153,14 +233,22 @@ export const agentRunMessageChangeSchema = z.object({
   workspace_id: z.string().nullable().optional(),
   message: z.string().nullable().optional(),
   type: z.string().nullable().optional(),
-  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
-  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
+  created: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
   modified_columns: z.array(z.string()).nullable().optional(),
   deleted: z.boolean().nullable().optional(),
   new: z.boolean().nullable().optional(),
-})
+});
 
-export type AgentRunMessageChange = z.infer<typeof agentRunMessageChangeSchema>
+export type AgentRunMessageChange = z.infer<typeof agentRunMessageChangeSchema>;
 
 export const issueLinkChangeSchema = z.object({
   id: z.string(),
@@ -168,14 +256,22 @@ export const issueLinkChangeSchema = z.object({
   target_issue_id: z.string().nullable().optional(),
   link_type: z.string().nullable().optional(),
   workspace_id: z.string().nullable().optional(),
-  modified: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
-  created: z.date().or(z.string().transform(str => new Date(str))).nullable().optional(),
+  modified: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
+  created: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .nullable()
+    .optional(),
   modified_columns: z.array(z.string()).nullable().optional(),
   deleted: z.boolean().nullable().optional(),
   new: z.boolean().nullable().optional(),
-})
+});
 
-export type IssueLinkChange = z.infer<typeof issueLinkChangeSchema>
+export type IssueLinkChange = z.infer<typeof issueLinkChangeSchema>;
 
 export const changeSetSchema = z.object({
   issues: z.array(issueChangeSchema),
@@ -188,6 +284,6 @@ export const changeSetSchema = z.object({
   githubBranches: z.array(githubBranchChangeSchema),
   agentRunMessages: z.array(agentRunMessageChangeSchema),
   issueLinks: z.array(issueLinkChangeSchema),
-})
+});
 
-export type ChangeSet = z.infer<typeof changeSetSchema>
+export type ChangeSet = z.infer<typeof changeSetSchema>;

@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useHotkeys } from 'react-hotkeys-hook';
-import { Transition } from '@headlessui/react';
-import classnames from 'classnames';
-import { createPortal } from 'react-dom';
+import React, { useState, useEffect, useRef } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
+import { Transition } from "@headlessui/react";
+import classnames from "classnames";
+import { createPortal } from "react-dom";
 
 // Import icons
-import { BsCollectionFill as IssuesIcon } from 'react-icons/bs';
-import { BsGearFill as SettingsIcon } from 'react-icons/bs';
-import { BsSearch as SearchIcon } from 'react-icons/bs';
-import { BsPencilSquare as AddIcon } from 'react-icons/bs';
+import { BsCollectionFill as IssuesIcon } from "react-icons/bs";
+import { BsGearFill as SettingsIcon } from "react-icons/bs";
+import { BsSearch as SearchIcon } from "react-icons/bs";
+import { BsPencilSquare as AddIcon } from "react-icons/bs";
 
 interface CommandBarProps {
   isOpen: boolean;
@@ -26,66 +26,66 @@ interface CommandOption {
   action: () => void;
 }
 
-const CommandBar: React.FC<CommandBarProps> = ({ 
-  isOpen, 
-  onClose, 
+const CommandBar: React.FC<CommandBarProps> = ({
+  isOpen,
+  onClose,
   onCreateIssue,
-  onNavigate
+  onNavigate,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  
+
   // Define command options
   const commandOptions: CommandOption[] = [
     {
-      id: 'issues',
-      label: 'Go to Issues',
+      id: "issues",
+      label: "Go to Issues",
       icon: <IssuesIcon className="w-3 h-3 text-gray-500" />,
-      shortcut: ['g', 'i'],
-      path: '/',
+      shortcut: ["g", "i"],
+      path: "/",
       action: () => {
-        onNavigate('/');
+        onNavigate("/");
         onClose();
-      }
+      },
     },
     {
-      id: 'search',
-      label: 'Go to Search',
+      id: "search",
+      label: "Go to Search",
       icon: <SearchIcon className="w-3 h-3 text-gray-500" />,
-      shortcut: ['/'],
-      path: '/search',
+      shortcut: ["/"],
+      path: "/search",
       action: () => {
-        onNavigate('/search');
+        onNavigate("/search");
         onClose();
-      }
+      },
     },
     {
-      id: 'settings',
-      label: 'Go to Settings',
+      id: "settings",
+      label: "Go to Settings",
       icon: <SettingsIcon className="w-3 h-3 text-gray-500" />,
-      shortcut: ['g', 's'],
-      path: '/settings',
+      shortcut: ["g", "s"],
+      path: "/settings",
       action: () => {
-        onNavigate('/settings');
+        onNavigate("/settings");
         onClose();
-      }
+      },
     },
     {
-      id: 'create-issue',
-      label: 'Create new',
+      id: "create-issue",
+      label: "Create new",
       icon: <AddIcon className="w-3 h-3 text-gray-500" />,
-      shortcut: ['c'],
+      shortcut: ["c"],
       action: () => {
         onCreateIssue();
         onClose();
-      }
-    }
+      },
+    },
   ];
 
   // Filter options based on search query
-  const filteredOptions = commandOptions.filter(option => 
-    option.label.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredOptions = commandOptions.filter((option) =>
+    option.label.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Focus input when modal opens
@@ -94,45 +94,65 @@ const CommandBar: React.FC<CommandBarProps> = ({
       const timeoutId = setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
-      
+
       // Clean up the timeout when component unmounts or effect re-runs
       return () => clearTimeout(timeoutId);
     }
   }, [isOpen]);
 
   // Handle keyboard navigation
-  useHotkeys('down', (e) => {
-    if (isOpen) {
-      e.preventDefault();
-      setSelectedOptionIndex(prev => 
-        prev < filteredOptions.length - 1 ? prev + 1 : prev
-      );
-    }
-  }, { enableOnFormTags: true }, [isOpen, filteredOptions.length]);
+  useHotkeys(
+    "down",
+    (e) => {
+      if (isOpen) {
+        e.preventDefault();
+        setSelectedOptionIndex((prev) =>
+          prev < filteredOptions.length - 1 ? prev + 1 : prev,
+        );
+      }
+    },
+    { enableOnFormTags: true },
+    [isOpen, filteredOptions.length],
+  );
 
-  useHotkeys('up', (e) => {
-    if (isOpen) {
-      e.preventDefault();
-      setSelectedOptionIndex(prev => prev > 0 ? prev - 1 : 0);
-    }
-  }, { enableOnFormTags: true }, [isOpen]);
+  useHotkeys(
+    "up",
+    (e) => {
+      if (isOpen) {
+        e.preventDefault();
+        setSelectedOptionIndex((prev) => (prev > 0 ? prev - 1 : 0));
+      }
+    },
+    { enableOnFormTags: true },
+    [isOpen],
+  );
 
-  useHotkeys('enter', () => {
-    if (isOpen && filteredOptions.length > 0) {
-      filteredOptions[selectedOptionIndex].action();
-    }
-  }, { enableOnFormTags: true }, [isOpen, filteredOptions, selectedOptionIndex]);
+  useHotkeys(
+    "enter",
+    () => {
+      if (isOpen && filteredOptions.length > 0) {
+        filteredOptions[selectedOptionIndex].action();
+      }
+    },
+    { enableOnFormTags: true },
+    [isOpen, filteredOptions, selectedOptionIndex],
+  );
 
-  useHotkeys('esc', () => {
-    if (isOpen) {
-      onClose();
-    }
-  }, { enableOnFormTags: true }, [isOpen, onClose]);
+  useHotkeys(
+    "esc",
+    () => {
+      if (isOpen) {
+        onClose();
+      }
+    },
+    { enableOnFormTags: true },
+    [isOpen, onClose],
+  );
 
   // Reset state when closed
   useEffect(() => {
     if (!isOpen) {
-      setSearchQuery('');
+      setSearchQuery("");
       setSelectedOptionIndex(0);
     }
   }, [isOpen]);
@@ -144,7 +164,7 @@ const CommandBar: React.FC<CommandBarProps> = ({
 
   const renderShortcut = (shortcut: string[] | undefined) => {
     if (!shortcut) return null;
-    
+
     return (
       <div className="flex items-center space-x-1">
         {shortcut.map((key, index) => (
@@ -152,7 +172,9 @@ const CommandBar: React.FC<CommandBarProps> = ({
             <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-50 rounded">
               {key}
             </kbd>
-            {index < shortcut.length - 1 && <span className="text-gray-400">+</span>}
+            {index < shortcut.length - 1 && (
+              <span className="text-gray-400">+</span>
+            )}
           </React.Fragment>
         ))}
       </div>
@@ -184,7 +206,7 @@ const CommandBar: React.FC<CommandBarProps> = ({
               onChange={handleInputChange}
             />
           </div>
-          
+
           <div className="py-2 max-h-80 overflow-y-auto">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option, index) => (
@@ -193,8 +215,8 @@ const CommandBar: React.FC<CommandBarProps> = ({
                   className={classnames(
                     "flex items-center justify-between px-3 py-2 cursor-pointer",
                     {
-                      "bg-blue-50": index === selectedOptionIndex
-                    }
+                      "bg-blue-50": index === selectedOptionIndex,
+                    },
                   )}
                   onClick={() => option.action()}
                   onMouseEnter={() => setSelectedOptionIndex(index)}
@@ -218,12 +240,12 @@ const CommandBar: React.FC<CommandBarProps> = ({
   );
 
   // Get the root-modal element for portal
-  const modalRoot = document.getElementById('root-modal');
-  
+  const modalRoot = document.getElementById("root-modal");
+
   // If modalRoot doesn't exist yet, return null
   if (!modalRoot) return null;
-  
+
   return createPortal(commandBar, modalRoot);
 };
 
-export default CommandBar; 
+export default CommandBar;

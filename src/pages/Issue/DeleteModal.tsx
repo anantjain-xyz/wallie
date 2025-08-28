@@ -1,10 +1,10 @@
-import Modal from '../../components/Modal'
+import Modal from "../../components/Modal";
 
 interface Props {
-  isOpen: boolean
-  setIsOpen: (isOpen: boolean) => void
-  onDismiss?: () => void
-  deleteIssue: () => void
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  onDismiss?: () => void;
+  deleteIssue: () => void;
 }
 
 export default function DeleteModal({
@@ -14,10 +14,10 @@ export default function DeleteModal({
   deleteIssue,
 }: Props) {
   const handleDelete = () => {
-    setIsOpen(false)
-    if (onDismiss) onDismiss()
-    deleteIssue()
-  }
+    setIsOpen(false);
+    if (onDismiss) onDismiss();
+    deleteIssue();
+  };
 
   return (
     <Modal title="Delete Issue" isOpen={isOpen} onDismiss={onDismiss}>
@@ -29,8 +29,8 @@ export default function DeleteModal({
           type="button"
           className="px-3 ml-auto text-white bg-gray-300 rounded hover:bg-gray-400 h-7"
           onClick={() => {
-            setIsOpen(false)
-            if (onDismiss) onDismiss()
+            setIsOpen(false);
+            if (onDismiss) onDismiss();
           }}
         >
           Cancel
@@ -44,5 +44,5 @@ export default function DeleteModal({
         </button>
       </div>
     </Modal>
-  )
+  );
 }

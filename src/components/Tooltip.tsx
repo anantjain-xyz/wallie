@@ -1,22 +1,27 @@
-import { ReactNode, useState } from 'react'
-import { useFloating, offset, shift, FloatingPortal } from '@floating-ui/react'
+import { ReactNode, useState } from "react";
+import { useFloating, offset, shift, FloatingPortal } from "@floating-ui/react";
 
 interface TooltipProps {
-  children: ReactNode
-  content: string
-  shortcut?: string
-  placement?: 'top' | 'bottom' | 'left' | 'right'
+  children: ReactNode;
+  content: string;
+  shortcut?: string;
+  placement?: "top" | "bottom" | "left" | "right";
 }
 
-export default function Tooltip({ children, content, shortcut, placement = 'bottom' }: TooltipProps) {
-  const [isOpen, setIsOpen] = useState(false)
+export default function Tooltip({
+  children,
+  content,
+  shortcut,
+  placement = "bottom",
+}: TooltipProps) {
+  const [isOpen, setIsOpen] = useState(false);
 
   const { refs, floatingStyles } = useFloating({
     open: isOpen,
     onOpenChange: setIsOpen,
     placement,
-    middleware: [offset(8), shift()]
-  })
+    middleware: [offset(8), shift()],
+  });
 
   return (
     <>
@@ -44,5 +49,5 @@ export default function Tooltip({ children, content, shortcut, placement = 'bott
         </FloatingPortal>
       )}
     </>
-  )
-} 
+  );
+}

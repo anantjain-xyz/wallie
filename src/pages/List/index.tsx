@@ -1,197 +1,179 @@
-import { useLiveQuery, usePGlite } from '@electric-sql/pglite-react'
-import { LiveQuery } from '@electric-sql/pglite/live'
-import { useLoaderData } from 'react-router-dom'
-import { type ListOnItemsRenderedProps } from 'react-window'
-import { useState, useCallback, useEffect } from 'react'
-import { useHotkeys } from 'react-hotkeys-hook'
-import TopBar from '../../components/TopBar'
-import IssueList from './IssueList'
-import IssueBoard from '../Board/IssueBoard'
-import BulkActionBar from '../../components/BulkActionBar'
-import { Issue, Status, StatusValue } from '../../types/types'
-import { FilterState, filterStateToSql } from '../../utils/filterState'
-const CHUNK_SIZE = 100
-
-function calculateWindow(
-  startIndex: number,
-  stopIndex: number
-): { offset: number; limit: number } {
-  const offset = Math.max(
-    0,
-    Math.floor(startIndex / CHUNK_SIZE) * CHUNK_SIZE - CHUNK_SIZE
-  )
-  const endOffset = Math.ceil(stopIndex / CHUNK_SIZE) * CHUNK_SIZE + CHUNK_SIZE
-  const limit = endOffset - offset
-  return { offset, limit }
-}
+import { supabase } from "../../supabase";
+import { useLoaderData } from "react-router-dom";
+import { type ListOnItemsRenderedProps } from "react-window";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
+import TopBar from "../../components/TopBar";
+import IssueList from "./IssueList";
+import IssueBoard from "../Board/IssueBoard";
+import BulkActionBar from "../../components/BulkActionBar";
+import { Issue } from "../../types/types";
+import { FilterState } from "../../utils/filterState";
+import { useRealtimeQuery } from "../../hooks/useRealtimeQuery";
+// Pagination helpers removed in Supabase mode
 
 function List({ showSearch = false }) {
-  const { liveIssues, filterState } = useLoaderData() as {
-    liveIssues: LiveQuery<Issue>
-    filterState: FilterState
-  }
+  const loaderData = useLoaderData() as {
+    issues: Issue[];
+    filterState: FilterState;
+  };
+  // const isSupabase = !!loaderData?.issues
+  const filterState: FilterState = loaderData?.filterState;
 
   // State for view mode (list or board)
-  const [viewMode, setViewMode] = useState<'list' | 'board'>('list')
-  
+  const [viewMode, setViewMode] = useState<"list" | "board">("list");
+
   // State for selected issues and selection mode
-  const [selectedIssues, setSelectedIssues] = useState<Set<string>>(() => new Set())
-  const [selectionMode, setSelectionMode] = useState(false)
-  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null)
-  
+  const [selectedIssues, setSelectedIssues] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
+    null,
+  );
+
   // State for board view
-  const [columnsLiveIssues, setColumnsLiveIssues] = useState<Record<StatusValue, LiveQuery<Issue>>>({} as Record<StatusValue, LiveQuery<Issue>>)
-  const pg = usePGlite()
-  
+  // const [columnsLiveIssues] = useState<Record<StatusValue, any>>({} as any)
+
   // Get workspace ID for the AssigneeMenu
-  const workspaceResults = useLiveQuery.sql<{ id: string, name: string }>`
-    SELECT id, name FROM workspace LIMIT 1
-  `
-  const workspaceId = workspaceResults?.rows[0]?.id || ''
-  const workspaceName = workspaceResults?.rows[0]?.name || ''
+  const [workspaceId, setWorkspaceId] = useState("");
+  const [workspaceName, setWorkspaceName] = useState("");
+  useEffect(() => {
+    const loadWs = async () => {
+      const { data } = await supabase
+        .from("workspace")
+        .select("id,name")
+        .limit(1);
+      if (data && data.length) {
+        setWorkspaceId(data[0].id);
+        setWorkspaceName(data[0].name);
+      }
+    };
+    loadWs();
+  }, []);
 
-  const issuesRes = useLiveQuery(liveIssues)
-  const offset = liveIssues.initialResults.offset ?? issuesRes.offset ?? 0
-  const limit = liveIssues.initialResults.limit ?? issuesRes.limit ?? CHUNK_SIZE
-  const issues = issuesRes?.rows
+  // Live issues using realtime subscription (fallback to loader on first paint)
+  const liveKey = JSON.stringify(filterState || {});
+  const liveIssuesRes = useRealtimeQuery<Issue>(
+    "issue",
+    async () => {
+      let query = supabase.from("issue").select("*");
+      if (filterState.status && filterState.status.length) {
+        query = query.in("status", filterState.status as string[]);
+      }
+      if (filterState.priority && filterState.priority.length) {
+        query = query.in("priority", filterState.priority as string[]);
+      }
+      if (filterState.estimate && filterState.estimate.length) {
+        const includesNull = filterState.estimate.includes(null);
+        const nums = filterState.estimate.filter((e) => e !== null) as number[];
+        if (includesNull && nums.length > 0) {
+          query = query.or(`estimate.is.null,estimate.in.(${nums.join(",")})`);
+        } else if (includesNull) {
+          query = query.is("estimate", null);
+        } else if (nums.length > 0) {
+          query = query.in("estimate", nums);
+        }
+      }
+      if (filterState.query) {
+        const q = filterState.query;
+        query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+      }
+      if (filterState.orderBy) {
+        query = query.order(filterState.orderBy as string, {
+          ascending: (filterState.orderDirection || "desc") === "asc",
+          nullsFirst: false,
+        });
+      }
+      const { data, error } = await query.limit(100);
+      return { data: (data as Issue[]) || [], error };
+    },
+    liveKey,
+  );
 
-  const currentTotalCount = issuesRes.totalCount ?? issuesRes.rows.length
-  const currentOffset = issuesRes.offset ?? 0
-  const filledItems = new Array(currentTotalCount).fill(null)
-  issues.forEach((issue, index) => {
-    filledItems[index + currentOffset] = issue
-  })
+  const filledItems: (Issue | undefined)[] = useMemo(() => {
+    if (!liveIssuesRes.loading && liveIssuesRes.data) return liveIssuesRes.data;
+    return (loaderData?.issues as Issue[]) || [];
+  }, [liveIssuesRes.loading, liveIssuesRes.data, loaderData]);
+  const issuesTotalCount = filledItems.length;
 
   // Set viewMode to list when `showSearch` is set to true
   useEffect(() => {
     if (showSearch) {
-      setViewMode('list')
+      setViewMode("list");
     }
-  }, [showSearch])
+  }, [showSearch]);
 
-  // Refresh the issues query when the component mounts
-  useEffect(() => {
-    liveIssues.refresh({ offset: 0, limit: CHUNK_SIZE })
-  }, [liveIssues])
+  // No extra refresh needed; IssueBoard and list loader handle fetching
+  useEffect(() => {}, []);
 
-  // Load board data when view mode is 'board'
-  useEffect(() => {
-    if (viewMode === 'board' && pg) {
-      const loadBoardData = async () => {
-        const newColumnsLiveIssues: Partial<Record<StatusValue, LiveQuery<Issue>>> = {}
-        
-        // Always load all status columns to maintain consistent hook calls
-        // but respect the status filters by applying them to each column's query
-        for (const status of Object.values(Status)) {
-          // Only include this status column if no status filters are applied
-          // or if this status is included in the filters
-          const shouldIncludeStatus = !filterState.status?.length || 
-                                     filterState.status.includes(status);
-          
-          if (shouldIncludeStatus) {
-            // For included statuses, create a real query with the actual filters
-            const colFilterState: FilterState = {
-              ...filterState,
-              orderBy: 'kanbanorder',
-              orderDirection: 'asc',
-              status: [status],
-            }
-            const { sql: colSql, sqlParams: colSqlParams } = filterStateToSql(colFilterState)
-            const colLiveIssues = await pg.live.query<Issue>({
-              query: colSql,
-              params: colSqlParams,
-              offset: 0,
-              limit: 10,
-            })
-            newColumnsLiveIssues[status] = colLiveIssues
-          } else {
-            // For filtered-out statuses, create an empty query that will result in no items
-            // This ensures the column won't be rendered in the Board view
-            const emptyQuery = await pg.live.query<Issue>({
-              query: 'SELECT * FROM issue WHERE 1=0 LIMIT 0',
-              params: [],
-              offset: 0,
-              limit: 0,
-            });
-            
-            // Set empty results to ensure the column is not rendered
-            newColumnsLiveIssues[status] = emptyQuery;
-          }
-        }
-        
-        setColumnsLiveIssues(newColumnsLiveIssues as Record<StatusValue, LiveQuery<Issue>>)
-      }
-      
-      loadBoardData()
-    }
-  }, [viewMode, pg, filterState])
+  // Board view is driven by IssueBoard component using Supabase realtime
 
-  const updateOffsetAndLimit = (itemsRendered: ListOnItemsRenderedProps) => {
-    const { offset: newOffset, limit: newLimit } = calculateWindow(
-      itemsRendered.overscanStartIndex,
-      itemsRendered.overscanStopIndex
-    )
-    if (newOffset !== offset || newLimit !== limit) {
-      liveIssues.refresh({ offset: newOffset, limit: newLimit })
-    }
-  }
+  const updateOffsetAndLimit = (_itemsRendered: ListOnItemsRenderedProps) => {};
 
-  const handleSelectIssue = useCallback((issueId: string, selected: boolean, event?: React.MouseEvent) => {
-    setSelectedIssues(prevSelected => {
-      const newSelected = new Set(prevSelected)
-      
-      // Handle Shift+click selection
-      if (event?.shiftKey && lastSelectedIndex !== null) {
-        const currentIndex = filledItems.findIndex(issue => issue?.id === issueId)
-        if (currentIndex !== -1) {
-          const start = Math.min(lastSelectedIndex, currentIndex)
-          const end = Math.max(lastSelectedIndex, currentIndex)
-          
-          // Select all issues between the last selected and current
-          for (let i = start; i <= end; i++) {
-            const issue = filledItems[i]
-            if (issue?.id) {
-              newSelected.add(issue.id)
+  const handleSelectIssue = useCallback(
+    (issueId: string, selected: boolean, event?: React.MouseEvent) => {
+      setSelectedIssues((prevSelected) => {
+        const newSelected = new Set(prevSelected);
+
+        // Handle Shift+click selection
+        if (event?.shiftKey && lastSelectedIndex !== null) {
+          const currentIndex = filledItems.findIndex(
+            (issue) => issue?.id === issueId,
+          );
+          if (currentIndex !== -1) {
+            const start = Math.min(lastSelectedIndex, currentIndex);
+            const end = Math.max(lastSelectedIndex, currentIndex);
+
+            // Select all issues between the last selected and current
+            for (let i = start; i <= end; i++) {
+              const issue = filledItems[i];
+              if (issue?.id) {
+                newSelected.add(issue.id);
+              }
             }
           }
-        }
-      } else {
-        // Regular click behavior
-        if (selected) {
-          newSelected.add(issueId)
-          // Update last selected index
-          const currentIndex = filledItems.findIndex(issue => issue?.id === issueId)
-          setLastSelectedIndex(currentIndex !== -1 ? currentIndex : null)
         } else {
-          newSelected.delete(issueId)
+          // Regular click behavior
+          if (selected) {
+            newSelected.add(issueId);
+            // Update last selected index
+            const currentIndex = filledItems.findIndex(
+              (issue) => issue?.id === issueId,
+            );
+            setLastSelectedIndex(currentIndex !== -1 ? currentIndex : null);
+          } else {
+            newSelected.delete(issueId);
+          }
         }
-      }
-      
-      // Enable selection mode when first issue is selected
-      if (newSelected.size === 1 && !selectionMode) {
-        setSelectionMode(true)
-      } else if (newSelected.size === 0) {
-        // Disable selection mode when no issues are selected
-        setSelectionMode(false)
-        setLastSelectedIndex(null)
-      }
-      
-      return newSelected
-    })
-  }, [filledItems, lastSelectedIndex, selectionMode])
+
+        // Enable selection mode when first issue is selected
+        if (newSelected.size === 1 && !selectionMode) {
+          setSelectionMode(true);
+        } else if (newSelected.size === 0) {
+          // Disable selection mode when no issues are selected
+          setSelectionMode(false);
+          setLastSelectedIndex(null);
+        }
+
+        return newSelected;
+      });
+    },
+    [filledItems, lastSelectedIndex, selectionMode],
+  );
 
   const handleClearSelection = useCallback(() => {
-    setSelectedIssues(new Set())
-    setSelectionMode(false)
-    setLastSelectedIndex(null)
-  }, [])
+    setSelectedIssues(new Set());
+    setSelectionMode(false);
+    setLastSelectedIndex(null);
+  }, []);
 
   // Select all visible issues
   const handleSelectAll = useCallback(() => {
     const visibleIssueIds = filledItems
-      .filter(issue => issue?.id)
-      .map(issue => issue?.id as string);
-    
+      .filter((issue) => issue?.id)
+      .map((issue) => issue?.id as string);
+
     if (visibleIssueIds.length > 0) {
       setSelectedIssues(new Set(visibleIssueIds));
       setSelectionMode(true);
@@ -199,34 +181,44 @@ function List({ showSearch = false }) {
   }, [filledItems]);
 
   // Add Cmd+A shortcut to select all visible issues
-  useHotkeys('mod+a', (e) => {
-    e.preventDefault(); // Prevent default browser select all behavior
-    handleSelectAll();
-  }, [handleSelectAll]);
+  useHotkeys(
+    "mod+a",
+    (e) => {
+      e.preventDefault(); // Prevent default browser select all behavior
+      handleSelectAll();
+    },
+    [handleSelectAll],
+  );
 
   // Add Esc shortcut to exit selection mode and deselect all items
-  useHotkeys('esc', () => {
-    if (selectionMode || selectedIssues.size > 0) {
-      handleClearSelection();
-    }
-  }, [selectionMode, selectedIssues, handleClearSelection]);
+  useHotkeys(
+    "esc",
+    () => {
+      if (selectionMode || selectedIssues.size > 0) {
+        handleClearSelection();
+      }
+    },
+    [selectionMode, selectedIssues, handleClearSelection],
+  );
 
   return (
     <div className="flex flex-col flex-1 overflow-x-auto">
       <div className="flex justify-between items-center w-full">
         <TopBar
           filterState={filterState}
-          filteredIssuesCount={issuesRes.totalCount ?? issuesRes.rows.length}
+          filteredIssuesCount={issuesTotalCount}
           showSearch={showSearch}
-          title={viewMode === 'board' ? 'Board' : undefined}
+          title={viewMode === "board" ? "Board" : undefined}
           onViewModeChange={setViewMode}
           viewMode={viewMode}
         />
       </div>
-      
-      {viewMode === 'list' ? (
+
+      {viewMode === "list" ? (
         <IssueList
-          onItemsRendered={(itemsRendered) => updateOffsetAndLimit(itemsRendered)}
+          onItemsRendered={(itemsRendered) =>
+            updateOffsetAndLimit(itemsRendered)
+          }
           issues={filledItems}
           selectedIssues={selectedIssues}
           onSelectIssue={handleSelectIssue}
@@ -236,12 +228,10 @@ function List({ showSearch = false }) {
           filterState={filterState}
         />
       ) : (
-        Object.keys(columnsLiveIssues).length > 0 && (
-          <IssueBoard columnsLiveIssues={columnsLiveIssues} />
-        )
+        <IssueBoard filterState={filterState} />
       )}
-      
-      {viewMode === 'list' && selectedIssues.size > 0 && workspaceId && (
+
+      {viewMode === "list" && selectedIssues.size > 0 && workspaceId && (
         <BulkActionBar
           selectedIssues={selectedIssues}
           workspaceId={workspaceId}
@@ -249,7 +239,7 @@ function List({ showSearch = false }) {
         />
       )}
     </div>
-  )
+  );
 }
 
-export default List
+export default List;
