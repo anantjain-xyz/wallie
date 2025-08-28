@@ -14,6 +14,7 @@ import React from "react";
 import { ReactComponent as EstimateIcon } from "../../assets/icons/estimate.svg";
 import EstimateMenu from "../../components/contextmenu/EstimateMenu";
 import { formatExternalId } from "../../utils/issueUtils";
+import { showError } from "../../utils/notification.tsx";
 // import { IoSync as SyncIcon } from "react-icons/io5";
 import { renderInlineCode } from "../../utils/renderInlineCode";
 
@@ -67,32 +68,52 @@ function IssueRow({
     }
   }, [issue?.assignee_id]);
 
-  const handleChangeStatus = (status: string) => {
-    supabase
-      .from("issue")
-      .update({ status, modified: new Date().toISOString() })
-      .eq("id", issue!.id);
+  const handleChangeStatus = async (status: string) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ status, modified: new Date().toISOString() })
+        .eq("id", issue!.id);
+      if (error) throw error;
+    } catch (err) {
+      showError("Failed to update status", "Save error");
+    }
   };
 
-  const handleChangePriority = (priority: string) => {
-    supabase
-      .from("issue")
-      .update({ priority, modified: new Date().toISOString() })
-      .eq("id", issue!.id);
+  const handleChangePriority = async (priority: string) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ priority, modified: new Date().toISOString() })
+        .eq("id", issue!.id);
+      if (error) throw error;
+    } catch (err) {
+      showError("Failed to update priority", "Save error");
+    }
   };
 
-  const handleChangeAssignee = (userId: string | null) => {
-    supabase
-      .from("issue")
-      .update({ assignee_id: userId, modified: new Date().toISOString() })
-      .eq("id", issue!.id);
+  const handleChangeAssignee = async (userId: string | null) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ assignee_id: userId, modified: new Date().toISOString() })
+        .eq("id", issue!.id);
+      if (error) throw error;
+    } catch (err) {
+      showError("Failed to update assignee", "Save error");
+    }
   };
 
-  const handleChangeEstimate = (estimate: number | null) => {
-    supabase
-      .from("issue")
-      .update({ estimate, modified: new Date().toISOString() })
-      .eq("id", issue!.id);
+  const handleChangeEstimate = async (estimate: number | null) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ estimate, modified: new Date().toISOString() })
+        .eq("id", issue!.id);
+      if (error) throw error;
+    } catch (err) {
+      showError("Failed to update estimate", "Save error");
+    }
   };
 
   const handleRowClick = (e: React.MouseEvent) => {
@@ -141,14 +162,28 @@ function IssueRow({
       <div className="flex-shrink-0 ml-3">
         <PriorityMenu
           id={`r-priority-` + issue.id}
-          button={<PriorityIcon priority={issue.priority} />}
+          button={
+            <div
+              className="flex items-center hover:bg-gray-100 rounded p-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <PriorityIcon priority={issue.priority} />
+            </div>
+          }
           onSelect={handleChangePriority}
         />
       </div>
       <div className="flex-shrink-0 ml-3">
         <StatusMenu
           id={`r-status-` + issue.id}
-          button={<StatusIcon status={issue.status} />}
+          button={
+            <div
+              className="flex items-center hover:bg-gray-100 rounded p-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <StatusIcon status={issue.status} />
+            </div>
+          }
           onSelect={handleChangeStatus}
         />
       </div>
