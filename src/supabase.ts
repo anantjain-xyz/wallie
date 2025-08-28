@@ -13,10 +13,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Third‑party auth bridging (Clerk):
 // Supabase is configured to trust Clerk (see supabase/config.toml),
 // so we forward the Clerk JWT in the Authorization header so PostgREST
-// can evaluate RLS using request.jwt.claims.
-let externalAuthToken: string | null = null;
-export function setSupabaseAuthToken(token: string | null) {
-  externalAuthToken = token;
+// can evaluate RLS using request.jwt.claims. Always fetch a fresh token per request.
+let tokenProvider: (() => Promise<string | null>) | null = null;
+export function setSupabaseTokenProvider(provider: (() => Promise<string | null>) | null) {
+  tokenProvider = provider;
 }
 
 export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "", {
@@ -29,8 +29,9 @@ export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "", {
     // Forward Clerk JWT when present; supabase-js still includes the anon key via `apikey` header.
     fetch: async (input, init) => {
       const headers = new Headers(init?.headers || {});
-      if (externalAuthToken) {
-        headers.set("Authorization", `Bearer ${externalAuthToken}`);
+      const token = tokenProvider ? await tokenProvider() : null;
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
       } else {
         headers.delete("Authorization");
       }

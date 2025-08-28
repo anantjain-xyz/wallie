@@ -16,7 +16,7 @@ const Issue = lazy(() => import("./pages/Issue"));
 const Settings = lazy(() => import("./pages/Settings"));
 import { getFilterStateFromSearchParams } from "./utils/filterState";
 import { ImSpinner8 } from "react-icons/im";
-import { supabase, setSupabaseAuthToken } from "./supabase";
+import { supabase, setSupabaseTokenProvider } from "./supabase";
 import { useAuth } from "@clerk/clerk-react";
 import SignInPage from "./components/SignInPage";
 import CommandBarWrapper from "./components/CommandBarWrapper";
@@ -214,21 +214,25 @@ const App = () => {
   // Forward Clerk token to Supabase (trusted third-party auth)
   useEffect(() => {
     let cancelled = false;
-    const load = async () => {
+    const setup = async () => {
       try {
         if (!isSignedIn) {
-          setSupabaseAuthToken(null);
+          setSupabaseTokenProvider(null);
           return;
         }
-        const token = await getToken();
-        if (!cancelled) setSupabaseAuthToken(token || null);
+        // Provide a per-request token fetcher so every request uses a fresh JWT
+        const provider = async () => (await getToken()) ?? null;
+        if (!cancelled) setSupabaseTokenProvider(provider);
       } catch (_e) {
-        if (!cancelled) setSupabaseAuthToken(null);
+        if (!cancelled) {
+          setSupabaseTokenProvider(null);
+        }
       }
     };
-    load();
+    setup();
     return () => {
       cancelled = true;
+      setSupabaseTokenProvider(null);
     };
   }, [getToken, isSignedIn]);
 
