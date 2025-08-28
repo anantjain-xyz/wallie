@@ -7,12 +7,8 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import 'react-toastify/dist/ReactToastify.css'
-import { live } from '@electric-sql/pglite/live'
-import { PGliteWorker } from '@electric-sql/pglite/worker'
-import { PGliteProvider } from '@electric-sql/pglite-react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { ToastContainer } from 'react-toastify'
-import PGWorker from './pglite-worker.js?worker'
 import List from './pages/List'
 import Root from './pages/root'
 import Issue from './pages/Issue'
@@ -22,16 +18,13 @@ import {
   filterStateToSql,
 } from './utils/filterState'
 import { Issue as IssueType } from './types/types'
-import { startSync, useSyncStatus, waitForInitialSyncDone } from './sync'
-import { electricSync } from '@electric-sql/pglite-sync'
 import { ImSpinner8 } from 'react-icons/im'
 import { useElectricAuth } from './auth'
 import { supabase } from './supabase'
-import type { PGliteWithExtensions } from './sync'
 import { useAuth } from '@clerk/clerk-react'
 import SignInPage from './components/SignInPage'
 import CommandBarWrapper from './components/CommandBarWrapper'
-import ClerkEventListener from './components/ClerkEventListener'
+// import ClerkEventListener from './components/ClerkEventListener'
 
 interface MenuContextInterface {
   showMenu: boolean
@@ -52,20 +45,7 @@ export const MenuContext = createContext(null as MenuContextInterface | null)
 export const IssueModalContext = createContext(null as IssueModalContextInterface | null)
 export const CommandBarContext = createContext(null as CommandBarContextInterface | null)
 
-async function createPGlite() {
-  return PGliteWorker.create(new PGWorker(), {
-    extensions: {
-      live,
-      sync: electricSync(),
-    },
-  })
-}
-
-const pgPromise = createPGlite()
-
 async function issueListLoader({ request }: { request: Request }) {
-  await waitForInitialSyncDone()
-  const pg = await pgPromise
   const url = new URL(request.url)
   
   // Get filter state from URL parameters
@@ -93,14 +73,7 @@ async function issueListLoader({ request }: { request: Request }) {
   }
   
   const { sql, sqlParams } = filterStateToSql(filterState)
-  const liveIssues = await pg.live.query<IssueType>({
-    query: sql,
-    params: sqlParams,
-    signal: request.signal,
-    offset: 0,
-    limit: 100,
-  })
-  return { liveIssues, filterState }
+  return { liveIssues: null, filterState }
 }
 
 async function issueLoader({
@@ -110,8 +83,6 @@ async function issueLoader({
   params: Params
   request: Request
 }) {
-  const pg = await pgPromise
-
   // Extract numeric external ID from formattedExternalId, e.g., "WRK-123" -> 123
   const formattedId = params.formattedExternalId || ''
   const match = formattedId.match(/-(\d+)$/)
@@ -121,12 +92,7 @@ async function issueLoader({
     throw new Error('Invalid issue identifier')
   }
 
-  const liveIssue = await pg.live.query<IssueType>({
-    query: `SELECT * FROM issue WHERE external_id = $1`,
-    params: [externalId],
-    signal: request.signal,
-  })
-  return { liveIssue }
+  return { liveIssue: null }
 }
 
 // Move GlobalShortcutsHandler to be used inside the router
@@ -206,24 +172,7 @@ const App = () => {
   const [showMenu, setShowMenu] = useState(false)
   const [showIssueModal, setShowIssueModal] = useState(false)
   const [showCommandBar, setShowCommandBar] = useState(false)
-  const [pgForProvider, setPgForProvider] =
-    useState<PGliteWithExtensions | null>(null)
-  const [syncStatus, syncMessage] = useSyncStatus()
   const { getAuthHeaders } = useElectricAuth()
-
-  useEffect(() => {
-    pgPromise.then((pg) => setPgForProvider(pg as PGliteWithExtensions))
-  }, [])
-
-  useEffect(() => {
-    if (pgForProvider) {
-      pgForProvider.onLeaderChange(() => {
-        if (pgForProvider.isLeader) {
-          startSync(pgForProvider, getAuthHeaders)
-        }
-      })
-    }
-  }, [pgForProvider, getAuthHeaders])
 
   const menuContextValue = useMemo(
     () => ({ showMenu, setShowMenu }),
@@ -259,7 +208,7 @@ const App = () => {
         {
           path: `/issue/:formattedExternalId`,
           element: <Issue />,
-          loader: issueLoader,
+          loader: issueLoaderSupabase,
         },
         {
           path: `/settings`,
@@ -279,31 +228,20 @@ const App = () => {
     return <SignInPage />
   }
 
-  if (!pgForProvider) {
-    return <LoadingScreen>Setting up the app...</LoadingScreen>
-  }
-
-  if (syncStatus === 'initial-sync') {
-    return <LoadingScreen>{syncMessage}</LoadingScreen>
-  }
-
   return (
-    <PGliteProvider db={pgForProvider}>
-      <MenuContext.Provider value={menuContextValue}>
-        <IssueModalContext.Provider value={issueModalContextValue}>
-          <CommandBarContext.Provider value={commandBarContextValue}>
-            <ClerkEventListener />
-            <RouterProvider router={router} />
-            <ToastContainer
-              position="bottom-right"
-              autoClose={2000}
-              hideProgressBar={false}
-              closeOnClick
-              pauseOnHover />
-          </CommandBarContext.Provider>
-        </IssueModalContext.Provider>
-      </MenuContext.Provider>
-    </PGliteProvider>
+    <MenuContext.Provider value={menuContextValue}>
+      <IssueModalContext.Provider value={issueModalContextValue}>
+        <CommandBarContext.Provider value={commandBarContextValue}>
+          <RouterProvider router={router} />
+          <ToastContainer
+            position="bottom-right"
+            autoClose={2000}
+            hideProgressBar={false}
+            closeOnClick
+            pauseOnHover />
+        </CommandBarContext.Provider>
+      </IssueModalContext.Provider>
+    </MenuContext.Provider>
   )
 }
 
