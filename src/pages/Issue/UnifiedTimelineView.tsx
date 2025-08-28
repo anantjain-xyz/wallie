@@ -74,6 +74,16 @@ function SafeMarkdown({ children }: { children: string }) {
 }
 
 function UnifiedTimelineView({ issue }: UnifiedTimelineViewProps) {
+  // Helper to reliably convert various timestamp shapes to a Date
+  const toDate = (value: unknown): Date => {
+    if (value instanceof Date) return value;
+    if (typeof value === "string" || typeof value === "number") {
+      const d = new Date(value);
+      if (!Number.isNaN(d.getTime())) return d;
+    }
+    // Fallback: now (prevents runtime errors; keeps UI responsive)
+    return new Date();
+  };
   const { user } = useUser();
   const currentUserResult = useCurrentUser(user);
   const currentUser = currentUserResult?.rows[0];
@@ -136,7 +146,7 @@ function UnifiedTimelineView({ issue }: UnifiedTimelineViewProps) {
     // Add agent runs to timeline
     agentRuns.forEach((run) => {
       // Determine which timestamp to use for sorting
-      const timestamp = run.end_time || run.start_time;
+      const timestamp = toDate(run.end_time || run.start_time);
 
       items.push({
         id: run.id,
@@ -151,7 +161,7 @@ function UnifiedTimelineView({ issue }: UnifiedTimelineViewProps) {
       items.push({
         id: comment.id,
         type: "comment",
-        timestamp: comment.created,
+        timestamp: toDate(comment.created),
         data: comment,
       });
     });
