@@ -4,9 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "backend:down": "echo 'Using Supabase cloud database'",
-    "backend:up": "echo 'Using Supabase cloud database'",
-    "reset": "pnpm backend:down && pnpm backend:up",
     "api-server": "dotenv -- tsx servers/api-server/index.ts",
     "cron-server": "dotenv -- tsx servers/cron-server.ts",
     "test:webhook": "dotenv -- tsx servers/api-server/test-webhook.ts",
@@ -17,8 +14,7 @@
     "format": "prettier --write ./src",
     "lint": "eslint ./src",
     "stylecheck": "eslint ./src && prettier --check ./src ./db",
-    "test": "vitest",
-    "db:migrate": "echo 'Use Supabase dashboard or CLI for migrations'"
+    "test": "vitest"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.842.0",
