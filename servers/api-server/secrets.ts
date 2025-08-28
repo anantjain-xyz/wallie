@@ -1,18 +1,13 @@
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
-import postgres from 'postgres'
+import { supabaseAdmin } from '../supabase'
 import { v4 as uuidv4 } from 'uuid'
 import { z } from 'zod'
 import { getAuth } from '@hono/clerk-auth'
 import { getWorkspaceIdFromUser } from '../auth'
 import { EncryptionService } from './encryption'
 
-const DATABASE_URL =
-  process.env.DATABASE_URL ??
-  'postgresql://postgres:password@localhost:54321/wallie'
-
-// Create postgres connection
-const sql = postgres(DATABASE_URL)
+// Using Supabase admin client for database operations
 
 // Validate request schema
 const secretSchema = z.object({
@@ -47,12 +42,15 @@ app.get('/', async (c) => {
       throw new HTTPException(401, { message: 'Workspace not found' })
     }
 
-    const secrets = await sql`
-      SELECT id, key, workspace_id, value_preview, created_by, created, modified
-      FROM workspace_secret
-      WHERE workspace_id = ${workspaceId}
-      ORDER BY key ASC
-    `
+    const { data: secrets, error } = await supabaseAdmin
+      .from('workspace_secret')
+      .select('id, key, workspace_id, value_preview, created_by, created, modified')
+      .eq('workspace_id', workspaceId)
+      .order('key', { ascending: true })
+
+    if (error) {
+      throw error
+    }
 
     return c.json(secrets)
   } catch (error) {
@@ -89,39 +87,34 @@ app.post('/', async (c) => {
     const encryptedValue = EncryptionService.encrypt(value)
 
     // Use upsert to either create or update the secret
-    const result = await sql`
-      INSERT INTO workspace_secret (
-        id,
-        workspace_id,
-        key,
-        value,
-        value_preview,
-        created_by,
-        created,
-        modified
-      ) VALUES (
-        ${uuidv4()},
-        ${workspaceId},
-        ${key},
-        ${encryptedValue},
-        ${valuePreview},
-        ${auth.userId},
-        NOW(),
-        NOW()
+    const now = new Date().toISOString()
+    const { data: result, error } = await supabaseAdmin
+      .from('workspace_secret')
+      .upsert(
+        {
+          id: uuidv4(),
+          workspace_id: workspaceId,
+          key,
+          value: encryptedValue,
+          value_preview: valuePreview,
+          created_by: auth.userId!,
+          created: now,
+          modified: now,
+        },
+        { onConflict: 'key,workspace_id' }
       )
-      ON CONFLICT (key, workspace_id) DO UPDATE SET
-        value = ${encryptedValue},
-        value_preview = ${valuePreview},
-        created_by = ${auth.userId},
-        modified = NOW()
-      RETURNING id, key, workspace_id, value_preview, created_by, created, modified
-    `
+      .select('id, key, workspace_id, value_preview, created_by, created, modified')
+      .single()
 
-    if (!result.length) {
+    if (error) {
+      throw error
+    }
+
+    if (!result) {
       throw new HTTPException(500, { message: 'Failed to save secret' })
     }
 
-    return c.json(result[0])
+    return c.json(result)
   } catch (error) {
     if (error instanceof z.ZodError) {
       return c.json({ error: error.errors }, 400)
@@ -153,13 +146,19 @@ app.delete('/:key', async (c) => {
     }
 
     // Delete the secret
-    const result = await sql`
-      DELETE FROM workspace_secret
-      WHERE workspace_id = ${workspaceId} AND key = ${key}
-      RETURNING id
-    `
+    const { data: result, error } = await supabaseAdmin
+      .from('workspace_secret')
+      .delete()
+      .eq('workspace_id', workspaceId)
+      .eq('key', key)
+      .select('id')
+      .single()
 
-    if (!result.length) {
+    if (error) {
+      throw error
+    }
+
+    if (!result) {
       throw new HTTPException(404, { message: 'Secret not found' })
     }
 
@@ -191,21 +190,22 @@ app.get('/:key/value', async (c) => {
       throw new HTTPException(400, { message: 'Secret key is required' })
     }
 
-    const secret = await sql`
-      SELECT *
-      FROM workspace_secret
-      WHERE workspace_id = ${workspaceId} AND key = ${key}
-    `
+    const { data: secret, error } = await supabaseAdmin
+      .from('workspace_secret')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .eq('key', key)
+      .maybeSingle()
 
-    if (!secret.length) {
+    if (error || !secret) {
       throw new HTTPException(404, { message: 'Secret not found' })
     }
 
     // Decrypt the value
     try {
       const decryptedSecret = {
-        ...secret[0],
-        value: EncryptionService.decrypt(secret[0].value)
+        ...secret,
+        value: EncryptionService.decrypt(secret.value)
       }
       return c.json(decryptedSecret)
     } catch (error) {

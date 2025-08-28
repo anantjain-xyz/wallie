@@ -1,10 +1,9 @@
 import { Hono } from 'hono';
 import { verify } from '@octokit/webhooks-methods';
-import postgres from 'postgres';
 import { v4 as uuidv4 } from 'uuid';
+import { supabaseAdmin } from '../supabase';
 
-const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://postgres:password@localhost:54321/wallie';
-const sql = postgres(DATABASE_URL);
+// Using Supabase admin client for database operations
 
 const app = new Hono();
 
@@ -77,24 +76,22 @@ async function handleInstallationEvent(payload: InstallationPayload) {
     
     if (action === 'deleted') {
       // Delete installation and its repositories (repositories should be deleted via CASCADE)
-      await sql`
-        DELETE FROM github_installation
-        WHERE installation_id = ${installation.id}
-      `;
+      await supabaseAdmin
+        .from('github_installation')
+        .delete()
+        .eq('installation_id', installation.id);
     } else if (action === 'suspend') {
       // Update installation status
-      await sql`
-        UPDATE github_installation
-        SET suspended = true, modified = NOW()
-        WHERE installation_id = ${installation.id}
-      `;
+      await supabaseAdmin
+        .from('github_installation')
+        .update({ suspended: true, modified: new Date().toISOString() })
+        .eq('installation_id', installation.id);
     } else if (action === 'unsuspend') {
       // Update installation status
-      await sql`
-        UPDATE github_installation
-        SET suspended = false, modified = NOW()
-        WHERE installation_id = ${installation.id}
-      `;
+      await supabaseAdmin
+        .from('github_installation')
+        .update({ suspended: false, modified: new Date().toISOString() })
+        .eq('installation_id', installation.id);
     }
   } catch (error) {
     console.error('Error handling installation event:', error);
@@ -132,12 +129,12 @@ async function handleRepositoryEvent(payload: InstallationRepositoriesPayload) {
     const installation = payload.installation;
     
     // Get the installation record
-    const installations = await sql`
-      SELECT * FROM github_installation
-      WHERE installation_id = ${installation.id}
-    `;
+    const { data: installations, error } = await supabaseAdmin
+      .from('github_installation')
+      .select('*')
+      .eq('installation_id', installation.id);
     
-    if (!installations.length) {
+    if (error || !installations || !installations.length) {
       console.error('Installation not found:', installation.id);
       return;
     }
@@ -146,51 +143,34 @@ async function handleRepositoryEvent(payload: InstallationRepositoriesPayload) {
     
     if (action === 'added' && payload.repositories_added) {
       // Add new repositories
-      for (const repo of payload.repositories_added) {
-        await sql`
-          INSERT INTO github_repository (
-            id,
-            workspace_id,
-            installation_id,
-            repo_id,
-            name,
-            full_name,
-            private,
-            html_url,
-            description,
-            created,
-            modified
-          ) VALUES (
-            ${uuidv4()},
-            ${installationRecord.workspace_id},
-            ${installationRecord.id},
-            ${repo.id},
-            ${repo.name},
-            ${repo.full_name},
-            ${repo.private},
-            ${repo.html_url},
-            ${repo.description || null},
-            NOW(),
-            NOW()
-          )
-          ON CONFLICT (repo_id, installation_id) DO UPDATE
-          SET 
-            name = ${repo.name},
-            full_name = ${repo.full_name},
-            private = ${repo.private},
-            html_url = ${repo.html_url},
-            description = ${repo.description || null},
-            modified = NOW()
-        `;
+      const now = new Date().toISOString();
+      const upserts = payload.repositories_added.map((repo) => ({
+        id: uuidv4(),
+        workspace_id: installationRecord.workspace_id,
+        installation_id: installationRecord.id,
+        repo_id: repo.id,
+        name: repo.name,
+        full_name: repo.full_name,
+        private: repo.private,
+        html_url: repo.html_url,
+        description: repo.description || null,
+        created: now,
+        modified: now,
+      }));
+      if (upserts.length > 0) {
+        await supabaseAdmin
+          .from('github_repository')
+          .upsert(upserts, { onConflict: 'repo_id,installation_id' });
       }
     } else if (action === 'removed' && payload.repositories_removed) {
       // Delete removed repositories
-      for (const repo of payload.repositories_removed) {
-        await sql`
-          DELETE FROM github_repository
-          WHERE installation_id = ${installationRecord.id}
-          AND repo_id = ${repo.id}
-        `;
+      const toRemove = payload.repositories_removed.map((r) => r.id);
+      if (toRemove.length > 0) {
+        await supabaseAdmin
+          .from('github_repository')
+          .delete()
+          .eq('installation_id', installationRecord.id)
+          .in('repo_id', toRemove);
       }
     }
   } catch (error) {
@@ -227,12 +207,12 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
       const branchName = pullRequest.head.ref;
       
       // Look up the issue ID from the github_branch table
-      const branches = await sql`
-        SELECT issue_id FROM github_branch 
-        WHERE name = ${branchName}
-        ORDER BY modified DESC
-        LIMIT 1
-      `;
+      const { data: branches } = await supabaseAdmin
+        .from('github_branch')
+        .select('issue_id')
+        .eq('name', branchName)
+        .order('modified', { ascending: false })
+        .limit(1);
       
       if (branches.length > 0 && branches[0].issue_id) {
         const issueId = branches[0].issue_id;
@@ -240,19 +220,17 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
         
         if (pullRequest.draft) {
           // If PR is in draft state, set issue to in_progress
-          await sql`
-            UPDATE issue
-            SET status = 'in_progress', modified = NOW()
-            WHERE id = ${issueId}
-          `;
+          await supabaseAdmin
+            .from('issue')
+            .update({ status: 'in_progress', modified: new Date().toISOString() })
+            .eq('id', issueId);
           console.log('Updated issue status to in_progress for issue:', issueId);
         } else {
           // If PR is ready for review, set issue to in_review
-          await sql`
-            UPDATE issue
-            SET status = 'in_review', modified = NOW()
-            WHERE id = ${issueId}
-          `;
+          await supabaseAdmin
+            .from('issue')
+            .update({ status: 'in_review', modified: new Date().toISOString() })
+            .eq('id', issueId);
           console.log('Updated issue status to in_review for issue:', issueId);
         }
       } else {
@@ -275,23 +253,22 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
           const originalPrNumber = originalPrMatch[1];
           console.log('Found original PR number:', originalPrNumber);
           
-          const branches = await sql`
-            SELECT issue_id FROM github_branch 
-            WHERE pull_request_link LIKE ${`%/pull/${originalPrNumber}`}
-            ORDER BY modified DESC
-            LIMIT 1
-          `;
+          const { data: branches } = await supabaseAdmin
+            .from('github_branch')
+            .select('issue_id')
+            .like('pull_request_link', `%/pull/${originalPrNumber}`)
+            .order('modified', { ascending: false })
+            .limit(1);
           
           if (branches.length > 0 && branches[0].issue_id) {
             const issueId = branches[0].issue_id;
             console.log('Found issue ID from original PR:', issueId);
             
             // Update issue status to todo
-            await sql`
-              UPDATE issue
-              SET status = 'in_progress', modified = NOW()
-              WHERE id = ${issueId}
-            `;
+            await supabaseAdmin
+              .from('issue')
+              .update({ status: 'in_progress', modified: new Date().toISOString() })
+              .eq('id', issueId);
             
             console.log('Updated issue status to todo for issue:', issueId);
           } else {
@@ -307,23 +284,22 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
         const branchName = pullRequest.head.ref;
         
         // Look up the issue ID from the github_branch table
-        const branches = await sql`
-          SELECT issue_id FROM github_branch 
-          WHERE name = ${branchName}
-          ORDER BY modified DESC
-          LIMIT 1
-        `;
+        const { data: branches } = await supabaseAdmin
+          .from('github_branch')
+          .select('issue_id')
+          .eq('name', branchName)
+          .order('modified', { ascending: false })
+          .limit(1);
         
         if (branches.length > 0 && branches[0].issue_id) {
           const issueId = branches[0].issue_id;
           console.log('Found issue ID from branch:', issueId);
           
           // Update issue status to done
-          await sql`
-            UPDATE issue
-            SET status = 'done', modified = NOW()
-            WHERE id = ${issueId}
-          `;
+          await supabaseAdmin
+            .from('issue')
+            .update({ status: 'done', modified: new Date().toISOString() })
+            .eq('id', issueId);
           
           console.log('Updated issue status to done for issue:', issueId);
         } else {

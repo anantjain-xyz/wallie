@@ -1,14 +1,12 @@
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
-import postgres from 'postgres';
+import { supabaseAdmin } from './supabase';
 import Stripe from 'stripe';
 import { CronJob } from 'cron';
 
 // Initialize database connection and Stripe
-const DATABASE_URL = process.env.DATABASE_URL!;
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY!;
 const STRIPE_USAGE_METER_ID = process.env.STRIPE_USAGE_METER_ID!; // Added for user count meter
-const sql = postgres(DATABASE_URL);
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 const app = new Hono();
@@ -50,12 +48,15 @@ async function checkAndResetBillingCycles() {
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    const workspaces = await sql`
-      SELECT id, tier, current_billing_cycle_start_date, successful_agent_runs_this_cycle
-      FROM workspace
-      WHERE current_billing_cycle_start_date < ${oneMonthAgo.toISOString()}
-        AND tier IN ('free', 'pro')
-    `;
+    const { data: workspaces, error } = await supabaseAdmin
+      .from('workspace')
+      .select('id, tier, current_billing_cycle_start_date, successful_agent_runs_this_cycle')
+      .lt('current_billing_cycle_start_date', oneMonthAgo.toISOString())
+      .in('tier', ['free', 'pro']);
+
+    if (error || !workspaces) {
+      throw error || new Error('Failed to query workspaces');
+    }
 
     console.log(`Found ${workspaces.length} workspaces needing billing cycle reset`);
 
@@ -63,13 +64,14 @@ async function checkAndResetBillingCycles() {
     const resetResults = await Promise.all(
       workspaces.map(async (workspace) => {
         try {
-          await sql`
-            UPDATE workspace
-            SET current_billing_cycle_start_date = NOW(),
-                successful_agent_runs_this_cycle = 0,
-                modified = NOW()
-            WHERE id = ${workspace.id}
-          `;
+          await supabaseAdmin
+            .from('workspace')
+            .update({
+              current_billing_cycle_start_date: new Date().toISOString(),
+              successful_agent_runs_this_cycle: 0,
+              modified: new Date().toISOString(),
+            })
+            .eq('id', workspace.id);
           return {
             workspace_id: workspace.id,
             tier: workspace.tier,
@@ -106,21 +108,32 @@ async function checkAndResetBillingCycles() {
 async function reportActiveUsersToStripe() {
   try {
     // Get user count by workspace
-    const workspaceUserCounts = await sql`
-      SELECT w.id, w.stripe_customer_id, w.tier, COUNT(DISTINCT au.id) as user_count
-      FROM workspace w
-      JOIN app_user au ON au.workspace_id = w.id
-      WHERE w.tier = 'pro'
-        AND w.stripe_customer_id IS NOT NULL
-        AND au.username != 'wallie'
-      GROUP BY w.id, w.stripe_customer_id, w.tier
-    `;
+    const { data: proWorkspaces, error } = await supabaseAdmin
+      .from('workspace')
+      .select('id, stripe_customer_id, tier')
+      .eq('tier', 'pro')
+      .not('stripe_customer_id', 'is', null);
+
+    if (error || !proWorkspaces) {
+      throw error || new Error('Failed to query pro workspaces');
+    }
+
+    const workspaceUserCounts = await Promise.all(
+      proWorkspaces.map(async (w) => {
+        const { count } = await supabaseAdmin
+          .from('app_user')
+          .select('id', { count: 'exact', head: true })
+          .eq('workspace_id', w.id)
+          .neq('username', 'wallie');
+        return { id: w.id, stripe_customer_id: w.stripe_customer_id, tier: w.tier, user_count: count || 0 } as any;
+      })
+    );
 
     console.log(`Found ${workspaceUserCounts.length} pro workspaces with user counts`);
 
     // Report user counts to Stripe using meterEvents API
     const results = await Promise.all(
-      workspaceUserCounts.map(async (workspace) => {
+      workspaceUserCounts.map(async (workspace: any) => {
         try {
           if (!workspace.stripe_customer_id) {
             return {

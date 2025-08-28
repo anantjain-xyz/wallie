@@ -1,14 +1,13 @@
 import { Hono } from 'hono';
 import Stripe from 'stripe';
-import postgres from 'postgres';
+import { supabaseAdmin } from '../supabase';
 import { getAuth } from '@hono/clerk-auth';
 import { getWorkspaceIdFromUser, getUserIdFromUser } from '../auth';
 const subscriptionApp = new Hono();
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY!;
 const stripe = new Stripe(STRIPE_SECRET_KEY);
-const DATABASE_URL = process.env.DATABASE_URL!;
-const sql = postgres(DATABASE_URL);
+// Using Supabase admin client
 
 subscriptionApp.post('/manage', async (c) => {
   try {
@@ -28,10 +27,24 @@ subscriptionApp.post('/manage', async (c) => {
     }
 
     // 1. Get workspace from DB
-    const [workspace] = await sql`SELECT * FROM workspace WHERE id = ${userWorkspaceId}`;
+    const { data: workspace, error: wsErr } = await supabaseAdmin
+      .from('workspace')
+      .select('*')
+      .eq('id', userWorkspaceId)
+      .single();
+    if (wsErr || !workspace) {
+      return c.json({ error: 'Workspace not found' }, 404);
+    }
 
     // 2. Get user from DB
-    const [user] = await sql`SELECT * FROM app_user WHERE id = ${userId}`;
+    const { data: user, error: userErr } = await supabaseAdmin
+      .from('app_user')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (userErr || !user) {
+      return c.json({ error: 'User not found' }, 404);
+    }
 
     let stripeCustomerId = workspace.stripe_customer_id;
 

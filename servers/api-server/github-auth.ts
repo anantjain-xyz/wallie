@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
 import { App } from '@octokit/app';
 import type { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods';
-import postgres from 'postgres';
 import { getWorkspaceIdFromUser } from '../auth';
 import { v4 as uuidv4 } from 'uuid';
 import { ClerkClient } from '@clerk/backend';
 import { getAuth } from '@hono/clerk-auth';
+import { supabaseAdmin } from '../supabase';
 
 type GitHubRepository = RestEndpointMethodTypes['apps']['listReposAccessibleToInstallation']['response']['data']['repositories'][0];
 
@@ -18,10 +18,6 @@ declare module 'hono' {
 }
 
 // Check for required environment variables
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is required');
-}
-
 if (!process.env.FRONTEND_URL) {
   throw new Error('FRONTEND_URL environment variable is required');
 }
@@ -30,10 +26,8 @@ if (!process.env.GITHUB_CALLBACK_URL) {
   throw new Error('GITHUB_CALLBACK_URL environment variable is required');
 }
 
-const DATABASE_URL = process.env.DATABASE_URL;
 const FRONTEND_URL = process.env.FRONTEND_URL;
 const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL;
-const sql = postgres(DATABASE_URL);
 
 // Initialize GitHub App
 if (!process.env.GITHUB_APP_ID || !process.env.GITHUB_APP_PRIVATE_KEY) {
@@ -121,111 +115,78 @@ app.get('/callback', async (c) => {
       installation_id: Number(installationId)
     });
 
-    // Delete any existing installations for this workspace
-    await sql`
-      DELETE FROM github_installation
-      WHERE workspace_id = ${workspaceId}
-      AND installation_id != ${installation.id}
-    `;
+    // Delete any existing installations for this workspace (except this one)
+    await supabaseAdmin
+      .from('github_installation')
+      .delete()
+      .eq('workspace_id', workspaceId)
+      .neq('installation_id', installation.id);
 
     const githubInstallationId = uuidv4();
     
     // Store installation in database
-    await sql`
-      INSERT INTO github_installation (
-        id,
-        workspace_id,
-        installation_id,
-        installation_url,
-        app_id,
-        target_type,
-        target_name,
-        permissions,
-        access_token,
-        token_expires_at,
-        created,
-        modified
-      ) VALUES (
-        ${githubInstallationId},
-        ${workspaceId},
-        ${installation.id},
-        ${installation.html_url},
-        ${installation.app_id},
-        ${installation.target_type},
-        ${(installation as any).account?.login || 'unknown'},
-        ${JSON.stringify(installation.permissions)},
-        ${token},
-        ${expiresAt},
-        NOW(),
-        NOW()
-      )
-      ON CONFLICT (installation_id) DO UPDATE
-      SET 
-        workspace_id = ${workspaceId},
-        installation_url = ${installation.html_url},
-        app_id = ${installation.app_id},
-        target_type = ${installation.target_type},
-        target_name = ${(installation as any).account?.login || 'unknown'},
-        permissions = ${JSON.stringify(installation.permissions)},
-        access_token = ${token},
-        token_expires_at = ${expiresAt},
-        modified = NOW()
-    `;
+    const now = new Date().toISOString();
+    await supabaseAdmin
+      .from('github_installation')
+      .upsert(
+        {
+          id: githubInstallationId,
+          workspace_id: workspaceId,
+          installation_id: installation.id,
+          installation_url: installation.html_url,
+          app_id: installation.app_id,
+          target_type: installation.target_type,
+          target_name: (installation as any).account?.login || 'unknown',
+          permissions: installation.permissions as any,
+          access_token: token,
+          token_expires_at: expiresAt,
+          created: now,
+          modified: now,
+        },
+        { onConflict: 'installation_id' }
+      );
     
     // Fetch and store repositories
     const { data: { repositories } } = await octokit.request('GET /installation/repositories');
     
-    // Get the repo_ids from GitHub to delete removed ones
-    const activeRepoIds = repositories.map(repo => repo.id);
-    
-    // Delete repositories not in GitHub's list
-    if (activeRepoIds.length > 0) {
-      await sql`
-        DELETE FROM github_repository
-        WHERE github_installation_id = ${githubInstallationId}
-        AND repo_id != ALL(${activeRepoIds})
-      `;
+    // Sync repositories: delete removed, upsert current
+    const { data: existingRepos } = await supabaseAdmin
+      .from('github_repository')
+      .select('repo_id')
+      .eq('github_installation_id', githubInstallationId);
+
+    const activeRepoIds = new Set(repositories.map((r) => r.id));
+    const toRemove = (existingRepos || [])
+      .map((r: any) => r.repo_id)
+      .filter((id: number) => !activeRepoIds.has(id));
+
+    if (toRemove.length > 0) {
+      await supabaseAdmin
+        .from('github_repository')
+        .delete()
+        .eq('github_installation_id', githubInstallationId)
+        .in('repo_id', toRemove);
     }
-    
-    // Insert or update repositories
-    for (const repo of repositories) {
-      await sql`
-        INSERT INTO github_repository (
-          id,
-          workspace_id,
-          github_installation_id,
-          installation_id,
-          repo_id,
-          name,
-          full_name,
-          private,
-          html_url,
-          description,
-          created,
-          modified
-        ) VALUES (
-          ${uuidv4()},
-          ${workspaceId},
-          ${githubInstallationId},
-          ${installation.id},
-          ${repo.id},
-          ${repo.name},
-          ${repo.full_name},
-          ${repo.private},
-          ${repo.html_url},
-          ${repo.description || null},
-          NOW(),
-          NOW()
-        )
-        ON CONFLICT (repo_id, github_installation_id) DO UPDATE
-        SET 
-          name = ${repo.name},
-          full_name = ${repo.full_name},
-          private = ${repo.private},
-          html_url = ${repo.html_url},
-          description = ${repo.description || null},
-          modified = NOW()
-      `;
+
+    const now2 = new Date().toISOString();
+    const upserts = repositories.map((repo) => ({
+      id: uuidv4(),
+      workspace_id: workspaceId,
+      github_installation_id: githubInstallationId,
+      installation_id: installation.id,
+      repo_id: repo.id,
+      name: repo.name,
+      full_name: repo.full_name,
+      private: repo.private,
+      html_url: repo.html_url,
+      description: repo.description || null,
+      created: now2,
+      modified: now2,
+    }));
+    if (upserts.length > 0) {
+      await supabaseAdmin
+        .from('github_repository')
+        .upsert(upserts, { onConflict: 'repo_id,github_installation_id' });
     }
     
     return c.redirect(`${FRONTEND_URL}/settings?github_success=true`);
@@ -250,14 +211,14 @@ app.post('/refresh-repos', async (c) => {
     }
 
     // Get the installation for this workspace
-    const installations = await sql`
-      SELECT * FROM github_installation 
-      WHERE workspace_id = ${workspaceId} 
-      ORDER BY modified DESC
-      LIMIT 1
-    `;
+    const { data: installations, error } = await supabaseAdmin
+      .from('github_installation')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .order('modified', { ascending: false })
+      .limit(1);
     
-    if (!installations.length) {
+    if (!installations || !installations.length || error) {
       return c.json({ error: 'No GitHub installation found for this workspace' }, 404);
     }
     
@@ -269,65 +230,52 @@ app.post('/refresh-repos', async (c) => {
     // Fetch repositories
     const { data: { repositories } } = await octokit.request('GET /installation/repositories');
     
-    // Get the repo_ids from GitHub to delete removed ones
-    const activeRepoIds = repositories.map(repo => repo.id);
-    
-    // Delete repositories not in GitHub's list
-    if (activeRepoIds.length > 0) {
-      await sql`
-        DELETE FROM github_repository
-        WHERE github_installation_id = ${installation.id}
-        AND repo_id != ALL(${activeRepoIds})
-      `;
+    // Sync repositories for this installation
+    const { data: existingRepos2 } = await supabaseAdmin
+      .from('github_repository')
+      .select('repo_id')
+      .eq('github_installation_id', installation.id);
+
+    const activeRepoIds = new Set(repositories.map((r) => r.id));
+    const toRemove2 = (existingRepos2 || [])
+      .map((r: any) => r.repo_id)
+      .filter((id: number) => !activeRepoIds.has(id));
+
+    if (toRemove2.length > 0) {
+      await supabaseAdmin
+        .from('github_repository')
+        .delete()
+        .eq('github_installation_id', installation.id)
+        .in('repo_id', toRemove2);
     }
-    
-    // Insert or update repositories
-    for (const repo of repositories) {
-      await sql`
-        INSERT INTO github_repository (
-          id,
-          workspace_id,
-          github_installation_id,
-          installation_id,
-          repo_id,
-          name,
-          full_name,
-          private,
-          html_url,
-          description,
-          created,
-          modified
-        ) VALUES (
-          ${uuidv4()},
-          ${workspaceId},
-          ${installation.id},
-          ${installation.installation_id},
-          ${repo.id},
-          ${repo.name},
-          ${repo.full_name},
-          ${repo.private},
-          ${repo.html_url},
-          ${repo.description || null},
-          NOW(),
-          NOW()
-        )
-        ON CONFLICT (repo_id, github_installation_id) DO UPDATE
-        SET 
-          name = ${repo.name},
-          full_name = ${repo.full_name},
-          private = ${repo.private},
-          html_url = ${repo.html_url},
-          description = ${repo.description || null},
-          modified = NOW()
-      `;
+
+    const now3 = new Date().toISOString();
+    const upserts2 = repositories.map((repo) => ({
+      id: uuidv4(),
+      workspace_id: workspaceId,
+      github_installation_id: installation.id,
+      installation_id: installation.installation_id,
+      repo_id: repo.id,
+      name: repo.name,
+      full_name: repo.full_name,
+      private: repo.private,
+      html_url: repo.html_url,
+      description: repo.description || null,
+      created: now3,
+      modified: now3,
+    }));
+    if (upserts2.length > 0) {
+      await supabaseAdmin
+        .from('github_repository')
+        .upsert(upserts2, { onConflict: 'repo_id,github_installation_id' });
     }
     
     // Return the updated list of repositories
-    const updatedRepos = await sql`
-      SELECT * FROM github_repository
-      WHERE github_installation_id = ${installation.id}
-      ORDER BY name ASC
-    `;
+    const { data: updatedRepos } = await supabaseAdmin
+      .from('github_repository')
+      .select('*')
+      .eq('github_installation_id', installation.id)
+      .order('name', { ascending: true });
     
     return c.json({ repositories: updatedRepos });
   } catch (error) {
@@ -348,14 +296,14 @@ app.get('/token', async (c) => {
     }
     
     // Get the installation for this workspace
-    const installations = await sql`
-      SELECT * FROM github_installation 
-      WHERE workspace_id = ${workspaceId} 
-      ORDER BY modified DESC
-      LIMIT 1
-    `;
+    const { data: installations, error } = await supabaseAdmin
+      .from('github_installation')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .order('modified', { ascending: false })
+      .limit(1);
     
-    if (!installations.length) {
+    if (!installations || !installations.length || error) {
       return c.json({ error: 'No GitHub installation found for this workspace' }, 404);
     }
     
@@ -375,11 +323,10 @@ app.get('/token', async (c) => {
     const { token, expiresAt } = authResponse;
     
     // Update token in database
-    await sql`
-      UPDATE github_installation
-      SET access_token = ${token}, token_expires_at = ${expiresAt}, modified = NOW()
-      WHERE id = ${installation.id}
-    `;
+    await supabaseAdmin
+      .from('github_installation')
+      .update({ access_token: token, token_expires_at: expiresAt, modified: new Date().toISOString() })
+      .eq('id', installation.id);
     
     return c.json({ token, expiresAt });
   } catch (error) {

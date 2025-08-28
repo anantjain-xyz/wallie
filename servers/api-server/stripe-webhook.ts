@@ -1,11 +1,10 @@
 import { Hono } from 'hono';
 import Stripe from 'stripe';
-import postgres from 'postgres';
+import { supabaseAdmin } from '../supabase';
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY!;
 const stripe = new Stripe(STRIPE_SECRET_KEY);
-const DATABASE_URL = process.env.DATABASE_URL!;
-const sql = postgres(DATABASE_URL);
+// Using Supabase admin client
 
 export const stripeWebhookApp = new Hono();
 
@@ -33,15 +32,16 @@ stripeWebhookApp.post('/', async (c) => {
       return c.json({ error: 'Missing workspaceId or stripeCustomerId' }, 400);
     }
     try {
-      await sql`
-        UPDATE workspace
-        SET tier = 'pro',
-            stripe_customer_id = ${stripeCustomerId},
-            current_billing_cycle_start_date = NOW(),
-            successful_agent_runs_this_cycle = 0,
-            modified = NOW()
-        WHERE id = ${workspaceId}
-      `;
+      await supabaseAdmin
+        .from('workspace')
+        .update({
+          tier: 'pro',
+          stripe_customer_id: stripeCustomerId,
+          current_billing_cycle_start_date: new Date().toISOString(),
+          successful_agent_runs_this_cycle: 0,
+          modified: new Date().toISOString(),
+        })
+        .eq('id', workspaceId);
       return c.json({ received: true });
     } catch (err) {
       console.error('Failed to update workspace on Stripe webhook:', err);
@@ -57,16 +57,17 @@ stripeWebhookApp.post('/', async (c) => {
       return c.json({ error: 'Missing stripeCustomerId' }, 400);
     }
     try {
-      const result = await sql`
-        UPDATE workspace
-        SET tier = 'free',
-            current_billing_cycle_start_date = NOW(),
-            successful_agent_runs_this_cycle = 0,
-            modified = NOW()
-        WHERE stripe_customer_id = ${stripeCustomerId}
-        RETURNING id
-      `;
-      if (result.length === 0) {
+      const { data: result } = await supabaseAdmin
+        .from('workspace')
+        .update({
+          tier: 'free',
+          current_billing_cycle_start_date: new Date().toISOString(),
+          successful_agent_runs_this_cycle: 0,
+          modified: new Date().toISOString(),
+        })
+        .eq('stripe_customer_id', stripeCustomerId)
+        .select('id');
+      if (!result || result.length === 0) {
         console.warn('No workspace found for stripe_customer_id:', stripeCustomerId);
       }
       return c.json({ received: true });

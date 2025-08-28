@@ -77,6 +77,22 @@ If you write migrations, you can apply them by resetting the Supabase db:
 supabase db reset
 ```
 
+## Supabase Clients & Env Vars
+
+Wallie uses two separate Supabase clients with different env vars, one for the frontend and one for server-side Hono services:
+
+- Frontend client
+  - File: `src/supabase.ts`
+  - Env: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+  - Behavior: uses the anon key and fetch-time token provider to forward a Clerk JWT for RLS. No service role key is ever exposed to the browser.
+
+- Server client
+  - File: `servers/supabase.ts`
+  - Env: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (required; no anon fallback)
+  - Behavior: uses the service role key for privileged operations needed by webhooks and background jobs (e.g., GitHub/Stripe handlers, cron tasks).
+
+Add these variables to your `.env` (see `.env.example`). The frontend `VITE_*` vars are only used in the browser app, while the server `SUPABASE_*` vars are only loaded by Node processes.
+
 ## GitHub App Integration
 
 Wallie includes a GitHub App integration that allows users to create pull requests directly from issues. Here's how it works:

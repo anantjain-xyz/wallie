@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { validateProxyAuth } from './auth';
 import { createClerkClient } from '@clerk/backend';
-import postgres from 'postgres';
 import type { Context } from 'hono';
 
 // Create hoisted mocks
@@ -12,13 +11,36 @@ const createMockClerkClient = vi.hoisted(() => vi.fn().mockReturnValue({
   }
 }));
 
-const mockSql = vi.hoisted(() => vi.fn().mockImplementation(async (...args) => []));
-const createMockSql = vi.hoisted(() => vi.fn().mockReturnValue(mockSql));
-
-// Mock postgres to return a function that can be mocked per test
-vi.mock('postgres', () => ({
-  default: createMockSql
+// Supabase admin mock
+type SelectResult = any[] | null;
+const supabaseState = vi.hoisted(() => ({
+  appUserRows: [] as any[],
+  workspaceRows: [] as any[],
+  upsertShouldFail: false,
 }));
+
+vi.mock('./supabase', () => {
+  const buildSelect = (table: string) => {
+    return {
+      eq: (col: string, _val: any) => ({ data: table === 'app_user' ? supabaseState.appUserRows : [], error: null }),
+      contains: (_col: string, _val: any) => ({ data: table === 'workspace' ? supabaseState.workspaceRows : [], error: null }),
+      order: () => ({ limit: () => ({ data: [], error: null }) }),
+      maybeSingle: () => ({ data: null, error: null }),
+      single: () => ({ data: null, error: null }),
+    } as any;
+  };
+
+  const from = (table: string) => ({
+    select: (_cols?: string) => buildSelect(table),
+    upsert: (_val: any, _opts?: any) => ({ select: () => ({ single: () => (supabaseState.upsertShouldFail ? { data: null, error: new Error('fail') } : { data: { id: 'new_ws' }, error: null }) }) }),
+    update: () => ({ eq: () => ({ data: null, error: null }) }),
+    delete: () => ({ eq: () => ({ data: null, error: null }) }),
+  });
+
+  return {
+    supabaseAdmin: { from },
+  };
+});
 
 // Mock Clerk client
 vi.mock('@clerk/backend', () => ({
@@ -93,7 +115,10 @@ describe('validateProxyAuth', () => {
       lastName: 'User'
     });
 
-    mockSql.mockResolvedValue([]);
+    // No user in DB, no workspace match, and simulate upsert failure
+    supabaseState.appUserRows = [];
+    supabaseState.workspaceRows = [];
+    supabaseState.upsertShouldFail = true;
 
     const response = await validateProxyAuth(mockContext);
     expect(response).toBeInstanceOf(Response);
@@ -118,7 +143,7 @@ describe('validateProxyAuth', () => {
       lastName: 'User'
     });
 
-    mockSql.mockResolvedValue([{ workspace_id: '456' }]); // Different workspace_id than requested
+    supabaseState.appUserRows = [{ workspace_id: '456' }]; // Different workspace_id than requested
 
     const response = await validateProxyAuth(mockContext);
     expect(response).toBeNull();
@@ -140,7 +165,7 @@ describe('validateProxyAuth', () => {
       lastName: 'User'
     });
 
-    mockSql.mockResolvedValue([{ workspace_id: '123' }]);
+    supabaseState.appUserRows = [{ workspace_id: '123' }];
 
     const response = await validateProxyAuth(mockContext);
     expect(response).toBeNull();
