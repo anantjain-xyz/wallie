@@ -9,6 +9,7 @@ create or replace function public.current_user_email()
 returns text
 language sql
 stable
+set search_path = ''
 as $$
   select lower((current_setting('request.jwt.claims', true)::jsonb ->> 'email'))
 $$;
@@ -20,7 +21,7 @@ returns setof uuid
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 as $$
   select au.workspace_id
   from public.app_user au
