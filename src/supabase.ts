@@ -25,17 +25,6 @@ export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "", {
     persistSession: false,
     detectSessionInUrl: false,
   },
-  global: {
-    // Forward Clerk JWT when present; supabase-js still includes the anon key via `apikey` header.
-    fetch: async (input, init) => {
-      const headers = new Headers(init?.headers || {});
-      const token = tokenProvider ? await tokenProvider() : null;
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      } else {
-        headers.delete("Authorization");
-      }
-      return fetch(input, { ...init, headers });
-    },
-  },
+  // Provide a fresh Clerk JWT for both PostgREST and Realtime
+  accessToken: async () => (tokenProvider ? await tokenProvider() : null),
 });
