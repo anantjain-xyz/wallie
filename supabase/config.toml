@@ -300,7 +300,7 @@ enabled = false
 enabled = true
 # Obtain from https://clerk.com/setup/supabase
 # Example: myapp.clerk.accounts.dev
-domain = "env(CLERK_JWT_ISSUER)"
+domain = "more-pangolin-98.clerk.accounts.dev"
 
 [edge_runtime]
 enabled = true
