@@ -281,11 +281,9 @@ export async function issueListLoaderSupabase({
   }
   if (filterState.estimate && filterState.estimate.length) {
     const includesNull = filterState.estimate.includes(null);
-    const nums = (filterState.estimate.filter((e) => e !== null) as number[]);
+    const nums = filterState.estimate.filter((e) => e !== null) as number[];
     if (includesNull && nums.length > 0) {
-      query = query.or(
-        `estimate.is.null,estimate.in.(${nums.join(",")})`,
-      );
+      query = query.or(`estimate.is.null,estimate.in.(${nums.join(",")})`);
     } else if (includesNull) {
       query = query.is("estimate", null);
     } else if (nums.length > 0) {

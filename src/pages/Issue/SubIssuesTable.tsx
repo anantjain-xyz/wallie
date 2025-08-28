@@ -81,14 +81,11 @@ export default function SubIssuesTable({
   ) => {
     // Event handling moved to button onClick
     try {
-      await supabase
-        .from("issue_link")
-        .delete()
-        .match({
-          target_issue_id: issueId,
-          source_issue_id: targetIssueId,
-          link_type: LinkType.SUB_ISSUE,
-        });
+      await supabase.from("issue_link").delete().match({
+        target_issue_id: issueId,
+        source_issue_id: targetIssueId,
+        link_type: LinkType.SUB_ISSUE,
+      });
     } catch (error) {
       console.error("Failed to remove sub-issue relationship:", error);
     }
