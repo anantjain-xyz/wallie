@@ -4,6 +4,19 @@ import { useAuth } from "@clerk/clerk-react";
 import { showError, showSuccess } from "../utils/notification";
 
 const SLUG_REGEX = /^[a-z0-9-]+$/;
+// Reserved URL slugs to avoid conflicts with app routes/endpoints
+const RESERVED_SLUGS = new Set<string>([
+  "api",
+  "settings",
+  "create-workspace",
+  "issue",
+  "search",
+  "subscription",
+  "webhook",
+  "secrets",
+  "workspaces",
+  "admin",
+]);
 
 const CreateWorkspace: React.FC = () => {
   const [name, setName] = useState("");
@@ -28,13 +41,19 @@ const CreateWorkspace: React.FC = () => {
     const trimmedUrl = url.trim().toLowerCase();
 
     if (!trimmedName) {
-      setSubmitting(false);
       showError("Workspace name is required", "Validation error");
       return;
     }
     if (!trimmedUrl || !SLUG_REGEX.test(trimmedUrl)) {
-      setSubmitting(false);
-      setUrlError("Use lowercase letters, numbers, and hyphens only");
+      const msg = "Use lowercase letters, numbers, and hyphens only";
+      setUrlError(msg);
+      showError(msg, "Validation error");
+      return;
+    }
+    if (RESERVED_SLUGS.has(trimmedUrl)) {
+      const msg = "This URL is reserved. Choose a different one.";
+      setUrlError(msg);
+      showError(msg, "Validation error");
       return;
     }
 
@@ -64,7 +83,9 @@ const CreateWorkspace: React.FC = () => {
       }
 
       if (res.status === 409) {
-        setUrlError("This URL is already in use. Choose a different one.");
+        const msg = "This URL is already in use. Choose a different one.";
+        setUrlError(msg);
+        showError(msg, "Conflict");
         return;
       }
 

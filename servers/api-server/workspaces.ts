@@ -12,6 +12,19 @@ const clerk = (() => {
 })();
 
 const SLUG_REGEX = /^[a-z0-9-]+$/;
+// Reserved URL slugs to avoid conflicts with app routes/endpoints
+const RESERVED_SLUGS = new Set([
+  'api',
+  'settings',
+  'create-workspace',
+  'issue',
+  'search',
+  'subscription',
+  'webhook',
+  'secrets',
+  'workspaces',
+  'admin',
+]);
 
 type CreateWorkspaceBody = {
   name: string;
@@ -63,7 +76,8 @@ workspacesApp.post('/', async (c) => {
 
     const body = (await c.req.json()) as CreateWorkspaceBody;
     const { avatar_url } = body || ({} as CreateWorkspaceBody);
-    let { name, url } = body || ({} as CreateWorkspaceBody);
+    const { name } = body || ({} as CreateWorkspaceBody);
+    let { url } = body || ({} as CreateWorkspaceBody);
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return c.json({ error: 'Workspace name is required' }, 400);
@@ -72,7 +86,7 @@ workspacesApp.post('/', async (c) => {
       return c.json({ error: 'Workspace url is required' }, 400);
     }
 
-    name = name.trim();
+    const sanitizedName = name.trim().replace(/<[^>]*>/g, '').slice(0, 100);
     url = url.trim().toLowerCase();
 
     if (!SLUG_REGEX.test(url)) {
@@ -80,6 +94,9 @@ workspacesApp.post('/', async (c) => {
         { error: 'Invalid url. Use lowercase letters, numbers, and hyphens only.' },
         400,
       );
+    }
+    if (RESERVED_SLUGS.has(url)) {
+      return c.json({ error: 'Workspace URL is reserved. Choose a different one.' }, 409);
     }
 
     // Uniqueness check (return 409 on conflict)
@@ -106,7 +123,7 @@ workspacesApp.post('/', async (c) => {
         .from('workspace')
         .insert({
           id: workspaceId,
-          name,
+          name: sanitizedName,
           url,
           avatar_url: avatar_url ?? null,
           allowlisted_domains: emailDomain ? [emailDomain] : [],
@@ -172,7 +189,7 @@ workspacesApp.post('/', async (c) => {
     // Create Wallie system user for the workspace
     await createWallieUser(workspaceId);
 
-    return c.json({ id: workspaceId, name, url }, 201);
+    return c.json({ id: workspaceId, name: sanitizedName, url }, 201);
   } catch (err) {
     console.error('Error in POST /workspaces:', err);
     return c.json({ error: 'Internal Server Error' }, 500);
