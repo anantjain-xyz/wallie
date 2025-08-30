@@ -10,6 +10,14 @@ interface AppUser {
   workspace_id: string;
 }
 
+interface PostgresChangesPayload {
+  new?: { email?: string };
+  old?: { email?: string };
+  eventType: string;
+  table: string;
+  schema: string;
+}
+
 export function useCurrentUser(user: User | null | undefined) {
   const email = user?.emailAddresses?.[0]?.emailAddress;
   const [rows, setRows] = useState<AppUser[]>([]);
@@ -46,7 +54,7 @@ export function useCurrentUser(user: User | null | undefined) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "app_user" },
-        (payload: any) => {
+        (payload: PostgresChangesPayload) => {
           const tgt = email.toLowerCase();
           const eNew = payload?.new?.email?.toLowerCase?.();
           const eOld = payload?.old?.email?.toLowerCase?.();

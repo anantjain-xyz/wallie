@@ -75,7 +75,7 @@ function IssueRow({
         .update({ status, modified: new Date().toISOString() })
         .eq("id", issue!.id);
       if (error) throw error;
-    } catch (err) {
+    } catch (_err) {
       showError("Failed to update status", "Save error");
     }
   };
@@ -87,7 +87,7 @@ function IssueRow({
         .update({ priority, modified: new Date().toISOString() })
         .eq("id", issue!.id);
       if (error) throw error;
-    } catch (err) {
+    } catch (_err) {
       showError("Failed to update priority", "Save error");
     }
   };
@@ -99,7 +99,7 @@ function IssueRow({
         .update({ assignee_id: userId, modified: new Date().toISOString() })
         .eq("id", issue!.id);
       if (error) throw error;
-    } catch (err) {
+    } catch (_err) {
       showError("Failed to update assignee", "Save error");
     }
   };
@@ -111,7 +111,7 @@ function IssueRow({
         .update({ estimate, modified: new Date().toISOString() })
         .eq("id", issue!.id);
       if (error) throw error;
-    } catch (err) {
+    } catch (_err) {
       showError("Failed to update estimate", "Save error");
     }
   };
