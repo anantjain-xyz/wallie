@@ -10,6 +10,7 @@ import secretsApp from './secrets'
 import { EncryptionService } from './encryption'
 import subscriptionApp from './subscription'
 import { stripeWebhookApp } from './stripe-webhook'
+import workspacesApp from './workspaces'
 
 // Check that encryption key is set
 try {
@@ -57,6 +58,7 @@ app.route('/webhook/github', githubWebhookApp);
 app.route('/webhook/stripe', stripeWebhookApp);
 app.route('/secrets', secretsApp);
 app.route('/subscription', subscriptionApp);
+app.route('/workspaces', workspacesApp);
 app.route('/', githubAuthApp);
 
 // Error handling

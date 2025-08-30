@@ -1,9 +1,11 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import LeftMenu from "../components/LeftMenu";
 import { useAuth } from "@clerk/clerk-react";
 
 export default function Root() {
   const { isLoaded } = useAuth();
+  const location = useLocation();
+  const hideSidebar = location.pathname === "/create-workspace";
 
   // Don't render anything until Clerk is initialized
   if (!isLoaded) {
@@ -17,7 +19,7 @@ export default function Root() {
   return (
     <>
       <div className="flex w-full h-screen overflow-y-hidden">
-        <LeftMenu />
+        {!hideSidebar && <LeftMenu />}
         <Outlet />
       </div>
       {/* Portal target for CommandBar */}

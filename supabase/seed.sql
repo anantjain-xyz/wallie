@@ -16,11 +16,34 @@ with ws as (
   select id from public.workspace where url = 'local' limit 1
 )
 insert into public.app_user (id, email, username, full_name, profile_picture, workspace_id)
-select uuid_generate_v4(), 'anant@wallie.app', 'wallie', 'Wallie', null, ws.id
+select uuid_generate_v4(), 'anant@wallie.app', 'anant', 'Anant', null, ws.id
 from ws
-where not exists (
-  select 1 from public.app_user where email = 'anant@wallie.app'
-);
+on conflict (workspace_id, email)
+do update set
+  username = excluded.username,
+  full_name = excluded.full_name,
+  profile_picture = excluded.profile_picture,
+  modified = now();
+
+-- Ensure the Wallie system user exists for the local workspace (matches API behavior)
+with ws as (
+  select id from public.workspace where url = 'local' limit 1
+)
+insert into public.app_user (id, email, username, full_name, profile_picture, workspace_id)
+select
+  uuid_generate_v4(),
+  'agent@wallie.app',
+  'wallie',
+  'Wallie',
+  'https://wallie.sfo2.digitaloceanspaces.com/production/workspace-avatars/4ddf8d2f-fce0-433f-af07-c970b43db995.png',
+  ws.id
+from ws
+on conflict (workspace_id, email)
+do update set
+  username = excluded.username,
+  full_name = excluded.full_name,
+  profile_picture = excluded.profile_picture,
+  modified = now();
 
 -- Seed a few issues for the board/list
 with ws as (
