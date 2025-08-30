@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import WorkspaceProfileForm from "./Settings/WorkspaceProfileForm";
 import { useAuth } from "@clerk/clerk-react";
-import { useNavigate } from "react-router-dom";
 import { showError, showSuccess } from "../utils/notification";
 
 const SLUG_REGEX = /^[a-z0-9-]+$/;
@@ -13,7 +12,6 @@ const CreateWorkspace: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
 
-  const navigate = useNavigate();
   const { getToken } = useAuth();
 
   const API_SERVER_URL = useMemo(
@@ -59,7 +57,9 @@ const CreateWorkspace: React.FC = () => {
 
       if (res.status === 201) {
         showSuccess("Workspace created", "Success");
-        navigate("/");
+        // Force a full reload to ensure all Supabase RLS-scoped queries and
+        // app_user membership are reflected immediately (Realtime can lag).
+        window.location.replace("/");
         return;
       }
 
@@ -76,16 +76,61 @@ const CreateWorkspace: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [API_SERVER_URL, avatarUrl, getToken, name, navigate, url]);
+  }, [API_SERVER_URL, avatarUrl, getToken, name, url]);
 
   const submitButton = (
     <button
       type="button"
       onClick={handleSubmit}
       disabled={submitting}
-      className="inline-flex items-center px-4 py-2 border border-blue-600 shadow-sm text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+      aria-busy={submitting}
+      title={submitting ? "Creating workspace" : "Create workspace"}
+      className="relative inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 hover:-translate-y-0.5 active:translate-y-0"
     >
-      {submitting ? "Creating..." : "Create workspace"}
+      {submitting ? (
+        <>
+          <svg
+            className="h-4 w-4 animate-spin text-white"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              d="M4 12a8 8 0 018-8"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+            />
+          </svg>
+          <span>Creating...</span>
+        </>
+      ) : (
+        <>
+          <svg
+            className="h-4 w-4 text-white"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 5v14M5 12h14"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+          <span>Create workspace</span>
+        </>
+      )}
     </button>
   );
 

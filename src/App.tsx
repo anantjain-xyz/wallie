@@ -170,6 +170,7 @@ const App = () => {
   const [showMenu, setShowMenu] = useState(false);
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [showCommandBar, setShowCommandBar] = useState(false);
+  const [supabaseReady, setSupabaseReady] = useState(false);
   // No external auth bridge to Supabase; requests use anon key.
 
   const menuContextValue = useMemo(
@@ -238,9 +239,10 @@ const App = () => {
 
   const { isLoaded, isSignedIn, getToken } = useAuth();
 
-  // Forward Clerk token to Supabase (trusted third-party auth)
+  // Forward Clerk token to Supabase (trusted third-party auth) and gate initial render
   useEffect(() => {
     let cancelled = false;
+    setSupabaseReady(false);
     const setup = async () => {
       try {
         if (!isSignedIn) {
@@ -249,10 +251,14 @@ const App = () => {
         }
         // Provide a per-request token fetcher so every request uses a fresh JWT
         const provider = async () => (await getToken()) ?? null;
-        if (!cancelled) setSupabaseTokenProvider(provider);
+        if (!cancelled) {
+          setSupabaseTokenProvider(provider);
+          setSupabaseReady(true);
+        }
       } catch (_e) {
         if (!cancelled) {
           setSupabaseTokenProvider(null);
+          setSupabaseReady(false);
         }
       }
     };
@@ -260,6 +266,7 @@ const App = () => {
     return () => {
       cancelled = true;
       setSupabaseTokenProvider(null);
+      setSupabaseReady(false);
     };
   }, [getToken, isSignedIn]);
 
@@ -269,6 +276,12 @@ const App = () => {
 
   if (!isSignedIn) {
     return <SignInPage />;
+  }
+
+  // Ensure Supabase has a Clerk JWT before first mount of routes to avoid
+  // subscribing Realtime channels unauthenticated (which can miss events under RLS)
+  if (!supabaseReady) {
+    return <LoadingScreen>Preparing your workspace...</LoadingScreen>;
   }
 
   return (
