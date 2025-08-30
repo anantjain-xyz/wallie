@@ -5,6 +5,7 @@ import {
   RouterProvider,
   type Params,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -14,12 +15,14 @@ import Root from "./pages/root";
 import { Suspense, lazy } from "react";
 const Issue = lazy(() => import("./pages/Issue"));
 const Settings = lazy(() => import("./pages/Settings"));
+const CreateWorkspace = lazy(() => import("./pages/CreateWorkspace"));
 import { getFilterStateFromSearchParams } from "./utils/filterState";
 import { ImSpinner8 } from "react-icons/im";
 import { supabase, setSupabaseTokenProvider } from "./supabase";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 import SignInPage from "./components/SignInPage";
 import CommandBarWrapper from "./components/CommandBarWrapper";
+import { useCurrentUser } from "./utils/userUtils";
 
 interface MenuContextInterface {
   showMenu: boolean;
@@ -47,11 +50,27 @@ export const CommandBarContext = createContext(
 // Move GlobalShortcutsHandler to be used inside the router
 const AppLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setShowIssueModal } = useContext(IssueModalContext)!;
   const { setShowCommandBar } = useContext(CommandBarContext)!;
   const [lastKeyPressed, setLastKeyPressed] = useState<string | null>(null);
   const [keySequenceTimer, setKeySequenceTimer] =
     useState<NodeJS.Timeout | null>(null);
+
+  // Redirect signed-in users without a workspace to creation flow
+  const { user } = useUser();
+  const { rows, loading } = useCurrentUser(user);
+  const workspaceId = rows?.[0]?.workspace_id;
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (!workspaceId && location.pathname !== "/create-workspace") {
+      navigate("/create-workspace", { replace: true });
+    } else if (workspaceId && location.pathname === "/create-workspace") {
+      navigate("/", { replace: true });
+    }
+  }, [loading, workspaceId, location.pathname, navigate]);
 
   // Clear the last key pressed after a delay
   const clearLastKeyPressed = () => {
@@ -185,6 +204,14 @@ const App = () => {
               path: `/search`,
               element: <List showSearch={true} />,
               loader: issueListLoaderSupabase,
+            },
+            {
+              path: `/create-workspace`,
+              element: (
+                <Suspense fallback={<div className="p-8">Loading...</div>}>
+                  <CreateWorkspace />
+                </Suspense>
+              ),
             },
             {
               path: `/issue/:formattedExternalId`,
