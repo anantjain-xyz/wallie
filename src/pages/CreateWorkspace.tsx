@@ -4,7 +4,6 @@ import { useAuth } from "@clerk/clerk-react";
 import { showError, showSuccess } from "../utils/notification";
 import { SLUG_REGEX, RESERVED_SLUGS } from "../../shared/constants";
 
-
 const CreateWorkspace: React.FC = () => {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
