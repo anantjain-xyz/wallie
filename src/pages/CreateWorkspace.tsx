@@ -2,21 +2,8 @@ import React, { useCallback, useMemo, useState } from "react";
 import WorkspaceProfileForm from "./Settings/WorkspaceProfileForm";
 import { useAuth } from "@clerk/clerk-react";
 import { showError, showSuccess } from "../utils/notification";
+import { SLUG_REGEX, RESERVED_SLUGS } from "../../shared/constants";
 
-const SLUG_REGEX = /^[a-z0-9-]+$/;
-// Reserved URL slugs to avoid conflicts with app routes/endpoints
-const RESERVED_SLUGS = new Set<string>([
-  "api",
-  "settings",
-  "create-workspace",
-  "issue",
-  "search",
-  "subscription",
-  "webhook",
-  "secrets",
-  "workspaces",
-  "admin",
-]);
 
 const CreateWorkspace: React.FC = () => {
   const [name, setName] = useState("");

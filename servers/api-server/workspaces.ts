@@ -3,6 +3,7 @@ import { getAuth } from '@hono/clerk-auth';
 import { createClerkClient } from '@clerk/backend';
 import { v4 as uuidv4 } from 'uuid';
 import { supabaseAdmin } from '../supabase';
+import { SLUG_REGEX, RESERVED_SLUGS } from '../../shared/constants';
 
 const clerk = (() => {
   if (!process.env.CLERK_SECRET_KEY) {
@@ -11,20 +12,6 @@ const clerk = (() => {
   return createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 })();
 
-const SLUG_REGEX = /^[a-z0-9-]+$/;
-// Reserved URL slugs to avoid conflicts with app routes/endpoints
-const RESERVED_SLUGS = new Set([
-  'api',
-  'settings',
-  'create-workspace',
-  'issue',
-  'search',
-  'subscription',
-  'webhook',
-  'secrets',
-  'workspaces',
-  'admin',
-]);
 
 type CreateWorkspaceBody = {
   name: string;
@@ -96,21 +83,6 @@ workspacesApp.post('/', async (c) => {
     }
     if (RESERVED_SLUGS.has(url)) {
       return c.json({ error: 'Workspace URL is reserved. Choose a different one.' }, 409);
-    }
-
-    // Uniqueness check (return 409 on conflict)
-    {
-      const { data: existing, error: existErr } = await supabaseAdmin
-        .from('workspace')
-        .select('id')
-        .eq('url', url)
-        .limit(1);
-      if (existErr) {
-        console.error('Error checking workspace uniqueness:', existErr);
-        // Continue and let insert handle unique violations as fallback
-      } else if (existing && existing.length > 0) {
-        return c.json({ error: 'Workspace URL already in use' }, 409);
-      }
     }
 
     const now = new Date().toISOString();
