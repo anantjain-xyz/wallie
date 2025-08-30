@@ -74,7 +74,9 @@ const WorkspaceProfileForm: React.FC<WorkspaceProfileFormProps> = ({
   return (
     <div className="bg-white shadow-md rounded-lg mb-6 overflow-hidden">
       <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
-        <h2 className="text-xl font-medium text-gray-900">Workspace Settings</h2>
+        <h2 className="text-xl font-medium text-gray-900">
+          Workspace Settings
+        </h2>
       </div>
 
       <div className="px-6 py-6">
@@ -108,8 +110,12 @@ const WorkspaceProfileForm: React.FC<WorkspaceProfileFormProps> = ({
                 )}
               </div>
               <div className="ml-5">
-                <p className="text-sm text-gray-600">Click or drag and drop to upload</p>
-                <p className="mt-1 text-xs text-gray-500">JPG, PNG, SVG, GIF up to 5MB</p>
+                <p className="text-sm text-gray-600">
+                  Click or drag and drop to upload
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  JPG, PNG, SVG, GIF up to 5MB
+                </p>
               </div>
             </div>
           </div>
@@ -155,7 +161,9 @@ const WorkspaceProfileForm: React.FC<WorkspaceProfileFormProps> = ({
                 className="flex-1 min-w-0 block w-full px-3 py-2.5 rounded-none rounded-r-md border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:opacity-60"
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">Use lowercase letters, numbers, and hyphens only.</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Use lowercase letters, numbers, and hyphens only.
+            </p>
           </div>
 
           {submitButton ? <div className="pt-2">{submitButton}</div> : null}
