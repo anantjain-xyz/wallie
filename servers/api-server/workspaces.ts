@@ -34,7 +34,6 @@ type CreateWorkspaceBody = {
 
 const workspacesApp = new Hono();
 
-// Helper: create the system Wallie user for a workspace (copied from servers/auth.ts)
 async function createWallieUser(workspaceId: string): Promise<void> {
   try {
     const now = new Date().toISOString();
