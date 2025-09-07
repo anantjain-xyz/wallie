@@ -45,6 +45,12 @@ const debounceTime = 500;
 
 function IssuePage() {
   const { issue: loadedIssue } = useLoaderData() as { issue: Issue | null };
+  
+  // If the issue wasn't found in the loader, show not found immediately
+  if (loadedIssue === null) {
+    return <div className="p-8 w-full text-center">Issue not found</div>;
+  }
+  
   const { data: issueRows } = useRealtimeQuery<Issue>(
     "issue",
     async () => {
