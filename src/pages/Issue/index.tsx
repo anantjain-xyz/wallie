@@ -673,7 +673,15 @@ function IssuePage() {
                     button={
                       <button
                         type="button"
-                        className="inline-flex items-center h-6 px-2 text-gray-500border-none rounded hover:bg-gray-100"
+                        className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100"
+                        onMouseDown={(e) => {
+                          // Trigger context menu on left click
+                          e.currentTarget.dispatchEvent(new MouseEvent('contextmenu', {
+                            bubbles: true,
+                            clientX: e.clientX,
+                            clientY: e.clientY
+                          }));
+                        }}
                       >
                         <StatusIcon status={issue.status} className="mr-2" />
                         <span>{StatusDisplay[issue.status]}</span>
@@ -694,6 +702,14 @@ function IssuePage() {
                       <button
                         type="button"
                         className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                        onMouseDown={(e) => {
+                          // Trigger context menu on left click
+                          e.currentTarget.dispatchEvent(new MouseEvent('contextmenu', {
+                            bubbles: true,
+                            clientX: e.clientX,
+                            clientY: e.clientY
+                          }));
+                        }}
                       >
                         <PriorityIcon
                           priority={issue.priority}
@@ -717,6 +733,14 @@ function IssuePage() {
                       <button
                         type="button"
                         className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                        onMouseDown={(e) => {
+                          // Trigger context menu on left click
+                          e.currentTarget.dispatchEvent(new MouseEvent('contextmenu', {
+                            bubbles: true,
+                            clientX: e.clientX,
+                            clientY: e.clientY
+                          }));
+                        }}
                       >
                         <EstimateIcon className="mr-2 mb-1 h-4 w-4" />
                         <span>{formatEstimate(issue.estimate)}</span>
@@ -739,6 +763,14 @@ function IssuePage() {
                         <button
                           type="button"
                           className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                          onMouseDown={(e) => {
+                            // Trigger context menu on left click
+                            e.currentTarget.dispatchEvent(new MouseEvent('contextmenu', {
+                              bubbles: true,
+                              clientX: e.clientX,
+                              clientY: e.clientY
+                            }));
+                          }}
                         >
                           {issue.assignee_id && assignee ? (
                             <>
@@ -791,6 +823,14 @@ function IssuePage() {
                             <button
                               type="button"
                               className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100 hover:text-gray-700"
+                              onMouseDown={(e) => {
+                                // Trigger context menu on left click
+                                e.currentTarget.dispatchEvent(new MouseEvent('contextmenu', {
+                                  bubbles: true,
+                                  clientX: e.clientX,
+                                  clientY: e.clientY
+                                }));
+                              }}
                             >
                               <FaGithub className="mr-2 h-4 w-4" />
                               <span>{currentRepoName || "No repository"}</span>
