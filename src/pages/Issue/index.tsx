@@ -420,10 +420,14 @@ function IssuePage() {
   // Add keyboard shortcut for copying issue as markdown (Cmd+Option+C)
   useHotkeys("mod+alt+c", handleCopyHotkey, { enableOnFormTags: true });
 
+  // If loader returned null, issue doesn't exist
+  if (loadedIssue === null) {
+    return <div className="p-8 w-full text-center">Issue not found</div>;
+  }
+  
+  // If loader found issue but realtime query hasn't loaded yet
   if (issue === undefined) {
     return <div className="p-8 w-full text-center">Loading...</div>;
-  } else if (issue === null) {
-    return <div className="p-8 w-full text-center">Issue not found</div>;
   }
 
   const handleStatusChange = (status: string) => {
