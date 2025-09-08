@@ -201,15 +201,24 @@ function IssuePage() {
 
   // Define handleGithubRepoChange with useCallback to prevent recreation on each render
   const handleGithubRepoChange = useCallback(
-    (repoId: string | null) => {
+    async (repoId: string | null) => {
       if (!issue?.id) return;
-      supabase
-        .from("issue")
-        .update({
-          github_repository_id: repoId || null,
-          modified: new Date().toISOString(),
-        })
-        .eq("id", issue.id);
+      try {
+        const { error } = await supabase
+          .from("issue")
+          .update({
+            github_repository_id: repoId || null,
+            modified: new Date().toISOString(),
+          })
+          .eq("id", issue.id);
+        if (error) {
+          console.error("Error updating GitHub repository:", error);
+          showError("Failed to update GitHub repository", "Error");
+        }
+      } catch (error) {
+        console.error("Error updating GitHub repository:", error);
+        showError("Failed to update GitHub repository", "Error");
+      }
     },
     [issue?.id],
   );
@@ -426,32 +435,68 @@ function IssuePage() {
     return <div className="p-8 w-full text-center">Issue not found</div>;
   }
 
-  const handleStatusChange = (status: string) => {
-    supabase
-      .from("issue")
-      .update({ status, modified: new Date().toISOString() })
-      .eq("id", issue.id);
+  const handleStatusChange = async (status: string) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ status, modified: new Date().toISOString() })
+        .eq("id", issue.id);
+      if (error) {
+        console.error("Error updating status:", error);
+        showError("Failed to update status", "Error");
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      showError("Failed to update status", "Error");
+    }
   };
 
-  const handlePriorityChange = (priority: string) => {
-    supabase
-      .from("issue")
-      .update({ priority, modified: new Date().toISOString() })
-      .eq("id", issue.id);
+  const handlePriorityChange = async (priority: string) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ priority, modified: new Date().toISOString() })
+        .eq("id", issue.id);
+      if (error) {
+        console.error("Error updating priority:", error);
+        showError("Failed to update priority", "Error");
+      }
+    } catch (error) {
+      console.error("Error updating priority:", error);
+      showError("Failed to update priority", "Error");
+    }
   };
 
-  const handleAssigneeChange = (userId: string | null) => {
-    supabase
-      .from("issue")
-      .update({ assignee_id: userId, modified: new Date().toISOString() })
-      .eq("id", issue.id);
+  const handleAssigneeChange = async (userId: string | null) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ assignee_id: userId, modified: new Date().toISOString() })
+        .eq("id", issue.id);
+      if (error) {
+        console.error("Error updating assignee:", error);
+        showError("Failed to update assignee", "Error");
+      }
+    } catch (error) {
+      console.error("Error updating assignee:", error);
+      showError("Failed to update assignee", "Error");
+    }
   };
 
-  const handleEstimateChange = (estimate: number | null) => {
-    supabase
-      .from("issue")
-      .update({ estimate, modified: new Date().toISOString() })
-      .eq("id", issue.id);
+  const handleEstimateChange = async (estimate: number | null) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ estimate, modified: new Date().toISOString() })
+        .eq("id", issue.id);
+      if (error) {
+        console.error("Error updating estimate:", error);
+        showError("Failed to update estimate", "Error");
+      }
+    } catch (error) {
+      console.error("Error updating estimate:", error);
+      showError("Failed to update estimate", "Error");
+    }
   };
 
   const handleTitleChange = (title: string) => {
@@ -673,7 +718,7 @@ function IssuePage() {
                     button={
                       <button
                         type="button"
-                        className="inline-flex items-center h-6 px-2 text-gray-500border-none rounded hover:bg-gray-100"
+                        className="inline-flex items-center h-6 px-2 text-gray-500 border-none rounded hover:bg-gray-100"
                       >
                         <StatusIcon status={issue.status} className="mr-2" />
                         <span>{StatusDisplay[issue.status]}</span>
