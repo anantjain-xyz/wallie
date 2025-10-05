@@ -179,7 +179,6 @@ Wallie includes a GitHub App integration that allows users to create pull reques
    - `/api/github/callback`: Handles the callback from GitHub after installation
    - `/api/github/webhook`: Handles webhook events from GitHub
    - `/api/github/refresh-repos`: Refreshes the list of repositories for an installation
-   - `/api/github/token`: Provides installation tokens
 
 4. **UI Components**:
    - GitHub integration settings in the Settings page

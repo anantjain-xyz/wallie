@@ -250,7 +250,7 @@ function IssuePage() {
       // We can't set titleIsDirty.current = false here because we haven't yet received
       // the updated issue from the db
     }, debounceTime),
-    [],
+    [issue?.id],
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -263,7 +263,7 @@ function IssuePage() {
       // We can't set descriptionIsDirty.current = false here because we haven't yet received
       // the updated issue from the db
     }, debounceTime),
-    [],
+    [issue?.id],
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -276,7 +276,7 @@ function IssuePage() {
       // We can't set planIsDirty.current = false here because we haven't yet received
       // the updated issue from the db
     }, debounceTime),
-    [],
+    [issue?.id],
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -289,7 +289,7 @@ function IssuePage() {
       // We can't set designIsDirty.current = false here because we haven't yet received
       // the updated issue from the db
     }, debounceTime),
-    [],
+    [issue?.id],
   );
 
   // Comments with author info via Supabase
@@ -527,9 +527,14 @@ function IssuePage() {
     handleDesignChangeDebounced(design);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     // Hard delete the issue in Supabase
-    supabase.from("issue").delete().eq("id", issue.id);
+    const { error } = await supabase.from("issue").delete().eq("id", issue.id);
+    if (error) {
+      console.error("Error deleting issue:", error);
+      showError("Failed to delete issue", "Error");
+      return;
+    }
     handleClose();
   };
 

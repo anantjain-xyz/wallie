@@ -214,10 +214,10 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
         .order('modified', { ascending: false })
         .limit(1);
       
-      if (branches.length > 0 && branches[0].issue_id) {
+      if (branches && branches.length > 0 && branches[0].issue_id) {
         const issueId = branches[0].issue_id;
         console.log('Found issue ID from branch:', issueId);
-        
+
         if (pullRequest.draft) {
           // If PR is in draft state, set issue to in_progress
           await supabaseAdmin
@@ -260,17 +260,17 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
             .order('modified', { ascending: false })
             .limit(1);
           
-          if (branches.length > 0 && branches[0].issue_id) {
+          if (branches && branches.length > 0 && branches[0].issue_id) {
             const issueId = branches[0].issue_id;
             console.log('Found issue ID from original PR:', issueId);
-            
-            // Update issue status to todo
+
+            // Update issue status to in_progress
             await supabaseAdmin
               .from('issue')
               .update({ status: 'in_progress', modified: new Date().toISOString() })
               .eq('id', issueId);
-            
-            console.log('Updated issue status to todo for issue:', issueId);
+
+            console.log('Updated issue status to in_progress for issue:', issueId);
           } else {
             console.log('Could not find issue ID for original PR:', originalPrNumber);
           }
@@ -291,16 +291,16 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
           .order('modified', { ascending: false })
           .limit(1);
         
-        if (branches.length > 0 && branches[0].issue_id) {
+        if (branches && branches.length > 0 && branches[0].issue_id) {
           const issueId = branches[0].issue_id;
           console.log('Found issue ID from branch:', issueId);
-          
+
           // Update issue status to done
           await supabaseAdmin
             .from('issue')
             .update({ status: 'done', modified: new Date().toISOString() })
             .eq('id', issueId);
-          
+
           console.log('Updated issue status to done for issue:', issueId);
         } else {
           console.log('Could not find issue ID for branch:', branchName);

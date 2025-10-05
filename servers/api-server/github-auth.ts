@@ -284,55 +284,5 @@ app.post('/refresh-repos', async (c) => {
   }
 });
 
-// Get installation token
-// The only traffic to this endpoint is from the agent, so we don't need to check for authentication
-// TODO: Lock this endpoint to only allow requests from the agent
-app.get('/token', async (c) => {
-  try {
-    const workspaceId = c.req.query('workspace_id');
-    
-    if (!workspaceId) {
-      return c.json({ error: 'Workspace ID is required' }, 400);
-    }
-    
-    // Get the installation for this workspace
-    const { data: installations, error } = await supabaseAdmin
-      .from('github_installation')
-      .select('*')
-      .eq('workspace_id', workspaceId)
-      .order('modified', { ascending: false })
-      .limit(1);
-    
-    if (!installations || !installations.length || error) {
-      return c.json({ error: 'No GitHub installation found for this workspace' }, 404);
-    }
-    
-    const installation = installations[0];
-    
-    // Check if token is still valid
-    if (installation.access_token && new Date(installation.token_expires_at) > new Date()) {
-      return c.json({ token: installation.access_token, expiresAt: installation.token_expires_at });
-    }
-    
-    // Get fresh token from GitHub
-    const octokit = await githubApp.getInstallationOctokit(Number(installation.installation_id));
-    const authResponse = await octokit.auth({
-      type: 'installation',
-      installationId: Number(installation.installation_id),
-    }) as { token: string; expiresAt: string };
-    const { token, expiresAt } = authResponse;
-    
-    // Update token in database
-    await supabaseAdmin
-      .from('github_installation')
-      .update({ access_token: token, token_expires_at: expiresAt, modified: new Date().toISOString() })
-      .eq('id', installation.id);
-    
-    return c.json({ token, expiresAt });
-  } catch (error) {
-    console.error('Error getting installation token:', error);
-    return c.json({ error: 'Failed to get installation token' }, 500);
-  }
-});
 
 export default app;
