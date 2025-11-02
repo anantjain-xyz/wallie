@@ -55,7 +55,7 @@ const IssueItem = ({
 
   // Fallback fetch for assignee if nested data not present
   useEffect(() => {
-    if (!assigneeName && issue.assignee_id) {
+    if (issue.assignee_id) {
       supabase
         .from("app_user")
         .select("full_name, profile_picture")
@@ -67,8 +67,11 @@ const IssueItem = ({
             setAssigneeProfilePicture(data[0].profile_picture);
           }
         });
+    } else {
+      setAssigneeName(undefined);
+      setAssigneeProfilePicture(null);
     }
-  }, [assigneeName, issue.assignee_id]);
+  }, [issue.assignee_id]);
 
   const priorityIcon = (
     <div
