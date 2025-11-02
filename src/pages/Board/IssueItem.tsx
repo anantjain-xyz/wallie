@@ -122,12 +122,12 @@ const IssueItem = ({
       }
     >
       <div className="flex justify-between items-center w-full cursor-default">
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0 flex-1 mr-2">
           <span className="mt-1 text-sm font-medium text-gray-700 line-clamp-2 overflow-ellipsis">
             {renderInlineCode(issue.title)}
           </span>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center flex-shrink-0">
           {workspaceId && (
             <AssigneeMenu
               id={`assignee-menu-` + issue.id}
