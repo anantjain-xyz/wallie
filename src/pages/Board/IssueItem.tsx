@@ -53,22 +53,41 @@ const IssueItem = ({
     string | null
   >(null);
 
-  // Fallback fetch for assignee if nested data not present
+  // Use nested assignee data from query if available, otherwise fetch
   useEffect(() => {
-    if (!assigneeName && issue.assignee_id) {
-      supabase
-        .from("app_user")
-        .select("full_name, profile_picture")
-        .eq("id", issue.assignee_id)
-        .limit(1)
-        .then(({ data }) => {
-          if (data && data[0]) {
-            setAssigneeName(data[0].full_name);
-            setAssigneeProfilePicture(data[0].profile_picture);
-          }
-        });
+    // Check if nested assignee data is available from the query
+    const nestedAssignee = (issue as any).app_user;
+    if (nestedAssignee && nestedAssignee.full_name !== undefined) {
+      // Use nested data directly
+      setAssigneeName(nestedAssignee.full_name);
+      setAssigneeProfilePicture(nestedAssignee.profile_picture);
+      return;
     }
-  }, [assigneeName, issue.assignee_id]);
+
+    // If no assignee_id, clear the state
+    if (!issue.assignee_id) {
+      setAssigneeName(undefined);
+      setAssigneeProfilePicture(null);
+      return;
+    }
+
+    // Fallback: fetch assignee data if nested data not present
+    supabase
+      .from("app_user")
+      .select("full_name, profile_picture")
+      .eq("id", issue.assignee_id)
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data[0]) {
+          setAssigneeName(data[0].full_name);
+          setAssigneeProfilePicture(data[0].profile_picture);
+        } else {
+          // Clear state if assignee not found
+          setAssigneeName(undefined);
+          setAssigneeProfilePicture(null);
+        }
+      });
+  }, [issue.assignee_id, issue]);
 
   const priorityIcon = (
     <div
