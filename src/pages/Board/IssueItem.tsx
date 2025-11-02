@@ -13,6 +13,7 @@ import { ReactComponent as EstimateIcon } from "../../assets/icons/estimate.svg"
 import { Issue } from "../../types/types";
 import { formatExternalId } from "../../utils/issueUtils";
 import { renderInlineCode } from "../../utils/renderInlineCode";
+import { showError } from "../../utils/notification.tsx";
 
 interface IssueProps {
   issue: Issue;
@@ -70,13 +71,19 @@ const IssueItem = ({
   }, [assigneeName, issue.assignee_id]);
 
   const priorityIcon = (
-    <div className="rounded-sm border border-gray-100 hover:border-gray-200 py-1 px-2">
+    <div
+      className="rounded-sm border border-gray-100 hover:border-gray-200 py-1 px-2"
+      onClick={(e) => e.stopPropagation()}
+    >
       <PriorityIcon priority={issue.priority} />
     </div>
   );
 
   const estimate = (
-    <div className="flex items-center rounded-sm border border-gray-100 hover:border-gray-200 p-0.5">
+    <div
+      className="flex items-center rounded-sm border border-gray-100 hover:border-gray-200 p-0.5"
+      onClick={(e) => e.stopPropagation()}
+    >
       <EstimateIcon className="w-4 h-4 mr-1" />
       <span className="text-xs">
         {issue.estimate !== null ? issue.estimate : "-"}
@@ -84,25 +91,40 @@ const IssueItem = ({
     </div>
   );
 
-  const updatePriority = (priority: string) => {
-    supabase
-      .from("issue")
-      .update({ priority, modified: new Date().toISOString() })
-      .eq("id", issue.id);
+  const updatePriority = async (priority: string) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ priority, modified: new Date().toISOString() })
+        .eq("id", issue.id);
+      if (error) throw error;
+    } catch (_err) {
+      showError("Failed to update priority", "Save error");
+    }
   };
 
-  const updateAssignee = (assigneeId: string | null) => {
-    supabase
-      .from("issue")
-      .update({ assignee_id: assigneeId, modified: new Date().toISOString() })
-      .eq("id", issue.id);
+  const updateAssignee = async (assigneeId: string | null) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ assignee_id: assigneeId, modified: new Date().toISOString() })
+        .eq("id", issue.id);
+      if (error) throw error;
+    } catch (_err) {
+      showError("Failed to update assignee", "Save error");
+    }
   };
 
-  const updateEstimate = (estimate: number | null) => {
-    supabase
-      .from("issue")
-      .update({ estimate, modified: new Date().toISOString() })
-      .eq("id", issue.id);
+  const updateEstimate = async (estimate: number | null) => {
+    try {
+      const { error } = await supabase
+        .from("issue")
+        .update({ estimate, modified: new Date().toISOString() })
+        .eq("id", issue.id);
+      if (error) throw error;
+    } catch (_err) {
+      showError("Failed to update estimate", "Save error");
+    }
   };
 
   return (
@@ -133,7 +155,10 @@ const IssueItem = ({
               id={`assignee-menu-` + issue.id}
               workspaceId={workspaceId}
               button={
-                <div className="flex items-center hover:bg-gray-100 rounded p-1">
+                <div
+                  className="flex items-center hover:bg-gray-100 rounded p-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {issue.assignee_id ? (
                     <Avatar
                       name={assigneeName}
