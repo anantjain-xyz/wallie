@@ -312,14 +312,17 @@ export async function issueListLoaderSupabase({
 }) {
   const url = new URL(request.url);
   const filterState = getFilterStateFromSearchParams(url.searchParams);
-  
+
   // Redirect to Active issues when on homepage with no status filter
-  if (url.pathname === "/" && (!filterState.status || filterState.status.length === 0)) {
+  if (
+    url.pathname === "/" &&
+    (!filterState.status || filterState.status.length === 0)
+  ) {
     const activeUrl = new URL(request.url);
     activeUrl.searchParams.set("status", "todo,in_progress,in_review");
     throw redirect(activeUrl.pathname + activeUrl.search);
   }
-  
+
   let query = supabase.from("issue").select("*", { count: "exact" });
 
   if (filterState.status && filterState.status.length) {
