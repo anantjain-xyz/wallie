@@ -18,9 +18,10 @@ try {
   EncryptionService.encrypt('test');
   console.log('Encryption service initialized successfully');
 } catch (error) {
-  console.error('Error initializing encryption service:', error);
-  // Don't exit the process, let it continue but with encryption service disabled
-  console.warn('Encryption service is not available. Secrets API will not function correctly!');
+  console.error('Error initializing encryption service:');
+  console.error(error); // Log the full error object for better debugging
+  console.error('Encryption service is not available. Please ensure WALLIE_ENCRYPTION_KEY environment variable is set.');
+  process.exit(1); // Exit the process immediately
 }
 
 const app = new Hono()
