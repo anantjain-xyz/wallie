@@ -346,8 +346,11 @@ export async function issueListLoaderSupabase({
     const q = filterState.query;
     query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
   }
+  
+  // Sort via Supabase - use priority_order column for priority sorting
   if (filterState.orderBy) {
-    query = query.order(filterState.orderBy as string, {
+    const orderByColumn = filterState.orderBy === "priority" ? "priority_order" : filterState.orderBy;
+    query = query.order(orderByColumn as string, {
       ascending: (filterState.orderDirection || "desc") === "asc",
       nullsFirst: false,
     });
@@ -355,6 +358,7 @@ export async function issueListLoaderSupabase({
 
   const { data, error, count } = await query.limit(100);
   if (error) throw error;
+  
   return { issues: data || [], count, filterState };
 }
 
