@@ -72,16 +72,19 @@ function List({ showSearch = false }) {
         const q = filterState.query;
         query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
       }
-      
+
       // Sort via Supabase - use priority_order column for priority sorting
       if (filterState.orderBy) {
-        const orderByColumn = filterState.orderBy === "priority" ? "priority_order" : filterState.orderBy;
+        const orderByColumn =
+          filterState.orderBy === "priority"
+            ? "priority_order"
+            : filterState.orderBy;
         query = query.order(orderByColumn as string, {
           ascending: (filterState.orderDirection || "desc") === "asc",
           nullsFirst: false,
         });
       }
-      
+
       const { data, error } = await query.limit(100);
       return { data: (data as Issue[]) || [], error };
     },
