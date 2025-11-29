@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Wallie is an issue tracking and project management application with GitHub App integration. It's a full-stack React + TypeScript application with a Supabase backend that supports real-time collaboration, kanban boards, and automated workflow features.
+Wallie is an issue tracking and project management application with GitHub App integration. It's a full-stack React + TypeScript application with a Supabase backend that supports real-time collaboration and automated workflow features.
 
 ## Development Commands
 
@@ -43,7 +43,7 @@ vitest path/to/file.test.ts # Run specific test file
 ### Frontend Structure
 - `src/`: React + TypeScript application
   - `components/`: Reusable UI components (Avatar, Modal, Select, etc.)
-  - `pages/`: Route-based page components (Board, List, Issue, Settings)
+  - `pages/`: Route-based page components (List, Issue, Settings)
   - `hooks/`: Custom React hooks (useRealtimeQuery, useUserPreferences)
   - `utils/`: Utility functions and helpers
   - `types/types.ts`: Core type definitions (Issue, Comment, Priority, Status)
@@ -74,7 +74,7 @@ vitest path/to/file.test.ts # Run specific test file
 ### Real-time Collaboration
 - Uses Supabase real-time subscriptions
 - Custom `useRealtimeQuery` hook for live data updates
-- Conflict-free ordering using fractional indexing for kanban boards
+- Conflict-free ordering for sortable issue lists
 
 ## Code Style & Conventions
 

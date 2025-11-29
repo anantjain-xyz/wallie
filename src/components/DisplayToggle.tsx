@@ -1,17 +1,11 @@
 import { Transition } from "@headlessui/react";
 import { useClickOutside } from "../hooks/useClickOutside";
 import { useRef, useState, useEffect } from "react";
-import { BsGrid3X3Gap, BsListUl } from "react-icons/bs";
 import Select from "./Select";
 import { useFilterState } from "../utils/filterState";
 import { useUserPreferences } from "../hooks/useUserPreferences";
 
-interface Props {
-  viewMode: "list" | "board";
-  onViewModeChange: (mode: "list" | "board") => void;
-}
-
-export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
+export default function DisplayToggle() {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef(null);
   const [filterState, setFilterState] = useFilterState();
@@ -20,13 +14,6 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
   useClickOutside(ref, () => {
     if (isOpen) setIsOpen(false);
   });
-
-  // Sync view mode with user preferences when they load
-  useEffect(() => {
-    if (userPreferences.view_mode !== viewMode) {
-      onViewModeChange(userPreferences.view_mode);
-    }
-  }, [userPreferences, onViewModeChange, viewMode]);
 
   // Sync filter state with user preferences when they load
   useEffect(() => {
@@ -41,11 +28,6 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
       });
     }
   }, [userPreferences, setFilterState, filterState]);
-
-  const handleViewModeChange = (mode: "list" | "board") => {
-    onViewModeChange(mode);
-    updateUserPreferences({ view_mode: mode });
-  };
 
   const handleOrderByChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newOrderBy = e.target.value;
@@ -88,68 +70,31 @@ export default function DisplayToggle({ viewMode, onViewModeChange }: Props) {
         className="absolute right-0 z-30 mt-2 bg-white rounded-lg shadow-modal w-60"
       >
         <div className="p-4">
-          {/* View Mode Section */}
-          <div className="pb-4 font-medium text-gray-700">
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                className={`flex items-center justify-center px-3 py-2 rounded border ${
-                  viewMode === "list"
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
-                onClick={() => {
-                  handleViewModeChange("list");
-                }}
-              >
-                <BsListUl className="w-4 h-4 mr-2" />
-                List
-              </button>
-              <button
-                type="button"
-                className={`flex items-center justify-center px-3 py-2 rounded border ${
-                  viewMode === "board"
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
-                onClick={() => {
-                  handleViewModeChange("board");
-                }}
-              >
-                <BsGrid3X3Gap className="w-4 h-4 mr-2" />
-                Board
-              </button>
-            </div>
-          </div>
-
-          {/* Ordering Section */}
-          {viewMode === "list" && (
-            <div className="pt-4 font-medium text-gray-700 border-t border-gray-200">
-              <div className="flex items-center justify-between mb-2">
-                <span>Ordering</span>
-                <div className="flex items-center">
-                  <Select
-                    className="text-xs mr-1"
-                    value={filterState.orderBy}
-                    onChange={handleOrderByChange}
-                  >
-                    <option value="priority">Priority</option>
-                    <option value="status">Status</option>
-                    <option value="created">Created</option>
-                    <option value="modified">Updated</option>
-                  </Select>
-                  <Select
-                    className="text-xs"
-                    value={filterState.orderDirection}
-                    onChange={handleOrderDirectionChange}
-                  >
-                    <option value="desc">Desc</option>
-                    <option value="asc">Asc</option>
-                  </Select>
-                </div>
+          <div className="font-medium text-gray-700">
+            <div className="flex items-center justify-between mb-2">
+              <span>Ordering</span>
+              <div className="flex items-center">
+                <Select
+                  className="text-xs mr-1"
+                  value={filterState.orderBy}
+                  onChange={handleOrderByChange}
+                >
+                  <option value="priority">Priority</option>
+                  <option value="status">Status</option>
+                  <option value="created">Created</option>
+                  <option value="modified">Updated</option>
+                </Select>
+                <Select
+                  className="text-xs"
+                  value={filterState.orderDirection}
+                  onChange={handleOrderDirectionChange}
+                >
+                  <option value="desc">Desc</option>
+                  <option value="asc">Asc</option>
+                </Select>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </Transition>
     </div>

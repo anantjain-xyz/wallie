@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 export interface UserPreferences {
-  view_mode: "list" | "board";
   order_by: string;
   order_direction: "asc" | "desc";
 }
@@ -10,7 +9,6 @@ const STORAGE_KEY = "wallie_user_preferences";
 
 // Default preferences
 const DEFAULT_PREFERENCES: UserPreferences = {
-  view_mode: "list",
   order_by: "priority",
   order_direction: "desc",
 };
@@ -23,9 +21,14 @@ export function useUserPreferences(): [
   const [preferences, setPreferences] = useState<UserPreferences>(() => {
     try {
       const storedPreferences = localStorage.getItem(STORAGE_KEY);
-      return storedPreferences
-        ? { ...DEFAULT_PREFERENCES, ...JSON.parse(storedPreferences) }
-        : DEFAULT_PREFERENCES;
+      if (!storedPreferences) return DEFAULT_PREFERENCES;
+
+      const parsed = JSON.parse(storedPreferences);
+      return {
+        order_by: parsed.order_by ?? DEFAULT_PREFERENCES.order_by,
+        order_direction:
+          parsed.order_direction ?? DEFAULT_PREFERENCES.order_direction,
+      };
     } catch (error) {
       console.error("Error reading preferences from localStorage:", error);
       return DEFAULT_PREFERENCES;
@@ -35,7 +38,10 @@ export function useUserPreferences(): [
   // Update preferences in state and localStorage
   const updatePreferences = (newPreferences: Partial<UserPreferences>) => {
     setPreferences((prev) => {
-      const updated = { ...prev, ...newPreferences };
+      const updated: UserPreferences = {
+        order_by: newPreferences.order_by ?? prev.order_by,
+        order_direction: newPreferences.order_direction ?? prev.order_direction,
+      };
 
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));

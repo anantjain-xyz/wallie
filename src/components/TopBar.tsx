@@ -25,8 +25,6 @@ interface Props {
   showSearch?: boolean;
   title?: string;
   filterState?: FilterState;
-  onViewModeChange: (viewMode: "list" | "board") => void;
-  viewMode: "list" | "board";
 }
 
 export default function ({
@@ -34,8 +32,6 @@ export default function ({
   showSearch,
   title = `All issues`,
   filterState,
-  onViewModeChange,
-  viewMode,
 }: Props) {
   const [usedFilterState, setFilterState] = useFilterState();
   const { showMenu, setShowMenu } = useContext(MenuContext)!;
@@ -241,10 +237,7 @@ export default function ({
       <div className="flex items-center justify-between flex-shrink-0 pl-2 pr-6 h-14">
         {/* right section */}
         <div className="flex-shrink-0">
-          <DisplayToggle
-            viewMode={viewMode}
-            onViewModeChange={onViewModeChange}
-          />
+          <DisplayToggle />
         </div>
       </div>
     </div>

@@ -5,7 +5,6 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import TopBar from "../../components/TopBar";
 import IssueList from "./IssueList";
-import IssueBoard from "../Board/IssueBoard";
 import BulkActionBar from "../../components/BulkActionBar";
 import { Issue } from "../../types/types";
 import { FilterState } from "../../utils/filterState";
@@ -20,9 +19,6 @@ function List({ showSearch = false }) {
   // const isSupabase = !!loaderData?.issues
   const filterState: FilterState = loaderData?.filterState;
 
-  // State for view mode (list or board)
-  const [viewMode, setViewMode] = useState<"list" | "board">("list");
-
   // State for selected issues and selection mode
   const [selectedIssues, setSelectedIssues] = useState<Set<string>>(
     () => new Set(),
@@ -31,9 +27,6 @@ function List({ showSearch = false }) {
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
     null,
   );
-
-  // State for board view
-  // const [columnsLiveIssues] = useState<Record<StatusValue, any>>({} as any)
 
   // Get workspace ID for the AssigneeMenu
   const [workspaceId, setWorkspaceId] = useState("");
@@ -96,18 +89,6 @@ function List({ showSearch = false }) {
     return (loaderData?.issues as Issue[]) || [];
   }, [liveIssuesRes.loading, liveIssuesRes.data, loaderData]);
   const issuesTotalCount = filledItems.length;
-
-  // Set viewMode to list when `showSearch` is set to true
-  useEffect(() => {
-    if (showSearch) {
-      setViewMode("list");
-    }
-  }, [showSearch]);
-
-  // No extra refresh needed; IssueBoard and list loader handle fetching
-  useEffect(() => {}, []);
-
-  // Board view is driven by IssueBoard component using Supabase realtime
 
   const updateOffsetAndLimit = (_itemsRendered: ListOnItemsRenderedProps) => {};
 
@@ -208,30 +189,21 @@ function List({ showSearch = false }) {
           filterState={filterState}
           filteredIssuesCount={issuesTotalCount}
           showSearch={showSearch}
-          title={viewMode === "board" ? "Board" : undefined}
-          onViewModeChange={setViewMode}
-          viewMode={viewMode}
         />
       </div>
 
-      {viewMode === "list" ? (
-        <IssueList
-          onItemsRendered={(itemsRendered) =>
-            updateOffsetAndLimit(itemsRendered)
-          }
-          issues={filledItems}
-          selectedIssues={selectedIssues}
-          onSelectIssue={handleSelectIssue}
-          selectionMode={selectionMode}
-          workspaceId={workspaceId}
-          workspaceName={workspaceName}
-          filterState={filterState}
-        />
-      ) : (
-        <IssueBoard filterState={filterState} />
-      )}
+      <IssueList
+        onItemsRendered={(itemsRendered) => updateOffsetAndLimit(itemsRendered)}
+        issues={filledItems}
+        selectedIssues={selectedIssues}
+        onSelectIssue={handleSelectIssue}
+        selectionMode={selectionMode}
+        workspaceId={workspaceId}
+        workspaceName={workspaceName}
+        filterState={filterState}
+      />
 
-      {viewMode === "list" && selectedIssues.size > 0 && workspaceId && (
+      {selectedIssues.size > 0 && workspaceId && (
         <BulkActionBar
           selectedIssues={selectedIssues}
           workspaceId={workspaceId}
