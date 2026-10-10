@@ -1,7 +1,16 @@
-
 # Wallie
 
+Issue tracking and project management with GitHub and coding agent integrations, built with React, TypeScript, Hono, Clerk, and Supabase.
+
+## Status
+
+This project is no longer maintained and is preserved as a reference. No support, security updates, or ongoing development are planned. Fork it if you want to continue development.
+
+Review the [known security limitations](SECURITY.md) before running or deploying it. The locked dependencies have known vulnerabilities, and the legacy upload flow requires changes to keep storage credentials on the server.
+
 ## Setup
+
+Use pnpm 10.15.0 (pinned in `package.json`). Local Supabase also requires the Supabase CLI and Docker.
 
 ```shell
 pnpm install
@@ -112,6 +121,7 @@ GITHUB_APP_WEBHOOK_SECRET=your_github_app_webhook_secret
 ```
 
 Notes:
+
 - `GITHUB_APP_NAME` is required for generating the install URL (`/prepare-install`).
 - The API server reads `FRONTEND_URL`, `GITHUB_CALLBACK_URL`, `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, and `GITHUB_APP_WEBHOOK_SECRET`.
 
@@ -129,3 +139,20 @@ Notes:
 - PR creation fails: confirm app permissions and valid installation token.
 - UUID extension errors in DB: latest migrations generate UUIDs in app code; ensure you applied current migrations.
 - Timestamp column type errors: use `NOW()` in SQL for timestamps when writing raw SQL.
+
+## Checks
+
+```shell
+pnpm stylecheck
+pnpm typecheck
+pnpm exec vitest run
+pnpm build
+```
+
+The unit suite excludes the live GitHub webhook smoke test. To run that test against your local API server, configure your own GitHub App webhook secret and run `pnpm test:webhook`.
+
+## License and credits
+
+Wallie's original contributions are licensed under the [MIT License](LICENSE). Inherited code and bundled fonts retain their original licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
+
+Wallie began as ElectricSQL's [Linearlite example](https://github.com/electric-sql/electric/tree/bf25e67216855616f0cc3d3da281b66d767ed35a/examples/linearlite), built on [Tuan Nguyen's Linear UI clone](https://github.com/tuan3w/linearapp_clone).

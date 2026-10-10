@@ -1,19 +1,26 @@
 {
   "name": "wallie",
   "version": "0.0.1",
+  "description": "Issue tracking with GitHub and coding agent integrations. Unmaintained reference project.",
+  "license": "MIT",
+  "packageManager": "pnpm@10.15.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anantjain-xyz/wallie.git"
+  },
   "private": true,
   "type": "module",
   "scripts": {
     "api-server": "dotenv -- tsx servers/api-server/index.ts",
     "cron-server": "dotenv -- tsx servers/cron-server.ts",
-    "test:webhook": "dotenv -- tsx servers/api-server/test-webhook.ts",
+    "test:webhook": "dotenv -- tsx servers/api-server/github-webhook.test.ts",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write ./src",
     "lint": "eslint ./src",
-    "stylecheck": "eslint ./src && prettier --check ./src ./db",
+    "stylecheck": "eslint ./src && prettier --check ./src",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
   },
